@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect, type FC } from 'react';
 import { SOLAR_SYSTEM_OBJECTS } from '../data/solarSystemData';
-import { EVIDENCE_TOPICS } from '../data/evidenceData';
-import type { SolarSystemObject, EvidenceTopic } from '../types';
+import { 
+  SCIENTIFIC_SEARCH_CARDS, 
+  EVIDENCE_TOPICS, 
+  CANDIDATE_CASES 
+} from '../data/evidenceData';
+import type { SolarSystemObject, EvidenceTopic, CandidateCase } from '../types';
 import { 
   Orbit, 
   ZoomIn, 
@@ -10,69 +14,77 @@ import {
   Play, 
   Pause, 
   ShieldAlert, 
-  Compass
+  Compass,
+  Eye,
+  Telescope,
+  Scale,
+  CheckCircle2,
+  Info,
+  Radio
 } from 'lucide-react';
 
+type ScalePreset = 'inner' | 'outer' | 'distant';
+
 export const PlanetXExplorer: FC = () => {
-  // Selected object for inspection
+  // 1. Selected Object State
   const [selectedObject, setSelectedObject] = useState<SolarSystemObject>(
     SOLAR_SYSTEM_OBJECTS.find(o => o.id === 'planet-x') || SOLAR_SYSTEM_OBJECTS[0]
   );
 
-  // Selected evidence topic
-  const [selectedEvidence, setSelectedEvidence] = useState<EvidenceTopic>(EVIDENCE_TOPICS[0]);
-
-  // Simulation controls
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
-  const [simSpeed, setSimSpeed] = useState<number>(1); // multiplier
-  const [elapsedYears, setElapsedYears] = useState<number>(0);
-
-  // Canvas Viewport Transformation
-  // scale represents pixels per AU
-  const [pixelsPerAU, setPixelsPerAU] = useState<number>(0.6); // default view shows up to ~1000 AU
+  // 2. Scale & Viewport State
+  const [scalePreset, setScalePreset] = useState<ScalePreset>('distant');
+  const [pixelsPerAU, setPixelsPerAU] = useState<number>(0.45); // default shows up to ~1000 AU
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Visual toggles
-  const [showInnerPlanets, setShowInnerPlanets] = useState<boolean>(true);
-  const [showOrbitPaths, setShowOrbitPaths] = useState<boolean>(true);
-  const [showClusteringVectors, setShowClusteringVectors] = useState<boolean>(true);
+  // 3. Visibility Toggles
+  const [showKnownPlanets, setShowKnownPlanets] = useState<boolean>(true);
+  const [showDistantObjects, setShowDistantObjects] = useState<boolean>(true);
+  const [showPlanetXOrbit, setShowPlanetXOrbit] = useState<boolean>(true);
+  const [isAnimated, setIsAnimated] = useState<boolean>(false); // static by default for scientific honesty
 
+  // 4. Selected Evidence Topic
+  const [selectedEvidence, setSelectedEvidence] = useState<EvidenceTopic>(EVIDENCE_TOPICS[0]);
+
+  // 5. Candidate Investigation State
+  const [activeCandidate, setActiveCandidate] = useState<CandidateCase>(CANDIDATE_CASES[0]);
+  const [userClassification, setUserClassification] = useState<string | null>(null);
+  const [blinkEpoch, setBlinkEpoch] = useState<'epoch1' | 'epoch2'>('epoch1');
+  const [isBlinkingAuto, setIsBlinkingAuto] = useState<boolean>(false);
+
+  // Canvas Refs
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(performance.now());
+  const simTimeRef = useRef<number>(0);
 
-  // Quick scale presets
-  const applyScalePreset = (preset: 'inner' | 'gas-giants' | 'kuiper' | 'planet-x') => {
+  // Scale preset switch handler
+  const handleScalePresetChange = (preset: ScalePreset) => {
+    setScalePreset(preset);
     setPanOffset({ x: 0, y: 0 });
     switch (preset) {
       case 'inner':
         setPixelsPerAU(120); // 1 AU is 120px
         break;
-      case 'gas-giants':
+      case 'outer':
         setPixelsPerAU(8); // 35 AU is ~280px
         break;
-      case 'kuiper':
-        setPixelsPerAU(3); // 100 AU is ~300px
-        break;
-      case 'planet-x':
+      case 'distant':
       default:
         setPixelsPerAU(0.45); // 1000 AU is ~450px
         break;
     }
   };
 
-  // Zoom handlers
+  // Zoom Handlers
   const handleZoomIn = () => setPixelsPerAU(prev => Math.min(prev * 1.4, 250));
   const handleZoomOut = () => setPixelsPerAU(prev => Math.max(prev / 1.4, 0.1));
   const handleReset = () => {
     setPanOffset({ x: 0, y: 0 });
-    setPixelsPerAU(0.45);
-    setElapsedYears(0);
+    handleScalePresetChange(scalePreset);
   };
 
-  // Canvas Mouse Interaction for Panning & Object Selection
+  // Canvas Mouse Interaction for Panning
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsPanning(true);
     dragStartRef.current = { x: e.clientX - panOffset.x, y: e.clientY - panOffset.y };
@@ -88,7 +100,7 @@ export const PlanetXExplorer: FC = () => {
 
   const handleMouseUp = () => setIsPanning(false);
 
-  // Click on canvas to detect nearest object
+  // Click on Canvas to Select Nearest Object
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -99,9 +111,8 @@ export const PlanetXExplorer: FC = () => {
     const centerX = canvas.width / (2 * (window.devicePixelRatio || 1)) + panOffset.x;
     const centerY = canvas.height / (2 * (window.devicePixelRatio || 1)) + panOffset.y;
 
-    // Check each object's current rendered position
     let closestObj: SolarSystemObject | null = null;
-    let minDistance = 25; // hit radius in pixels
+    let minDistance = 25; // pixel hit radius
 
     for (const obj of SOLAR_SYSTEM_OBJECTS) {
       if (obj.id === 'sun') {
@@ -113,12 +124,18 @@ export const PlanetXExplorer: FC = () => {
         continue;
       }
 
-      if (!showInnerPlanets && (obj.id === 'mercury' || obj.id === 'venus' || obj.id === 'earth' || obj.id === 'mars')) {
+      // Check visibility filter
+      if (!showKnownPlanets && (obj.type === 'Terrestrial Planet' || obj.type === 'Gas Giant' || obj.type === 'Ice Giant')) {
+        continue;
+      }
+      if (!showDistantObjects && (obj.type === 'Extreme TNO' || obj.id === 'pluto')) {
+        continue;
+      }
+      if (!showPlanetXOrbit && obj.id === 'planet-x') {
         continue;
       }
 
-      // Compute current Keplerian position of object
-      const pos = computeObjectScreenPos(obj, centerX, centerY, pixelsPerAU, elapsedYears);
+      const pos = computeObjectScreenPos(obj, centerX, centerY, pixelsPerAU, isAnimated ? simTimeRef.current : 0);
       const d = Math.hypot(clickX - pos.x, clickY - pos.y);
       if (d < minDistance) {
         closestObj = obj;
@@ -131,44 +148,51 @@ export const PlanetXExplorer: FC = () => {
     }
   };
 
-  // Helper: compute Keplerian 2D screen coordinate for an orbiting object
+  // Compute Keplerian 2D Screen Position
   const computeObjectScreenPos = (
     obj: SolarSystemObject,
     centerX: number,
     centerY: number,
     scale: number,
-    years: number
+    time: number
   ) => {
     if (obj.semiMajorAxisAU === 0) return { x: centerX, y: centerY };
 
-    // Mean motion: n = 2 * PI / orbitalPeriodYears
-    const period = Math.max(obj.orbitalPeriodYears, 0.001);
-    const meanAnomaly = (2 * Math.PI * (years / period)) % (2 * Math.PI);
-
-    // Approximate eccentric anomaly from mean anomaly using Kepler solver
-    let E = meanAnomaly;
-    for (let i = 0; i < 5; i++) {
-      E = E - (E - obj.eccentricity * Math.sin(E) - meanAnomaly) / (1 - obj.eccentricity * Math.cos(E));
-    }
-
-    // Position in orbital plane coordinate system (Sun at one focus)
     const a = obj.semiMajorAxisAU;
     const e = obj.eccentricity;
+    const period = Math.max(obj.orbitalPeriodYears, 0.001);
+
+    // If static, show perihelion point (E = 0)
+    const meanAnomaly = isAnimated ? (2 * Math.PI * (time / period)) % (2 * Math.PI) : 0;
+
+    let E = meanAnomaly;
+    for (let i = 0; i < 5; i++) {
+      E = E - (E - e * Math.sin(E) - meanAnomaly) / (1 - e * Math.cos(E));
+    }
+
     const xOrb = a * (Math.cos(E) - e);
     const yOrb = a * Math.sqrt(1 - e * e) * Math.sin(E);
 
-    // Rotate by argument of perihelion (in radians)
     const omega = (obj.argumentOfPerihelionDeg * Math.PI) / 180;
     const xAU = xOrb * Math.cos(omega) - yOrb * Math.sin(omega);
     const yAU = xOrb * Math.sin(omega) + yOrb * Math.cos(omega);
 
     return {
       x: centerX + xAU * scale,
-      y: centerY - yAU * scale // canvas Y is inverted
+      y: centerY - yAU * scale
     };
   };
 
-  // Simulation Render Loop
+  // Auto-blink comparator effect for Candidate Investigation
+  useEffect(() => {
+    if (!isBlinkingAuto) return;
+    const interval = setInterval(() => {
+      setBlinkEpoch(prev => prev === 'epoch1' ? 'epoch2' : 'epoch1');
+    }, 600);
+    return () => clearInterval(interval);
+  }, [isBlinkingAuto]);
+
+  // Main Canvas Rendering Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -176,20 +200,18 @@ export const PlanetXExplorer: FC = () => {
     if (!ctx) return;
 
     let isRunning = true;
+    let lastTime = performance.now();
 
-    const render = (time: number) => {
+    const render = (now: number) => {
       if (!isRunning) return;
 
-      const deltaTime = (time - lastTimeRef.current) / 1000;
-      lastTimeRef.current = time;
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
 
-      if (isPlaying) {
-        // Increment elapsed simulation time in years based on speed
-        // Base rate: 1 real second = 5 simulation years * simSpeed
-        setElapsedYears(prev => prev + deltaTime * 5 * simSpeed);
+      if (isAnimated) {
+        simTimeRef.current += dt * 8; // progression rate
       }
 
-      // Handle DPI scaling
       const dpr = window.devicePixelRatio || 1;
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
@@ -202,21 +224,21 @@ export const PlanetXExplorer: FC = () => {
       ctx.save();
       ctx.scale(dpr, dpr);
 
-      // Clear Canvas with deep space navy background
+      // Deep navy background
       ctx.fillStyle = '#050B1A';
       ctx.fillRect(0, 0, width, height);
 
-      // Draw subtle astronomical grid
+      // Faint coordinate grid
       ctx.strokeStyle = '#0E1B38';
       ctx.lineWidth = 1;
-      const gridSize = 100;
-      for (let x = 0; x < width; x += gridSize) {
+      const step = 80;
+      for (let x = 0; x < width; x += step) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, height);
         ctx.stroke();
       }
-      for (let y = 0; y < height; y += gridSize) {
+      for (let y = 0; y < height; y += step) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
@@ -226,124 +248,86 @@ export const PlanetXExplorer: FC = () => {
       const centerX = width / 2 + panOffset.x;
       const centerY = height / 2 + panOffset.y;
 
-      // Draw scale reference circles (e.g. 100 AU, 500 AU, 1000 AU) when zoomed out
-      if (pixelsPerAU < 2) {
-        const ranges = [100, 300, 500, 1000];
-        ranges.forEach(r => {
-          const rPx = r * pixelsPerAU;
-          if (rPx > 20 && rPx < width * 2) {
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, rPx, 0, 2 * Math.PI);
-            ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
-            ctx.setLineDash([4, 6]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.fillStyle = 'rgba(167, 180, 204, 0.4)';
-            ctx.font = '10px monospace';
-            ctx.fillText(`${r} AU`, centerX + rPx + 4, centerY - 4);
-          }
-        });
-      }
-
-      // Draw Perihelion Alignment Vectors (to show the scientific clustering of eTNOs)
-      if (showClusteringVectors) {
-        const clusteredObjects = SOLAR_SYSTEM_OBJECTS.filter(o => o.type === 'Extreme TNO');
-        clusteredObjects.forEach(obj => {
-          const omegaRad = (obj.argumentOfPerihelionDeg * Math.PI) / 180;
-          const vectorLengthAU = Math.min(obj.perihelionAU * 1.2, 100);
-          const endX = centerX + Math.cos(omegaRad) * vectorLengthAU * pixelsPerAU;
-          const endY = centerY - Math.sin(omegaRad) * vectorLengthAU * pixelsPerAU;
-
+      // Draw Distance Scale Reference Rings in Astronomical Units (AU)
+      const scaleRings = pixelsPerAU > 20 ? [1, 2, 5] : pixelsPerAU > 3 ? [5, 10, 20, 30] : [50, 100, 300, 500, 800];
+      scaleRings.forEach(au => {
+        const rPx = au * pixelsPerAU;
+        if (rPx > 15 && rPx < width * 2) {
           ctx.beginPath();
-          ctx.moveTo(centerX, centerY);
-          ctx.lineTo(endX, endY);
-          ctx.strokeStyle = 'rgba(251, 113, 133, 0.25)';
-          ctx.lineWidth = 1.5;
-          ctx.setLineDash([2, 4]);
+          ctx.arc(centerX, centerY, rPx, 0, 2 * Math.PI);
+          ctx.strokeStyle = au === 30 ? 'rgba(59, 130, 246, 0.4)' : 'rgba(56, 189, 248, 0.12)';
+          ctx.lineWidth = au === 30 ? 1.5 : 1;
+          ctx.setLineDash([4, 6]);
           ctx.stroke();
           ctx.setLineDash([]);
-        });
-
-        // Anti-aligned vector for hypothetical Planet X
-        const pX = SOLAR_SYSTEM_OBJECTS.find(o => o.id === 'planet-x');
-        if (pX) {
-          const omegaRad = (pX.argumentOfPerihelionDeg * Math.PI) / 180;
-          const vectorLengthAU = 120;
-          const endX = centerX + Math.cos(omegaRad) * vectorLengthAU * pixelsPerAU;
-          const endY = centerY - Math.sin(omegaRad) * vectorLengthAU * pixelsPerAU;
-
-          ctx.beginPath();
-          ctx.moveTo(centerX, centerY);
-          ctx.lineTo(endX, endY);
-          ctx.strokeStyle = 'rgba(139, 92, 246, 0.35)';
-          ctx.lineWidth = 2;
-          ctx.setLineDash([3, 3]);
-          ctx.stroke();
-          ctx.setLineDash([]);
+          ctx.fillStyle = au === 30 ? '#3B82F6' : 'rgba(167, 180, 204, 0.6)';
+          ctx.font = '10px monospace';
+          ctx.fillText(au === 30 ? '30 AU (Neptune)' : `${au} AU`, centerX + rPx + 4, centerY - 4);
         }
-      }
+      });
 
-      // Draw Orbit Paths
-      if (showOrbitPaths) {
-        SOLAR_SYSTEM_OBJECTS.forEach(obj => {
-          if (obj.semiMajorAxisAU === 0) return;
-          if (!showInnerPlanets && (obj.id === 'mercury' || obj.id === 'venus' || obj.id === 'earth' || obj.id === 'mars')) {
-            return;
-          }
+      // Draw Orbits
+      SOLAR_SYSTEM_OBJECTS.forEach(obj => {
+        if (obj.semiMajorAxisAU === 0) return;
 
-          const a = obj.semiMajorAxisAU;
-          const e = obj.eccentricity;
-          const omega = (obj.argumentOfPerihelionDeg * Math.PI) / 180;
+        const isKnownPlanet = obj.type === 'Terrestrial Planet' || obj.type === 'Gas Giant' || obj.type === 'Ice Giant';
+        const isDistantObject = obj.type === 'Extreme TNO' || obj.id === 'pluto';
+        const isPlanetX = obj.id === 'planet-x';
 
-          // Draw full ellipse with Keplerian points
-          ctx.beginPath();
-          const steps = 120;
-          for (let i = 0; i <= steps; i++) {
-            const E = (i / steps) * 2 * Math.PI;
-            const xOrb = a * (Math.cos(E) - e);
-            const yOrb = a * Math.sqrt(1 - e * e) * Math.sin(E);
+        if (isKnownPlanet && !showKnownPlanets) return;
+        if (isDistantObject && !showDistantObjects) return;
+        if (isPlanetX && !showPlanetXOrbit) return;
 
-            const xAU = xOrb * Math.cos(omega) - yOrb * Math.sin(omega);
-            const yAU = xOrb * Math.sin(omega) + yOrb * Math.cos(omega);
+        const a = obj.semiMajorAxisAU;
+        const e = obj.eccentricity;
+        const omega = (obj.argumentOfPerihelionDeg * Math.PI) / 180;
 
-            const px = centerX + xAU * pixelsPerAU;
-            const py = centerY - yAU * pixelsPerAU;
+        // Render true Keplerian ellipse with Sun at primary focus
+        ctx.beginPath();
+        const steps = 120;
+        for (let i = 0; i <= steps; i++) {
+          const E = (i / steps) * 2 * Math.PI;
+          const xOrb = a * (Math.cos(E) - e);
+          const yOrb = a * Math.sqrt(1 - e * e) * Math.sin(E);
 
-            if (i === 0) ctx.moveTo(px, py);
-            else ctx.lineTo(px, py);
-          }
+          const xAU = xOrb * Math.cos(omega) - yOrb * Math.sin(omega);
+          const yAU = xOrb * Math.sin(omega) + yOrb * Math.cos(omega);
 
-          if (obj.isHypothetical) {
-            // Planet X: Distinct dashed purple orbit
-            ctx.setLineDash([6, 6]);
-            ctx.strokeStyle = 'rgba(139, 92, 246, 0.85)';
-            ctx.lineWidth = 2;
-          } else if (obj.type === 'Extreme TNO') {
-            ctx.setLineDash([3, 3]);
-            ctx.strokeStyle = obj.orbitalColor;
-            ctx.lineWidth = 1.5;
-          } else {
-            ctx.setLineDash([]);
-            ctx.strokeStyle = obj.orbitalColor;
-            ctx.lineWidth = obj.id === 'neptune' ? 2 : 1;
-          }
+          const px = centerX + xAU * pixelsPerAU;
+          const py = centerY - yAU * pixelsPerAU;
 
-          ctx.stroke();
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+
+        if (isPlanetX) {
+          // Hypothetical Planet X: Clearly differentiated dashed purple line
+          ctx.setLineDash([6, 6]);
+          ctx.strokeStyle = 'rgba(139, 92, 246, 0.9)';
+          ctx.lineWidth = 2;
+        } else if (isDistantObject) {
+          ctx.setLineDash([3, 3]);
+          ctx.strokeStyle = obj.orbitalColor;
+          ctx.lineWidth = 1.5;
+        } else {
           ctx.setLineDash([]);
-        });
-      }
+          ctx.strokeStyle = obj.orbitalColor;
+          ctx.lineWidth = obj.id === 'neptune' ? 2 : 1;
+        }
 
-      // Draw the Sun
+        ctx.stroke();
+        ctx.setLineDash([]);
+      });
+
+      // Draw Central Sun
       ctx.beginPath();
-      const sunRadius = Math.max(4, Math.min(18, 10 * Math.sqrt(pixelsPerAU)));
-      // Corona glow
-      const sunGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, sunRadius * 3);
-      sunGradient.addColorStop(0, '#FFFFFF');
-      sunGradient.addColorStop(0.3, '#F5C451');
-      sunGradient.addColorStop(0.8, 'rgba(245, 196, 81, 0.2)');
-      sunGradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = sunGradient;
-      ctx.arc(centerX, centerY, sunRadius * 3, 0, 2 * Math.PI);
+      const sunRadius = Math.max(4, Math.min(16, 8 * Math.sqrt(pixelsPerAU)));
+      const sunGlow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, sunRadius * 2.5);
+      sunGlow.addColorStop(0, '#FFFFFF');
+      sunGlow.addColorStop(0.3, '#F5C451');
+      sunGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = sunGlow;
+      ctx.arc(centerX, centerY, sunRadius * 2.5, 0, 2 * Math.PI);
       ctx.fill();
 
       ctx.beginPath();
@@ -354,54 +338,54 @@ export const PlanetXExplorer: FC = () => {
       // Draw Orbiting Bodies
       SOLAR_SYSTEM_OBJECTS.forEach(obj => {
         if (obj.id === 'sun') return;
-        if (!showInnerPlanets && (obj.id === 'mercury' || obj.id === 'venus' || obj.id === 'earth' || obj.id === 'mars')) {
-          return;
-        }
 
-        const pos = computeObjectScreenPos(obj, centerX, centerY, pixelsPerAU, elapsedYears);
+        const isKnownPlanet = obj.type === 'Terrestrial Planet' || obj.type === 'Gas Giant' || obj.type === 'Ice Giant';
+        const isDistantObject = obj.type === 'Extreme TNO' || obj.id === 'pluto';
+        const isPlanetX = obj.id === 'planet-x';
 
-        // Body radius
+        if (isKnownPlanet && !showKnownPlanets) return;
+        if (isDistantObject && !showDistantObjects) return;
+        if (isPlanetX && !showPlanetXOrbit) return;
+
+        const pos = computeObjectScreenPos(obj, centerX, centerY, pixelsPerAU, isAnimated ? simTimeRef.current : 0);
+
         let bodyRadius = 3;
         if (obj.id === 'jupiter') bodyRadius = 6;
         else if (obj.id === 'saturn') bodyRadius = 5;
-        else if (obj.id === 'uranus' || obj.id === 'neptune') bodyRadius = 4.5;
-        else if (obj.id === 'planet-x') bodyRadius = 5.5;
+        else if (obj.id === 'neptune' || obj.id === 'uranus') bodyRadius = 4.5;
+        else if (isPlanetX) bodyRadius = 5.5;
 
-        // Is this object selected?
         const isSelected = selectedObject.id === obj.id;
 
         if (isSelected) {
-          // Highlight ring
           ctx.beginPath();
-          ctx.arc(pos.x, pos.y, bodyRadius + 7, 0, 2 * Math.PI);
+          ctx.arc(pos.x, pos.y, bodyRadius + 6, 0, 2 * Math.PI);
           ctx.strokeStyle = '#38BDF8';
           ctx.lineWidth = 2;
           ctx.stroke();
         }
 
-        // Draw object circle
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, bodyRadius, 0, 2 * Math.PI);
         ctx.fillStyle = obj.color;
         ctx.shadowColor = obj.color;
-        ctx.shadowBlur = isSelected ? 12 : 4;
+        ctx.shadowBlur = isSelected ? 10 : 3;
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Labels for significant bodies
-        const showLabel = 
+        // Display Labels
+        const shouldLabel = 
           isSelected || 
-          obj.id === 'planet-x' || 
-          obj.id === 'sedna' || 
+          isPlanetX || 
           obj.id === 'neptune' || 
-          obj.id === 'jupiter' || 
-          (pixelsPerAU > 15 && (obj.id === 'earth' || obj.id === 'mars'));
+          obj.id === 'sedna' || 
+          (pixelsPerAU > 10 && (obj.id === 'jupiter' || obj.id === 'earth'));
 
-        if (showLabel) {
+        if (shouldLabel) {
           ctx.fillStyle = isSelected ? '#38BDF8' : '#F8FAFC';
           ctx.font = `${isSelected ? 'bold ' : ''}11px -apple-system, sans-serif`;
-          const label = obj.isHypothetical ? `${obj.name.split('(')[0].trim()} [HYPOTHETICAL]` : obj.name.split('(')[0].trim();
-          ctx.fillText(label, pos.x + bodyRadius + 6, pos.y + 4);
+          const text = isPlanetX ? 'Planet X [Hypothetical]' : obj.name.split('(')[0].trim();
+          ctx.fillText(text, pos.x + bodyRadius + 6, pos.y + 4);
         }
       });
 
@@ -415,35 +399,27 @@ export const PlanetXExplorer: FC = () => {
       isRunning = false;
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [isPlaying, simSpeed, pixelsPerAU, panOffset, showInnerPlanets, showOrbitPaths, showClusteringVectors, selectedObject]);
+  }, [pixelsPerAU, panOffset, showKnownPlanets, showDistantObjects, showPlanetXOrbit, isAnimated, selectedObject]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 animate-fadeIn">
-      {/* 1. TOP HEADER & MANDATORY SCIENTIFIC DISCLAIMER BANNER */}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 animate-fadeIn">
+      {/* 1. PAGE HEADER */}
       <div className="space-y-4 pb-6 border-b border-[#1E293B]">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6] border border-[#8B5CF6]/30 text-xs font-semibold uppercase tracking-wider mb-2">
-              <Orbit className="w-3.5 h-3.5" />
-              <span>Outer Solar System Dynamics</span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-[#F8FAFC]">
-              Planet X Explorer
-            </h1>
-            <p className="text-sm sm:text-base text-[#A7B4CC] mt-1 max-w-2xl">
-              Interactive 2D orbital model of the outer solar system and the gravitational evidence surrounding the proposed ninth planet.
-            </p>
-          </div>
-
-          {/* Time & Simulation status badge */}
-          <div className="flex items-center gap-2 self-start md:self-auto">
-            <div className="px-3 py-1.5 rounded-lg bg-[#0B1630] border border-[#1E293B] text-xs font-mono text-[#A7B4CC]">
-              Simulation Year: <span className="text-[#38BDF8] font-bold">{Math.round(elapsedYears)}</span>
-            </div>
-          </div>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6] border border-[#8B5CF6]/30 text-xs font-semibold uppercase tracking-wider">
+          <Orbit className="w-3.5 h-3.5" />
+          <span>Outer Solar System Dynamics</span>
         </div>
+        <h1 className="text-3xl sm:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">
+          Planet X Explorer
+        </h1>
+        <p className="text-base sm:text-lg text-[#F5C451] font-medium">
+          Explore the outer solar system. Investigate the unknown.
+        </p>
+        <p className="text-sm text-[#A7B4CC] leading-relaxed max-w-3xl">
+          Beyond Neptune lies a vast, frozen frontier populated by icy trans-Neptunian objects. By studying how these distant bodies orbit the Sun, astronomers search for clues to an undiscovered planet that might be shaping their trajectories from the outer darkness.
+        </p>
 
-        {/* PROMINENT MANDATORY SCIENTIFIC DISCLAIMER */}
+        {/* 2. PROMINENT SCIENTIFIC DISCLAIMER (SECTION 9 MANDATORY NOTICE) */}
         <div className="p-4 rounded-2xl bg-[#0B1630] border border-[#F5C451]/40 flex items-start sm:items-center gap-3.5 shadow-lg">
           <div className="w-9 h-9 rounded-xl bg-[#F5C451]/10 text-[#F5C451] flex items-center justify-center shrink-0">
             <ShieldAlert className="w-5 h-5" />
@@ -453,127 +429,117 @@ export const PlanetXExplorer: FC = () => {
               Scientific Notice:
             </span>
             <span className="font-medium">
-              Planet X, sometimes called Planet Nine, remains hypothetical. It has not been confirmed.
-            </span>
-            <span className="text-[#A7B4CC] block sm:inline sm:ml-1 text-xs">
-              Its orbit and physical properties are derived from gravitational models, not direct visual observation.
+              Planet X remains hypothetical and has not been confirmed. This explorer illustrates the scientific questions researchers investigate. Any proposed Planet X orbit shown here is illustrative unless explicitly supported by verified data.
             </span>
           </div>
         </div>
       </div>
 
-      {/* 2. SCALE PRESETS & VIEWPORT CONTROLS */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-[#0B1630] border border-[#1E293B]">
+      {/* 3. DISTANCE CONTROL & SCALE NOTICE (SECTION 5) */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-[#0B1630] border border-[#1E293B]">
         {/* Scale Presets */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-[#A7B4CC] font-mono mr-1">Scale Presets:</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-[#A7B4CC] font-mono mr-1">Scale Viewport:</span>
           <button
-            onClick={() => applyScalePreset('inner')}
+            onClick={() => handleScalePresetChange('inner')}
             className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
-              pixelsPerAU > 50
-                ? 'bg-[#38BDF8] text-[#050B1A] font-bold'
+              scalePreset === 'inner'
+                ? 'bg-[#38BDF8] text-[#050B1A] font-bold shadow'
                 : 'bg-[#050B1A] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B]'
             }`}
           >
-            Inner System (1-2 AU)
+            Inner Solar System (1–2 AU)
           </button>
           <button
-            onClick={() => applyScalePreset('gas-giants')}
+            onClick={() => handleScalePresetChange('outer')}
             className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
-              pixelsPerAU >= 5 && pixelsPerAU <= 50
-                ? 'bg-[#38BDF8] text-[#050B1A] font-bold'
+              scalePreset === 'outer'
+                ? 'bg-[#38BDF8] text-[#050B1A] font-bold shadow'
                 : 'bg-[#050B1A] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B]'
             }`}
           >
-            Gas Giants (35 AU)
+            Outer Planets (35 AU)
           </button>
           <button
-            onClick={() => applyScalePreset('kuiper')}
+            onClick={() => handleScalePresetChange('distant')}
             className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
-              pixelsPerAU >= 1.5 && pixelsPerAU < 5
-                ? 'bg-[#38BDF8] text-[#050B1A] font-bold'
+              scalePreset === 'distant'
+                ? 'bg-[#8B5CF6] text-[#FFFFFF] font-bold shadow'
                 : 'bg-[#050B1A] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B]'
             }`}
           >
-            Kuiper Belt (100 AU)
-          </button>
-          <button
-            onClick={() => applyScalePreset('planet-x')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
-              pixelsPerAU < 1.5
-                ? 'bg-[#8B5CF6] text-[#FFFFFF] font-bold'
-                : 'bg-[#050B1A] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B]'
-            }`}
-          >
-            Planet X & eTNOs (1000 AU)
+            Distant Objects (1,000 AU)
           </button>
         </div>
 
-        {/* Toggles */}
-        <div className="flex items-center gap-4 text-xs text-[#A7B4CC] ml-auto">
+        {/* Visibility Toggles */}
+        <div className="flex items-center gap-4 text-xs text-[#A7B4CC] flex-wrap">
           <label className="flex items-center gap-1.5 cursor-pointer hover:text-[#F8FAFC]">
             <input
               type="checkbox"
-              checked={showOrbitPaths}
-              onChange={(e) => setShowOrbitPaths(e.target.checked)}
+              checked={showKnownPlanets}
+              onChange={(e) => setShowKnownPlanets(e.target.checked)}
               className="accent-[#38BDF8] rounded"
             />
-            <span>Orbit Paths</span>
+            <span>Known Planets</span>
           </label>
           <label className="flex items-center gap-1.5 cursor-pointer hover:text-[#F8FAFC]">
             <input
               type="checkbox"
-              checked={showInnerPlanets}
-              onChange={(e) => setShowInnerPlanets(e.target.checked)}
-              className="accent-[#38BDF8] rounded"
-            />
-            <span>Inner Planets</span>
-          </label>
-          <label className="flex items-center gap-1.5 cursor-pointer hover:text-[#F8FAFC]">
-            <input
-              type="checkbox"
-              checked={showClusteringVectors}
-              onChange={(e) => setShowClusteringVectors(e.target.checked)}
+              checked={showDistantObjects}
+              onChange={(e) => setShowDistantObjects(e.target.checked)}
               className="accent-[#FB7185] rounded"
             />
-            <span>Perihelion Vectors</span>
+            <span>Distant Objects</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer hover:text-[#F8FAFC]">
+            <input
+              type="checkbox"
+              checked={showPlanetXOrbit}
+              onChange={(e) => setShowPlanetXOrbit(e.target.checked)}
+              className="accent-[#8B5CF6] rounded"
+            />
+            <span>Hypothetical Planet X</span>
           </label>
         </div>
       </div>
 
-      {/* 3. INTERACTIVE 2D ORBITAL SIMULATION CANVAS + OBJECT DATA SHEET */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: 2D Canvas Viewport */}
-        <div className="lg:col-span-2 space-y-3">
+      {/* AU Scale Explanation Banner */}
+      <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] flex items-center justify-between text-xs text-[#A7B4CC]">
+        <div className="flex items-center gap-2">
+          <Info className="w-4 h-4 text-[#38BDF8] shrink-0" />
+          <span>
+            <strong>Astronomical Unit (AU):</strong> One astronomical unit is approximately the average distance between Earth and the Sun (~149.6 million kilometers).
+          </span>
+        </div>
+        <span className="hidden sm:inline-block font-mono text-[11px] text-[#A7B4CC]">
+          Orbits drawn to true Keplerian geometry
+        </span>
+      </div>
+
+      {/* 4. MAIN INTERACTIVE VISUALIZATION & OBJECT INFORMATION PANEL */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* LEFT: 2D ORBITAL CANVAS VIEWPORT (lg:col-span-8) */}
+        <div className="lg:col-span-8 space-y-3">
           <div className="relative rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-2xl overflow-hidden">
             {/* Top Toolbar */}
             <div className="bg-[#050B1A]/85 backdrop-blur-md px-4 py-2.5 border-b border-[#1E293B] flex items-center justify-between gap-3 text-xs">
-              {/* Play / Pause & Speed Multiplier */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3 font-mono">
+                <span className="w-2 h-2 rounded-full bg-[#38BDF8]" />
+                <span className="text-[#F8FAFC] font-bold">2D Heliocentric View</span>
+                <span className="text-[#1E293B]">|</span>
                 <button
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="p-1.5 rounded-lg bg-[#0E1B38] text-[#F8FAFC] hover:bg-[#38BDF8] hover:text-[#050B1A] border border-[#1E293B] transition-colors"
-                  title={isPlaying ? 'Pause Simulation' : 'Play Simulation'}
+                  onClick={() => setIsAnimated(!isAnimated)}
+                  className={`px-2 py-0.5 rounded text-[11px] font-mono transition-all flex items-center gap-1 ${
+                    isAnimated
+                      ? 'bg-[#8B5CF6]/20 text-[#8B5CF6] border border-[#8B5CF6]/40'
+                      : 'bg-[#0E1B38] text-[#A7B4CC] border border-[#1E293B]'
+                  }`}
+                  title="Toggle illustrative motion progression (not real-time positions)"
                 >
-                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  {isAnimated ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                  <span>{isAnimated ? 'Motion (Illustrative)' : 'Static Diagram'}</span>
                 </button>
-
-                <div className="flex items-center gap-1 text-[11px] font-mono">
-                  <span className="text-[#A7B4CC] hidden sm:inline">Speed:</span>
-                  {[0.5, 1, 5, 20].map(speed => (
-                    <button
-                      key={speed}
-                      onClick={() => setSimSpeed(speed)}
-                      className={`px-2 py-0.5 rounded transition-all ${
-                        simSpeed === speed
-                          ? 'bg-[#38BDF8] text-[#050B1A] font-bold'
-                          : 'bg-[#0E1B38] text-[#A7B4CC] hover:text-[#F8FAFC]'
-                      }`}
-                    >
-                      {speed}x
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Zoom & Reset Toolbar */}
@@ -582,6 +548,7 @@ export const PlanetXExplorer: FC = () => {
                   onClick={handleZoomIn}
                   className="p-1.5 rounded-lg bg-[#0E1B38] text-[#F8FAFC] hover:bg-[#38BDF8] hover:text-[#050B1A] border border-[#1E293B] transition-colors"
                   title="Zoom In"
+                  aria-label="Zoom in"
                 >
                   <ZoomIn className="w-4 h-4" />
                 </button>
@@ -592,6 +559,7 @@ export const PlanetXExplorer: FC = () => {
                   onClick={handleZoomOut}
                   className="p-1.5 rounded-lg bg-[#0E1B38] text-[#F8FAFC] hover:bg-[#38BDF8] hover:text-[#050B1A] border border-[#1E293B] transition-colors"
                   title="Zoom Out"
+                  aria-label="Zoom out"
                 >
                   <ZoomOut className="w-4 h-4" />
                 </button>
@@ -599,13 +567,14 @@ export const PlanetXExplorer: FC = () => {
                   onClick={handleReset}
                   className="p-1.5 rounded-lg bg-[#0E1B38] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B] transition-colors ml-1"
                   title="Reset View"
+                  aria-label="Reset view"
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Interactive Canvas Viewport */}
+            {/* Canvas Viewport */}
             <canvas
               ref={canvasRef}
               onMouseDown={handleMouseDown}
@@ -618,15 +587,15 @@ export const PlanetXExplorer: FC = () => {
               }`}
             />
 
-            {/* Canvas Legend & Overlay Information */}
+            {/* Bottom Legend */}
             <div className="absolute bottom-3 left-3 bg-[#050B1A]/85 backdrop-blur-md px-3 py-2 rounded-xl border border-[#1E293B] text-[11px] font-mono space-y-1 pointer-events-none">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-0.5 bg-[#3B82F6]" />
-                <span className="text-[#F8FAFC]">Neptune Orbit (30 AU)</span>
+                <span className="text-[#F8FAFC]">Neptune's Orbit (30 AU)</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-0.5 bg-[#FB7185] border-b border-dashed" />
-                <span className="text-[#FB7185]">eTNO Orbits (Sedna, VP113)</span>
+                <span className="text-[#FB7185]">Distant Sednoids (Sedna, VP113)</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-0.5 bg-[#8B5CF6] border-b border-dashed" />
@@ -634,7 +603,7 @@ export const PlanetXExplorer: FC = () => {
               </div>
             </div>
 
-            {/* Interactive Hint */}
+            {/* Click to Select Hint */}
             <div className="absolute top-12 right-3 pointer-events-none hidden sm:block">
               <span className="text-[10px] text-[#A7B4CC]/80 bg-[#050B1A]/70 px-2 py-1 rounded border border-[#1E293B]">
                 Click any orbit/planet to inspect
@@ -642,9 +611,9 @@ export const PlanetXExplorer: FC = () => {
             </div>
           </div>
 
-          {/* Quick Select Fleet Pills */}
+          {/* Quick Select Fleet Buttons */}
           <div className="space-y-1.5">
-            <span className="text-xs text-[#A7B4CC] font-mono">Quick Select Body:</span>
+            <span className="text-xs text-[#A7B4CC] font-mono">Select Celestial Body:</span>
             <div className="flex flex-wrap gap-1.5">
               {SOLAR_SYSTEM_OBJECTS.map(obj => {
                 const isSelected = selectedObject.id === obj.id;
@@ -669,9 +638,8 @@ export const PlanetXExplorer: FC = () => {
           </div>
         </div>
 
-        {/* Right: Selected Object Data Sheet & Evidence Cards */}
-        <div className="space-y-6">
-          {/* Object Information Sheet */}
+        {/* RIGHT: SELECTED-OBJECT INFORMATION PANEL (SECTION 4) (lg:col-span-4) */}
+        <div className="lg:col-span-4 space-y-4">
           <div className={`p-6 rounded-2xl bg-[#0B1630] border space-y-4 shadow-xl ${
             selectedObject.isHypothetical ? 'border-[#8B5CF6]/50 shadow-[#8B5CF6]/5' : 'border-[#1E293B]'
           }`}>
@@ -698,10 +666,10 @@ export const PlanetXExplorer: FC = () => {
               )}
             </div>
 
-            {/* Orbital Parameters Grid */}
-            <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+            {/* Approximate Orbital Properties Only When Verified */}
+            <div className="grid grid-cols-2 gap-2.5 text-xs font-mono">
               <div className="p-2.5 rounded-xl bg-[#050B1A] border border-[#1E293B]">
-                <span className="text-[10px] text-[#A7B4CC] block">Semi-Major Axis (a):</span>
+                <span className="text-[10px] text-[#A7B4CC] block">Semi-Major Axis:</span>
                 <span className="text-[#F8FAFC] font-bold text-sm">
                   {selectedObject.semiMajorAxisAU > 0 ? `${selectedObject.semiMajorAxisAU} AU` : 'Anchor (0 AU)'}
                 </span>
@@ -738,40 +706,84 @@ export const PlanetXExplorer: FC = () => {
               </div>
             </div>
 
-            {/* Description & Significance */}
-            <p className="text-xs text-[#A7B4CC] leading-relaxed pt-2">
+            {/* Description & Relevance */}
+            <p className="text-xs text-[#A7B4CC] leading-relaxed pt-1">
               {selectedObject.description}
             </p>
 
             <div className="p-3 rounded-xl bg-[#050B1A]/80 border border-[#1E293B] space-y-1 text-xs">
               <span className="text-[10px] font-bold uppercase font-mono text-[#F5C451]">
-                Scientific Importance:
+                Why this object is relevant:
               </span>
               <p className="text-[#F8FAFC] leading-relaxed">
                 {selectedObject.scientificContext}
               </p>
             </div>
+
+            {/* Verified Data Source Attribution */}
+            {selectedObject.dataSource && (
+              <div className="pt-2 border-t border-[#1E293B] text-[10px] font-mono text-[#A7B4CC]">
+                Source: {selectedObject.dataSource}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* 4. SCIENTIFIC EVIDENCE EXPLORER FOR PLANET X */}
+      {/* 5. THE EVIDENCE INVESTIGATION PANEL (SECTION 6) */}
       <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-8">
         <div className="max-w-2xl space-y-2">
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#38BDF8] font-mono">
             <Compass className="w-4 h-4" />
-            <span>Gravitational & Observational Clues</span>
+            <span>Observational Methodology</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC]">
-            The Evidence Behind Planet X
+            What Are Scientists Looking For?
           </h2>
           <p className="text-xs sm:text-sm text-[#A7B4CC]">
-            Why do prominent astrophysicists suspect an unseen massive planet in the outer solar system? Explore the key observations and debates.
+            Astronomers employ distinct observational techniques to explore whether an unseen massive body exists beyond Neptune.
           </p>
         </div>
 
-        {/* Evidence Topics Selector Tabs */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {/* The 4 required simple cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {SCIENTIFIC_SEARCH_CARDS.map(card => {
+            return (
+              <div
+                key={card.id}
+                className="p-5 rounded-2xl bg-[#050B1A] border border-[#1E293B] hover:border-[#38BDF8]/40 transition-all space-y-2.5"
+              >
+                <div className="w-9 h-9 rounded-xl bg-[#38BDF8]/10 text-[#38BDF8] flex items-center justify-center">
+                  {card.iconName === 'Compass' && <Compass className="w-4 h-4" />}
+                  {card.iconName === 'Eye' && <Eye className="w-4 h-4" />}
+                  {card.iconName === 'Telescope' && <Telescope className="w-4 h-4" />}
+                  {card.iconName === 'Scale' && <Scale className="w-4 h-4" />}
+                </div>
+                <h3 className="text-base font-semibold text-[#F8FAFC]">
+                  {card.title}
+                </h3>
+                <p className="text-xs text-[#A7B4CC] leading-relaxed">
+                  {card.summary}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 6. EVIDENCE AND UNCERTAINTY SECTION (SECTION 7) */}
+      <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-6">
+        <div className="max-w-3xl space-y-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC]">
+            What Does the Evidence Tell Us?
+          </h2>
+          <p className="text-xs sm:text-sm text-[#A7B4CC] leading-relaxed">
+            Some researchers have proposed that a distant, massive planet could help explain certain orbital alignments among extreme trans-Neptunian objects. However, this interpretation remains actively debated. Observational selection bias and alternative physical mechanisms must be carefully tested before any definitive conclusion can be reached.
+          </p>
+        </div>
+
+        {/* Topics selector */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
           {EVIDENCE_TOPICS.map(topic => {
             const isSelected = selectedEvidence.id === topic.id;
             return (
@@ -784,11 +796,11 @@ export const PlanetXExplorer: FC = () => {
                     : 'bg-[#050B1A]/40 border-[#1E293B] hover:border-[#38BDF8]/40'
                 }`}
               >
-                <div className="font-semibold text-xs text-[#F8FAFC] leading-snug">
+                <div className="font-semibold text-xs text-[#F8FAFC]">
                   {topic.title}
                 </div>
-                <div className="text-[10px] font-mono text-[#38BDF8] mt-1.5">
-                  {topic.confidenceLevel}
+                <div className="text-[10px] text-[#A7B4CC] mt-1 truncate">
+                  {topic.researchFocus}
                 </div>
               </button>
             );
@@ -796,17 +808,17 @@ export const PlanetXExplorer: FC = () => {
         </div>
 
         {/* Selected Evidence Detail Box */}
-        <div className="p-6 sm:p-8 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1E293B] pb-4">
-            <h3 className="text-xl font-bold text-[#F8FAFC]">
+        <div className="p-6 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1E293B] pb-3">
+            <h3 className="text-lg font-bold text-[#F8FAFC]">
               {selectedEvidence.title}
             </h3>
-            <span className="text-xs font-mono px-2.5 py-1 rounded bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 self-start sm:self-auto">
-              Status: {selectedEvidence.confidenceLevel}
+            <span className="text-[11px] font-mono text-[#F5C451]">
+              Scientific Investigation
             </span>
           </div>
 
-          <p className="text-sm text-[#F5C451] font-medium leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#F8FAFC] font-medium leading-relaxed">
             {selectedEvidence.summary}
           </p>
 
@@ -814,27 +826,198 @@ export const PlanetXExplorer: FC = () => {
             {selectedEvidence.fullExplanation}
           </p>
 
-          <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-[#1E293B] text-xs">
+          <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs border-t border-[#1E293B]">
             <div className="p-3 rounded-xl bg-[#0B1630] border border-[#1E293B] space-y-1">
-              <span className="text-[10px] uppercase font-mono text-[#38BDF8] font-bold">
+              <span className="text-[10px] font-mono text-[#38BDF8] uppercase font-bold">
                 Current Observations:
               </span>
-              <p className="text-[#F8FAFC]">
-                {selectedEvidence.observationsToDate}
-              </p>
+              <p className="text-[#A7B4CC]">{selectedEvidence.observationsToDate}</p>
             </div>
             <div className="p-3 rounded-xl bg-[#0B1630] border border-[#1E293B] space-y-1">
-              <span className="text-[10px] uppercase font-mono text-[#8B5CF6] font-bold">
-                Future Search & Tests:
+              <span className="text-[10px] font-mono text-[#8B5CF6] uppercase font-bold">
+                Alternative Hypotheses & Debated Aspects:
               </span>
-              <p className="text-[#F8FAFC]">
-                {selectedEvidence.futureMissions}
+              <p className="text-[#A7B4CC]">{selectedEvidence.debatedAspects}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 7. CANDIDATE INVESTIGATION EDUCATIONAL WORKFLOW (SECTION 8) */}
+      <div className="rounded-3xl bg-gradient-to-r from-[#0B1630] to-[#0E1B38] border border-[#8B5CF6]/30 p-8 sm:p-10 space-y-8 shadow-2xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 text-xs font-mono text-[#8B5CF6] uppercase tracking-wider font-bold">
+              <Eye className="w-4 h-4" />
+              <span>Interactive Citizen Science Workflow</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC]">
+              Candidate Investigation: How Astronomers Find Moving Objects
+            </h2>
+            <p className="text-xs sm:text-sm text-[#A7B4CC] max-w-2xl">
+              Distant Solar System objects are discovered by taking photographs of the sky separated by weeks or months. Stars remain stationary, while orbiting bodies shift noticeably against the celestial background.
+            </p>
+          </div>
+
+          {/* Educational Simulation Badge */}
+          <span className="px-3 py-1 rounded-full bg-[#8B5CF6]/20 text-[#8B5CF6] border border-[#8B5CF6]/40 text-xs font-mono font-semibold shrink-0 self-start md:self-auto">
+            Educational Simulation
+          </span>
+        </div>
+
+        {/* Case Selector Tabs */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-[#A7B4CC] font-mono mr-1">Select Case:</span>
+          {CANDIDATE_CASES.map(c => {
+            const isSelected = activeCandidate.id === c.id;
+            return (
+              <button
+                key={c.id}
+                onClick={() => {
+                  setActiveCandidate(c);
+                  setUserClassification(null);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
+                  isSelected
+                    ? 'bg-[#8B5CF6] text-[#FFFFFF] font-bold shadow'
+                    : 'bg-[#050B1A] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B]'
+                }`}
+              >
+                {c.name}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Comparison Panels (Side-by-Side or Blink Mode) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Epoch 1 Observation */}
+          <div className="p-4 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-3">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-[#38BDF8] font-bold">{activeCandidate.epoch1Label}</span>
+              <span className="text-[#A7B4CC]">Telescope Epoch A</span>
+            </div>
+            <div className="relative rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A] flex items-center justify-center">
+              <img
+                src={isBlinkingAuto && blinkEpoch === 'epoch2' ? activeCandidate.epoch2Image : activeCandidate.epoch1Image}
+                alt={activeCandidate.epoch1Label}
+                className="w-full h-auto"
+              />
+            </div>
+          </div>
+
+          {/* Epoch 2 Observation */}
+          <div className="p-4 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-3">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-[#8B5CF6] font-bold">{activeCandidate.epoch2Label}</span>
+              <span className="text-[#A7B4CC]">Telescope Epoch B</span>
+            </div>
+            <div className="relative rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A] flex items-center justify-center">
+              <img
+                src={activeCandidate.epoch2Image}
+                alt={activeCandidate.epoch2Label}
+                className="w-full h-auto"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Blink Comparator Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] text-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[#A7B4CC]">Blink Comparator (Tombaugh Technique):</span>
+            <button
+              onClick={() => setIsBlinkingAuto(!isBlinkingAuto)}
+              className={`px-3 py-1 rounded-lg font-mono text-xs transition-all flex items-center gap-1.5 ${
+                isBlinkingAuto
+                  ? 'bg-[#F5C451] text-[#050B1A] font-bold'
+                  : 'bg-[#0E1B38] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B]'
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5" />
+              <span>{isBlinkingAuto ? 'Auto-Blinking Active' : 'Start Auto-Blink'}</span>
+            </button>
+          </div>
+          <span className="text-[#A7B4CC] text-[11px] font-mono">
+            Hints: {activeCandidate.hints}
+          </span>
+        </div>
+
+        {/* User Classification Action */}
+        <div className="p-6 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#F8FAFC] font-mono">
+              Your Scientific Assessment: Does this candidate exhibit orbital motion?
+            </span>
+            {userClassification && (
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
+                Evaluation Complete
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              onClick={() => setUserClassification('Possible movement')}
+              className={`p-3 rounded-xl text-xs font-bold font-mono transition-all text-center border ${
+                userClassification === 'Possible movement'
+                  ? 'bg-[#38BDF8] text-[#050B1A] border-[#38BDF8]'
+                  : 'bg-[#0B1630] text-[#F8FAFC] hover:border-[#38BDF8]/50 border-[#1E293B]'
+              }`}
+            >
+              Possible movement
+            </button>
+
+            <button
+              onClick={() => setUserClassification('No clear movement')}
+              className={`p-3 rounded-xl text-xs font-bold font-mono transition-all text-center border ${
+                userClassification === 'No clear movement'
+                  ? 'bg-[#F5C451] text-[#050B1A] border-[#F5C451]'
+                  : 'bg-[#0B1630] text-[#F8FAFC] hover:border-[#F5C451]/50 border-[#1E293B]'
+              }`}
+            >
+              No clear movement
+            </button>
+
+            <button
+              onClick={() => setUserClassification('Uncertain')}
+              className={`p-3 rounded-xl text-xs font-bold font-mono transition-all text-center border ${
+                userClassification === 'Uncertain'
+                  ? 'bg-[#8B5CF6] text-[#FFFFFF] border-[#8B5CF6]'
+                  : 'bg-[#0B1630] text-[#F8FAFC] hover:border-[#8B5CF6]/50 border-[#1E293B]'
+              }`}
+            >
+              Uncertain
+            </button>
+          </div>
+
+          {/* Feedback Display */}
+          {userClassification && (
+            <div className={`p-4 rounded-xl text-xs space-y-2 border ${
+              userClassification === activeCandidate.expectedClassification
+                ? 'bg-[#38BDF8]/10 border-[#38BDF8]/30 text-[#F8FAFC]'
+                : 'bg-[#F5C451]/10 border-[#F5C451]/30 text-[#F8FAFC]'
+            }`}>
+              <div className="flex items-center gap-2 font-bold font-mono">
+                <CheckCircle2 className="w-4 h-4 text-[#38BDF8]" />
+                <span>
+                  {userClassification === activeCandidate.expectedClassification
+                    ? 'Scientifically Sound Classification!'
+                    : `Alternative Review (Scientific Consensus: ${activeCandidate.expectedClassification})`}
+                </span>
+              </div>
+              <p className="leading-relaxed text-[#A7B4CC]">
+                {activeCandidate.explanation}
               </p>
             </div>
+          )}
+
+          {/* Simulation Disclaimer */}
+          <div className="pt-2 text-[10px] text-[#A7B4CC]/70 font-mono">
+            * Note: This interactive exercise is an educational simulation of multi-epoch parallax detection techniques. It does not connect to live survey archives or submit real sky classifications.
           </div>
         </div>
       </div>
     </div>
   );
 };
-

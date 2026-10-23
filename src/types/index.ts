@@ -11,6 +11,11 @@ export interface InfraredBand {
   colorHex: string;
 }
 
+export type DataStatusType = 
+  | 'Real Archival Data'
+  | 'Illustrative Astronomical Model'
+  | 'Synthetic Mission Demonstration';
+
 export interface CelestialTarget {
   id: string;
   name: string;
@@ -22,15 +27,20 @@ export interface CelestialTarget {
   scientificSignificance: string;
   opticalImage: string;
   infraredImage: string;
+  dataStatus: DataStatusType;
+  dataSource: string;
+  observationDate: string; // "Not available" if unverified
+  instrumentDetails: string; // "Not available" if unverified
+  telescope: string;
+  sourceAttribution: string;
   bandsData: {
-    [bandId: string]: {
+    [bandWavelength: string]: {
       features: string[];
       intensityNotes: string;
       absorptionSignature: string;
+      bandImage?: string;
     };
   };
-  dataStatus: 'Calibrated Astronomical Observation' | 'Processed Infrared Survey' | 'Illustrative Mission Model';
-  sourceAttribution: string;
 }
 
 export interface SolarSystemObject {
@@ -54,6 +64,8 @@ export interface SolarSystemObject {
   scientificContext: string;
   argumentOfPerihelionDeg: number;
   longitudeOfAscendingNodeDeg: number;
+  dataSource?: string;
+  statusLabel: 'Confirmed' | 'Hypothetical (Unconfirmed)';
 }
 
 export interface GuideMessage {
@@ -71,9 +83,21 @@ export interface EvidenceTopic {
   title: string;
   summary: string;
   fullExplanation: string;
-  confidenceLevel: 'High Correlation' | 'Strong Gravitational Prediction' | 'Ongoing Survey Search' | 'Active Scientific Debate';
+  researchFocus: string;
   observationsToDate: string;
-  futureMissions: string;
+  debatedAspects: string;
   iconName: string;
 }
 
+export interface CandidateCase {
+  id: string;
+  name: string;
+  fieldId: string;
+  epoch1Label: string;
+  epoch2Label: string;
+  epoch1Image: string;
+  epoch2Image: string;
+  expectedClassification: 'Possible movement' | 'No clear movement' | 'Uncertain';
+  explanation: string;
+  hints: string;
+}
