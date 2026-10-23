@@ -176,7 +176,28 @@ async function runTests() {
     assert(false, `Test 6: Multi-turn chat test failed: ${err.message}`);
   }
 
-  // 7. Client Static Serving & SPA fallback
+  // 7. NASA Open Data API Integration
+  try {
+    const resApod = await fetch(`${BASE_URL}/api/nasa/apod`);
+    assert(resApod.status === 200, 'Test 7.1: /api/nasa/apod returns HTTP 200');
+    const apodJson = await resApod.json();
+    assert(apodJson.success === true, 'Test 7.2: APOD response has success: true');
+    assert(Boolean(apodJson.data && apodJson.data.title && apodJson.data.explanation), 'Test 7.3: APOD has verified title and explanation');
+
+    const resSpherex = await fetch(`${BASE_URL}/api/nasa/spherex`);
+    assert(resSpherex.status === 200, 'Test 7.4: /api/nasa/spherex returns HTTP 200');
+    const spherexJson = await resSpherex.json();
+    assert(Array.isArray(spherexJson.photos) && spherexJson.photos.length > 0, 'Test 7.5: SPHEREx photos array contains items');
+
+    const resStatus = await fetch(`${BASE_URL}/api/status`);
+    const statusObj = await resStatus.json();
+    assert(statusObj.isNasaConfigured === true, 'Test 7.6: /api/status confirms isNasaConfigured is true');
+    assert(statusObj.nasaApiConnected === true, 'Test 7.7: /api/status confirms nasaApiConnected is true');
+  } catch (err) {
+    assert(false, `Test 7: NASA API test failed: ${err.message}`);
+  }
+
+  // 8. Client Static Serving & SPA fallback
   try {
     const resRoot = await fetch(`${BASE_URL}/`);
     assert(resRoot.status === 200, 'Test 7.1: Root / returns HTTP 200');

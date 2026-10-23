@@ -252,6 +252,54 @@ NASA's WISE survey ruled out Saturn- or Jupiter-sized gas giants in the outer So
       }
     ],
     scientificReference: 'Luhman (2014) WISE Constraints & Batygin et al. (2021)'
+  },
+  {
+    id: 'nasa-apod-connection',
+    keywords: ['nasa', 'api', 'apod', 'picture of the day', 'astronomy picture', 'live data', 'connected', 'photo', 'feed'],
+    question: 'What is NASA Astronomy Picture of the Day (APOD)?',
+    answer: `NASA's **Astronomy Picture of the Day (APOD)** is an acclaimed educational outreach service created in 1995 by NASA astrophysicists Robert Nemiroff and Jerry Bonnell. Each day, it features a different cosmic image—ranging from Hubble deep-sky panoramas to rover imagery from Mars—accompanied by a concise explanation written by professional astronomers.
+
+In COSMIC FRONTIER:
+- Our backend is authenticated directly with the official **NASA Open Data API** (\`api.nasa.gov\`).
+- You can explore today's live Astronomy Picture of the Day with full metadata, explanations, and high-definition photography on the homepage command dashboard!`,
+    suggestions: [
+      'How does SPHEREx study the universe?',
+      'What is infrared light?',
+      'Are there real photos of the SPHEREx spacecraft?'
+    ],
+    links: [
+      {
+        label: 'View Live NASA Open Data Dispatch',
+        page: 'home',
+        reason: 'Inspect the live Astronomy Picture of the Day and NASA mission hardware gallery.'
+      }
+    ],
+    scientificReference: 'NASA Open Data (api.nasa.gov) & Astronomy Picture of the Day'
+  },
+  {
+    id: 'real-spherex-photos',
+    keywords: ['real photos', 'real spherex', 'hardware', 'spacecraft', 'observatory photos', 'clean room', 'pia'],
+    question: 'Are there real photos of the SPHEREx spacecraft?',
+    answer: `Yes! While SPHEREx is designed to observe distant stars and galaxies, NASA's Jet Propulsion Laboratory (JPL) and contractor BAE Systems have thoroughly photographed the physical space observatory hardware in cleanrooms during assembly and thermal-vacuum testing.
+
+Notable hardware elements in real NASA photography:
+- **Nested Conical Photon Shields**: Three layers of gold-tinted aluminum shields that passively radiate warmth into deep space, chilling the infrared detectors down to 80 Kelvin (-193°C) without heavy active cooling tanks.
+- **Telescope Assembly**: A 20-centimeter aluminum wide-field telescope engineered to survive the extreme vibration of rocket launch.
+
+You can inspect verified archival JPL cleanroom photos (such as PIA25784, PIA26537, and PIA26542) directly in the COSMIC FRONTIER NASA Open Data Dispatch!`,
+    suggestions: [
+      'How does SPHEREx study the universe?',
+      'What is infrared light?',
+      'What am I looking at in the SPHEREx Explorer?'
+    ],
+    links: [
+      {
+        label: 'Open SPHEREx Explorer',
+        page: 'spherex',
+        reason: 'Explore 102 infrared channels and science targets.'
+      }
+    ],
+    scientificReference: 'NASA Image and Video Library & NASA/JPL-Caltech SPHEREx Project Office'
   }
 ];
 

@@ -23,9 +23,18 @@ interface AIGuideProps {
 
 interface BackendStatus {
   isAiConfigured: boolean;
+  isNasaConfigured?: boolean;
+  nasaApiConnected?: boolean;
   mode: 'live' | 'demonstration';
   model?: string;
   message?: string;
+  services?: {
+    nasaOpenData?: {
+      status: string;
+      source: string;
+      authenticated: boolean;
+    };
+  };
 }
 
 let msgSequence = 0;
@@ -276,6 +285,20 @@ You can explore any of our core educational questions or inspect our interactive
               </>
             )}
           </div>
+
+          {/* NASA Open Data API Status Badge */}
+          {backendStatus?.isNasaConfigured && (
+            <div
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono bg-[#10B981]/10 text-[#34D399] border-[#10B981]/30"
+              title="NASA Open Data API authenticated via api.nasa.gov"
+            >
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
+              </span>
+              <span>NASA API: Active</span>
+            </div>
+          )}
         </div>
       </div>
 

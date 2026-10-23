@@ -4,6 +4,7 @@ import { NovaCommandHero } from './NovaCommandHero';
 import { PlanetaryShowcase } from './PlanetaryShowcase';
 import { CosmicOrbitalDiagram } from './CosmicOrbitalDiagram';
 import { CosmicRadarHUD } from './CosmicRadarHUD';
+import { NasaLiveDispatch } from './NasaLiveDispatch';
 import { 
   Telescope, 
   Orbit, 
@@ -164,6 +165,11 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
       {/* 5. LIVE TELEMETRY RADAR & ASTROPHYSICAL KNOWLEDGE */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <CosmicRadarHUD onNavigate={onNavigate} />
+      </section>
+
+      {/* 5B. LIVE NASA OPEN DATA DISPATCH (api.nasa.gov) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <NasaLiveDispatch onNavigate={onNavigate} />
       </section>
 
       {/* 6. HOW COSMIC FRONTIER WORKS */}

@@ -111,3 +111,24 @@ export interface CandidateCase {
   explanation: string;
   hints: string;
 }
+
+export interface NasaApodData {
+  date: string;
+  title: string;
+  explanation: string;
+  url: string;
+  hdurl?: string;
+  media_type: 'image' | 'video';
+  copyright?: string;
+  service_version?: string;
+}
+
+export interface NasaMissionPhoto {
+  title: string;
+  nasaId: string;
+  thumb: string;
+  largeUrl?: string;
+  description: string;
+  dateCreated?: string;
+  center?: string;
+}
