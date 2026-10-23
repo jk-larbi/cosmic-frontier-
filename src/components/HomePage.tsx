@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import type { AppPage } from '../types';
-import { PlanetGraphic } from './PlanetGraphic';
+import { NovaCommandHero } from './NovaCommandHero';
 import { PlanetaryShowcase } from './PlanetaryShowcase';
 import { CosmicOrbitalDiagram } from './CosmicOrbitalDiagram';
 import { CosmicRadarHUD } from './CosmicRadarHUD';
@@ -11,8 +11,6 @@ import {
   ChevronRight, 
   Waves, 
   ShieldAlert, 
-  Activity, 
-  Globe, 
   ArrowRight 
 } from 'lucide-react';
 
@@ -22,174 +20,13 @@ interface HomePageProps {
 
 export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
   return (
-    <div className="space-y-24 pb-16">
-      {/* 1. SCI-FI COMMAND CENTER HERO (NOVA & UZAY KEŞİF INSPIRED) */}
-      <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-        {/* Background Cosmic Starfield & Ambient Glows */}
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          <div 
-            className="absolute inset-0 bg-[#050B1A] bg-cover bg-center opacity-60 mix-blend-screen scale-105"
-            style={{
-              backgroundImage: `radial-gradient(circle at 65% 35%, rgba(56, 189, 248, 0.18) 0%, rgba(139, 92, 246, 0.14) 25%, rgba(5, 11, 26, 0.95) 75%),
-                                radial-gradient(circle at 20% 75%, rgba(245, 196, 81, 0.1) 0%, transparent 45%),
-                                radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 40%)`
-            }}
-          />
-          {/* Subtle sci-fi grid overlay */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#1E293B15_1px,transparent_1px),linear-gradient(to_bottom,#1E293B15_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#050B1A]/80 via-[#050B1A]/50 to-[#050B1A]" />
-        </div>
+    <div className="space-y-20 pb-16">
+      {/* 1. NOVA-STYLE SCI-FI COMMAND CENTER HERO */}
+      <div className="max-w-[1440px] mx-auto px-2 sm:px-4 lg:px-6 pt-4">
+        <NovaCommandHero onNavigate={onNavigate} />
+      </div>
 
-        {/* Hero Content Container */}
-        <div className="relative z-10 max-w-7xl mx-auto w-full">
-          {/* Telemetry Header Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-6 mb-8 border-b border-[#1E293B]/60 text-xs font-mono">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#10B981]/10 text-[#34D399] border border-[#10B981]/30">
-                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
-                <span>SYSTEM STATUS: NOMINAL</span>
-              </span>
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0B1630] text-[#A7B4CC] border border-[#1E293B]">
-                <Activity className="w-3 h-3 text-[#38BDF8]" />
-                <span>NASA SPACE APPS 2026</span>
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4 text-[#A7B4CC]">
-              <span className="hidden md:inline">SURVEY: <strong className="text-[#38BDF8]">SPHEREx (102 BANDS)</strong></span>
-              <span>ORBITS: <strong className="text-[#F5C451]">13 MAPPED WORLDS</strong></span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Left 7 Columns: Headlines, Story & Main CTAs */}
-            <div className="lg:col-span-7 space-y-8">
-              {/* Mission Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#38BDF8]/10 border border-[#38BDF8]/40 shadow-lg backdrop-blur-md">
-                <Sparkles className="w-3.5 h-3.5 text-[#38BDF8]" />
-                <span className="text-xs font-bold tracking-widest uppercase text-[#38BDF8] font-mono">
-                  Deep Space Astrophysics & Outer Worlds
-                </span>
-              </div>
-
-              {/* Main Headline */}
-              <div className="space-y-2">
-                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-[#F8FAFC] leading-[1.05]">
-                  EXPLORE.{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#38BDF8] via-[#8B5CF6] to-[#F5C451]">
-                    DISCOVER.
-                  </span>
-                  <br />
-                  UNVEIL THE UNSEEN.
-                </h1>
-                <p className="max-w-2xl text-base sm:text-xl text-[#A7B4CC] leading-relaxed pt-2">
-                  Survey the cosmos across 102 infrared channels with NASA’s SPHEREx mission, map the far reaches of our Solar System, and track the gravitational clues of the hypothetical Planet X.
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
-                {/* SPHEREx Explorer CTA */}
-                <button
-                  onClick={() => onNavigate('spherex')}
-                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-[#F5C451] to-[#EAB308] text-[#050B1A] font-extrabold text-base shadow-xl hover:shadow-[#F5C451]/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group cursor-pointer"
-                >
-                  <Telescope className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                  <span>Launch SPHEREx Explorer</span>
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
-
-                {/* Planet X Explorer CTA */}
-                <button
-                  onClick={() => onNavigate('planet-x')}
-                  className="px-7 py-4 rounded-2xl bg-[#0B1630] hover:bg-[#132247] text-[#F8FAFC] border border-[#38BDF8]/40 font-bold text-base shadow-lg hover:border-[#38BDF8] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group cursor-pointer"
-                >
-                  <Orbit className="w-5 h-5 text-[#8B5CF6] group-hover:rotate-45 transition-transform" />
-                  <span>Track Planet X Orbits</span>
-                  <ChevronRight className="w-4 h-4 text-[#38BDF8] group-hover:translate-x-1 transition-transform" />
-                </button>
-
-                {/* Ask AI Guide */}
-                <button
-                  onClick={() => onNavigate('ai-guide')}
-                  className="px-5 py-4 rounded-2xl bg-[#0B1630]/60 hover:bg-[#0B1630] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B] hover:border-[#F5C451] text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Sparkles className="w-4 h-4 text-[#F5C451]" />
-                  <span>AI Space Guide</span>
-                </button>
-              </div>
-
-              {/* Telemetry Stats Strip */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-[#1E293B]/70 font-mono">
-                <div className="p-3.5 rounded-xl bg-[#0B1630]/60 border border-[#1E293B]">
-                  <div className="text-2xl font-black text-[#38BDF8]">102</div>
-                  <div className="text-[11px] text-[#A7B4CC] mt-0.5">SPHEREx Channels</div>
-                </div>
-                <div className="p-3.5 rounded-xl bg-[#0B1630]/60 border border-[#1E293B]">
-                  <div className="text-2xl font-black text-[#8B5CF6]">450M+</div>
-                  <div className="text-[11px] text-[#A7B4CC] mt-0.5">Galaxies Mapped</div>
-                </div>
-                <div className="p-3.5 rounded-xl bg-[#0B1630]/60 border border-[#1E293B]">
-                  <div className="text-2xl font-black text-[#F5C451]">13</div>
-                  <div className="text-[11px] text-[#A7B4CC] mt-0.5">Worlds Cataloged</div>
-                </div>
-                <div className="p-3.5 rounded-xl bg-[#0B1630]/60 border border-[#1E293B]">
-                  <div className="text-2xl font-black text-[#10B981]">~420 AU</div>
-                  <div className="text-[11px] text-[#A7B4CC] mt-0.5">Planet X Orbit Model</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right 5 Columns: Visual Hero Planet HUD Display (NOVA style) */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center">
-              <div className="relative w-full max-w-md p-8 rounded-3xl bg-gradient-to-b from-[#0B1630]/90 to-[#070D1E]/90 border border-[#1E293B] shadow-2xl backdrop-blur-xl space-y-6">
-                {/* HUD Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-[#1E293B] text-xs font-mono">
-                  <span className="text-[#38BDF8] flex items-center gap-1.5 font-bold">
-                    <Globe className="w-3.5 h-3.5" />
-                    <span>TARGET WORLD: SATURN</span>
-                  </span>
-                  <span className="text-[#F5C451]">9.58 AU FROM SUN</span>
-                </div>
-
-                {/* Central Luminous Artwork */}
-                <div className="relative py-4 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-[#F5C451]/10 rounded-full blur-2xl pointer-events-none" />
-                  <PlanetGraphic planetId="saturn" size={170} animate={true} />
-                </div>
-
-                {/* Mini Telemetry Specs */}
-                <div className="space-y-3 pt-2 text-xs">
-                  <div className="flex items-center justify-between font-mono p-2.5 rounded-xl bg-[#050B1A] border border-[#1E293B]">
-                    <span className="text-[#A7B4CC]">Orbital Period:</span>
-                    <span className="text-[#F8FAFC] font-bold">29.46 Earth Years</span>
-                  </div>
-                  <div className="flex items-center justify-between font-mono p-2.5 rounded-xl bg-[#050B1A] border border-[#1E293B]">
-                    <span className="text-[#A7B4CC]">Ring Composition:</span>
-                    <span className="text-[#38BDF8] font-bold">99% Water Ice & Dust</span>
-                  </div>
-                  <div className="flex items-center justify-between font-mono p-2.5 rounded-xl bg-[#050B1A] border border-[#1E293B]">
-                    <span className="text-[#A7B4CC]">Known Moons:</span>
-                    <span className="text-[#F5C451] font-bold">146 Confirmed Moons</span>
-                  </div>
-                </div>
-
-                {/* Quick Action */}
-                <button
-                  onClick={() => onNavigate('planet-x')}
-                  className="w-full py-3 rounded-xl bg-[#050B1A] hover:bg-[#38BDF8] text-[#A7B4CC] hover:text-[#050B1A] border border-[#1E293B] hover:border-[#38BDF8] font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Orbit className="w-4 h-4" />
-                  <span>Inspect Solar System Orbits</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. DISCOVERY CATEGORY CARDS (UZAY KEŞİF INSPIRED) */}
+      {/* 2. DISCOVERY CATEGORIES GATEWAY */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="text-center max-w-3xl mx-auto space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-xs font-mono font-bold uppercase tracking-wider">
@@ -222,7 +59,7 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
                 </h3>
               </div>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Peel back dense dust clouds with multi-spectral infrared bands, study the cosmic dawn, and examine water ice signatures.
+                Peel back dense dust clouds with multi-spectral infrared bands, study cosmic inflation, and examine water ice signatures.
               </p>
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
@@ -314,17 +151,17 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* 3. PLANETARY SHOWCASE & CATALOG ("various planets listed" - Image 1 & 2) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* 3. PLANETARY SHOWCASE & CATALOG ("various planets listed") */}
+      <section id="planetary-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <PlanetaryShowcase onNavigate={onNavigate} />
       </section>
 
-      {/* 4. COSMIC ORBITAL ARCHITECTURE DIAGRAM (IMAGE 1 INSPIRED) */}
+      {/* 4. COSMIC ORBITAL ARCHITECTURE DIAGRAM */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <CosmicOrbitalDiagram onNavigate={onNavigate} />
       </section>
 
-      {/* 5. LIVE TELEMETRY RADAR & ASTROPHYSICAL KNOWLEDGE (IMAGE 2 & 3) */}
+      {/* 5. LIVE TELEMETRY RADAR & ASTROPHYSICAL KNOWLEDGE */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <CosmicRadarHUD onNavigate={onNavigate} />
       </section>
