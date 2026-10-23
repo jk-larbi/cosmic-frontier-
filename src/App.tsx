@@ -22,14 +22,17 @@ export function App() {
   // Sync with browser hash and path on initial load and hash change
   useEffect(() => {
     const handleLocationChange = () => {
-      const hash = window.location.hash.replace('#', '').replace('/', '') as AppPage;
-      const pathname = window.location.pathname.replace('/', '') as AppPage;
+      // Strip leading and trailing slashes and hashes
+      const hash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '') as AppPage;
+      const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '') as AppPage;
 
       const candidate = hash || pathname;
       if (candidate === 'ai-guide' || candidate === 'guide') {
         setCurrentPage('ai-guide');
       } else if (['home', 'spherex', 'planet-x', 'about'].includes(candidate)) {
         setCurrentPage(candidate);
+      } else if (!candidate) {
+        setCurrentPage('home');
       }
     };
 

@@ -8,6 +8,7 @@
     "server": "node server/index.js",
     "start": "node server/index.js",
     "build": "tsc -b && vite build",
+    "test": "node server/test-suite.js",
     "test:ai": "node server/test-suite.js",
     "lint": "oxlint",
     "preview": "vite preview"

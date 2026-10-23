@@ -533,7 +533,7 @@ You can explore any of our core educational questions or inspect our interactive
             <button
               type="submit"
               disabled={isLoading || !inputValue.trim()}
-              className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#38BDF8] to-[#0284C7] text-[#050B1A] font-bold text-xs sm:text-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-md focus:ring-2 focus:ring-[#38BDF8] focus:outline-none"
+              className="px-5 py-3 rounded-xl bg-linear-to-r from-[#38BDF8] to-[#0284C7] text-[#050B1A] font-bold text-xs sm:text-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-md focus:ring-2 focus:ring-[#38BDF8] focus:outline-none"
               aria-label="Send message"
             >
               {isLoading ? (

@@ -100,6 +100,52 @@ export const PlanetXExplorer: FC = () => {
 
   const handleMouseUp = () => setIsPanning(false);
 
+  // Canvas Touch Interaction for Panning
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setIsPanning(true);
+    dragStartRef.current = { x: touch.clientX - panOffset.x, y: touch.clientY - panOffset.y };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isPanning || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setPanOffset({
+      x: touch.clientX - dragStartRef.current.x,
+      y: touch.clientY - dragStartRef.current.y
+    });
+  };
+
+  const handleTouchEnd = () => setIsPanning(false);
+
+  // Keyboard accessibility for the orbital diagram
+  const handleCanvasKeyDown = (e: React.KeyboardEvent<HTMLCanvasElement>) => {
+    const step = 30;
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      handleZoomIn();
+    } else if (e.key === '-' || e.key === '_') {
+      e.preventDefault();
+      handleZoomOut();
+    } else if (e.key === '0') {
+      e.preventDefault();
+      handleReset();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setPanOffset(prev => ({ ...prev, x: prev.x + step }));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setPanOffset(prev => ({ ...prev, x: prev.x - step }));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setPanOffset(prev => ({ ...prev, y: prev.y + step }));
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setPanOffset(prev => ({ ...prev, y: prev.y - step }));
+    }
+  };
+
   // Click on Canvas to Select Nearest Object
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -577,12 +623,19 @@ export const PlanetXExplorer: FC = () => {
             {/* Canvas Viewport */}
             <canvas
               ref={canvasRef}
+              tabIndex={0}
+              role="region"
+              aria-label="2D Heliocentric Solar System & Planet X Orbital Canvas. Use arrow keys to pan, plus and minus keys to zoom, zero to reset."
+              onKeyDown={handleCanvasKeyDown}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
               onClick={handleCanvasClick}
-              className={`w-full h-[440px] sm:h-[500px] block select-none ${
+              className={`w-full h-[440px] sm:h-[500px] block select-none focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/40 ${
                 isPanning ? 'cursor-grabbing' : 'cursor-grab'
               }`}
             />

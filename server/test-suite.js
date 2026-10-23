@@ -1,10 +1,17 @@
-// Automated Comprehensive Verification Test Suite for COSMIC FRONTIER — STAGE 4: AI SPACE GUIDE
+// Automated Comprehensive Verification Test Suite for COSMIC FRONTIER — STAGE 5: FULL APPLICATION QA
+// Validates Backend, Routes, Navigation, Scientific Integrity, NASA Open Data API, and AI Space Guide
 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const BASE_URL = 'http://localhost:3001';
 
 async function runTests() {
   console.log('====================================================');
-  console.log('COSMIC AI GUIDE — VERIFICATION TEST SUITE');
+  console.log('COSMIC FRONTIER — FULL QA & SCIENTIFIC TEST SUITE');
   console.log('====================================================\n');
 
   let passed = 0;
@@ -100,49 +107,33 @@ async function runTests() {
       'Test 3.2: Does not falsely claim Planet X is confirmed'
     );
   } catch (err) {
-    assert(false, `Test 3: Scientific integrity test failed: ${err.message}`);
+    assert(false, `Test 3: Scientific integrity query failed: ${err.message}`);
   }
 
-  // 4. Input Validation & Edge Cases
-  const validationTests = [
-    {
-      name: 'Empty string',
-      body: { message: '' },
-      expectedStatus: 400
-    },
-    {
-      name: 'Whitespace only',
-      body: { message: '    \t   ' },
-      expectedStatus: 400
-    },
-    {
-      name: 'Missing message property',
-      body: {},
-      expectedStatus: 400
-    },
-    {
-      name: 'Oversized message (> 1000 chars)',
-      body: { message: 'A'.repeat(1005) },
-      expectedStatus: 400
-    }
+  // 4. Input Validation & Security Edge Cases
+  const invalidPayloads = [
+    { name: 'Empty string', body: { message: '' }, expectedCode: 400 },
+    { name: 'Whitespace only', body: { message: '    \n\t  ' }, expectedCode: 400 },
+    { name: 'Missing message property', body: {}, expectedCode: 400 },
+    { name: 'Oversized message (> 1000 chars)', body: { message: 'A'.repeat(1005) }, expectedCode: 400 }
   ];
 
-  for (const vt of validationTests) {
+  for (const testCase of invalidPayloads) {
     try {
       const res = await fetch(`${BASE_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(vt.body)
+        body: JSON.stringify(testCase.body)
       });
+      assert(res.status === testCase.expectedCode, `Test 4: ${testCase.name} returns HTTP ${testCase.expectedCode}`);
       const data = await res.json();
-      assert(res.status === vt.expectedStatus, `Test 4: ${vt.name} returns HTTP ${vt.expectedStatus}`);
-      assert(Boolean(data.error), `Test 4: ${vt.name} returns error message`);
+      assert(Boolean(data.error), `Test 4: ${testCase.name} returns error message`);
     } catch (err) {
-      assert(false, `Test 4: Validation test ${vt.name} failed: ${err.message}`);
+      assert(false, `Test 4: ${testCase.name} failed with error: ${err.message}`);
     }
   }
 
-  // 5. Malformed JSON Body Protection (Security test)
+  // 5. Malformed JSON Body Handling (Prevents Crashes & Stack Leaks)
   try {
     const res = await fetch(`${BASE_URL}/api/chat`, {
       method: 'POST',
@@ -170,8 +161,8 @@ async function runTests() {
       })
     });
     const data = await res.json();
-    assert(res.status === 200, 'Test 6: Multi-turn chat request succeeded with 200');
-    assert(Boolean(data.reply), 'Test 6: Received reply for follow-up question');
+    assert(res.status === 200, 'Test 6.1: Multi-turn chat request succeeded with 200');
+    assert(Boolean(data.reply), 'Test 6.2: Received reply for follow-up question');
   } catch (err) {
     assert(false, `Test 6: Multi-turn chat test failed: ${err.message}`);
   }
@@ -197,18 +188,36 @@ async function runTests() {
     assert(false, `Test 7: NASA API test failed: ${err.message}`);
   }
 
-  // 8. Client Static Serving & SPA fallback
+  // 8. Navigation Routes & SPA Fallback
+  const appRoutes = ['/', '/spherex', '/planet-x', '/ai-guide', '/about'];
+  for (const route of appRoutes) {
+    try {
+      const resRoute = await fetch(`${BASE_URL}${route}`);
+      assert(resRoute.status === 200, `Test 8: Route '${route}' serves HTTP 200`);
+      const htmlText = await resRoute.text();
+      assert(htmlText.includes('COSMIC FRONTIER'), `Test 8: Route '${route}' returns COSMIC FRONTIER HTML`);
+    } catch (err) {
+      assert(false, `Test 8: Navigation to route '${route}' failed: ${err.message}`);
+    }
+  }
+
+  // 9. Static Data Integrity & Science Audit
   try {
-    const resRoot = await fetch(`${BASE_URL}/`);
-    assert(resRoot.status === 200, 'Test 7.1: Root / returns HTTP 200');
+    const spherexFile = fs.readFileSync(path.resolve(__dirname, '../src/data/spherexData.ts'), 'utf8');
+    assert(spherexFile.includes('0.75') && spherexFile.includes('5.0'), 'Test 9.1: SPHEREx data documents 0.75 to 5.0 µm coverage');
+    assert(spherexFile.includes('Real Archival Data') && spherexFile.includes('Synthetic Mission Demonstration'), 'Test 9.2: SPHEREx accurately labels Real vs. Synthetic datasets');
 
-    const resAiGuide = await fetch(`${BASE_URL}/ai-guide`);
-    assert(resAiGuide.status === 200, 'Test 7.2: /ai-guide route serves index.html with HTTP 200');
+    const solarSystemFile = fs.readFileSync(path.resolve(__dirname, '../src/data/solarSystemData.ts'), 'utf8');
+    assert(solarSystemFile.includes("id: 'planet-x'"), 'Test 9.3: Planet X is present in solar system registry');
+    assert(solarSystemFile.includes("isHypothetical: true"), 'Test 9.4: Planet X is strictly flagged as isHypothetical: true');
+    assert(solarSystemFile.includes("statusLabel: 'Hypothetical (Unconfirmed)'"), 'Test 9.5: Planet X statusLabel is explicitly Hypothetical (Unconfirmed)');
+    assert(solarSystemFile.includes('Batygin & Brown'), 'Test 9.6: Planet X cites Batygin & Brown theoretical models');
 
-    const htmlText = await resAiGuide.text();
-    assert(htmlText.includes('COSMIC FRONTIER'), 'Test 7.3: HTML contains COSMIC FRONTIER title');
+    const evidenceFile = fs.readFileSync(path.resolve(__dirname, '../src/data/evidenceData.ts'), 'utf8');
+    assert(evidenceFile.includes('candidate-alpha') && evidenceFile.includes('candidate-beta') && evidenceFile.includes('candidate-gamma'), 'Test 9.7: All candidate test cases are defined');
+    assert(evidenceFile.includes('Alternative Scientific Explanations'), 'Test 9.8: Evidence includes alternative scientific hypotheses');
   } catch (err) {
-    assert(false, `Test 7: Static serving test failed: ${err.message}`);
+    assert(false, `Test 9: Static data audit failed: ${err.message}`);
   }
 
   console.log('\n====================================================');
@@ -224,4 +233,3 @@ runTests().catch((e) => {
   console.error('Fatal test runner error:', e);
   process.exit(1);
 });
-

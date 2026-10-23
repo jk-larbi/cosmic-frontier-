@@ -72,7 +72,7 @@ export const SPHERExExplorer: FC = () => {
     setSliderPosition(50);
   };
 
-  // Pan Handlers
+  // Pan Handlers (Mouse & Touch)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isSliderDraggingRef.current) return;
     setIsDraggingPan(true);
@@ -89,7 +89,25 @@ export const SPHERExExplorer: FC = () => {
 
   const handleMouseUp = () => setIsDraggingPan(false);
 
-  // Split-slider handle drag tracking
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isSliderDraggingRef.current || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setIsDraggingPan(true);
+    dragStartRef.current = { x: touch.clientX - pan.x, y: touch.clientY - pan.y };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingPan || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setPan({
+      x: touch.clientX - dragStartRef.current.x,
+      y: touch.clientY - dragStartRef.current.y
+    });
+  };
+
+  const handleTouchEnd = () => setIsDraggingPan(false);
+
+  // Split-slider handle drag tracking (Mouse & Touch)
   const handleSliderDragStart = (e: React.MouseEvent) => {
     e.stopPropagation();
     isSliderDraggingRef.current = true;
@@ -106,6 +124,52 @@ export const SPHERExExplorer: FC = () => {
     };
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
+  };
+
+  const handleSliderTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    isSliderDraggingRef.current = true;
+    const onTouchMove = (moveEvent: TouchEvent) => {
+      if (!isSliderDraggingRef.current || !viewerContainerRef.current || moveEvent.touches.length === 0) return;
+      const touch = moveEvent.touches[0];
+      const rect = viewerContainerRef.current.getBoundingClientRect();
+      const pos = ((touch.clientX - rect.left) / rect.width) * 100;
+      setSliderPosition(Math.max(0, Math.min(100, pos)));
+    };
+    const onTouchEnd = () => {
+      isSliderDraggingRef.current = false;
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd);
+  };
+
+  // Keyboard accessibility controls for the viewer
+  const handleViewerKeyDown = (e: React.KeyboardEvent) => {
+    const step = 25;
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      handleZoomIn();
+    } else if (e.key === '-' || e.key === '_') {
+      e.preventDefault();
+      handleZoomOut();
+    } else if (e.key === '0') {
+      e.preventDefault();
+      handleReset();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setPan(prev => ({ ...prev, x: prev.x + step }));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setPan(prev => ({ ...prev, x: prev.x - step }));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setPan(prev => ({ ...prev, y: prev.y + step }));
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setPan(prev => ({ ...prev, y: prev.y - step }));
+    }
   };
 
   // Real Canvas Image Processing Effect
@@ -368,11 +432,18 @@ export const SPHERExExplorer: FC = () => {
             {/* Canvas / Image Display Viewport Area */}
             <div
               ref={viewerContainerRef}
+              tabIndex={0}
+              role="region"
+              aria-label="Interactive astronomical image viewer. Use arrow keys to pan, plus and minus keys to zoom, zero to reset."
+              onKeyDown={handleViewerKeyDown}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
-              className={`relative h-[380px] sm:h-[480px] bg-[#050B1A] overflow-hidden select-none ${
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              className={`relative h-[380px] sm:h-[480px] bg-[#050B1A] overflow-hidden select-none focus:outline-none focus:ring-1 focus:ring-[#38BDF8]/40 ${
                 isDraggingPan ? 'cursor-grabbing' : 'cursor-grab'
               }`}
             >
@@ -457,12 +528,13 @@ export const SPHERExExplorer: FC = () => {
 
                   {/* Draggable Divider Line & Handle */}
                   <div
-                    className="absolute top-0 bottom-0 w-0.5 bg-[#F5C451] shadow-2xl z-20 cursor-ew-resize select-none"
+                    className="absolute top-0 bottom-0 w-0.5 bg-[#F5C451] shadow-2xl z-20 cursor-ew-resize select-none touch-none"
                     style={{ left: `${sliderPosition}%` }}
                     onMouseDown={handleSliderDragStart}
+                    onTouchStart={handleSliderTouchStart}
                   >
                     <div 
-                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-[#F5C451] text-[#050B1A] flex items-center justify-center shadow-lg border-2 border-[#050B1A] hover:scale-110 active:scale-95 transition-transform"
+                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-[#F5C451] text-[#050B1A] flex items-center justify-center shadow-lg border-2 border-[#050B1A] hover:scale-110 active:scale-95 transition-transform cursor-ew-resize"
                       title="Drag to compare Optical vs. Infrared"
                     >
                       <SplitSquareVertical className="w-4 h-4 rotate-90 pointer-events-none" />
