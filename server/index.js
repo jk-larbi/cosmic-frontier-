@@ -72,6 +72,27 @@ function getExplorerLinks(text) {
     lower.includes('trans-neptunian') ||
     lower.includes('kuiper');
 
+  const mentionsSolarSystem = lower.includes('solar system') ||
+    lower.includes('planet') ||
+    lower.includes('jupiter') ||
+    lower.includes('saturn') ||
+    lower.includes('mars') ||
+    lower.includes('venus') ||
+    lower.includes('mercury') ||
+    lower.includes('earth') ||
+    lower.includes('uranus') ||
+    lower.includes('neptune') ||
+    lower.includes('3d') ||
+    lower.includes('sun');
+
+  if (mentionsSolarSystem) {
+    links.push({
+      label: 'Explore in 3D Universe Explorer',
+      page: 'universe',
+      reason: 'Interact with the 3D Solar System, rotate the camera, and inspect Keplerian planetary orbits.'
+    });
+  }
+
   if (mentionsSpherex) {
     links.push({
       label: 'Explore in SPHEREx Explorer',

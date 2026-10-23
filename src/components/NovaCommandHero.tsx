@@ -57,6 +57,12 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
             Dashboard
           </button>
           <button
+            onClick={() => onNavigate('universe')}
+            className="px-4 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
+          >
+            3D Universe
+          </button>
+          <button
             onClick={() => onNavigate('spherex')}
             className="px-4 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
           >

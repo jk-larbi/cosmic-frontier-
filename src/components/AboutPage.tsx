@@ -171,6 +171,14 @@ export const AboutPage: FC = () => {
           <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] flex items-start gap-2.5">
             <CheckCircle2 className="w-4 h-4 text-[#38BDF8] shrink-0 mt-0.5" />
             <div>
+              <strong className="text-[#F8FAFC] block">3D Visual Scaling Transparency:</strong>
+              <span>Our 3D Universe Explorer clearly informs users when Presentation Scale is active (normalizing distances for interactive viewing) versus Astronomical Scale (linear relative AU distances).</span>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] flex items-start gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-[#38BDF8] shrink-0 mt-0.5" />
+            <div>
               <strong className="text-[#F8FAFC] block">Accessible Language:</strong>
               <span>We avoid misleading hype, jargon, and opaque claims, ensuring learners of all backgrounds can explore space with confidence.</span>
             </div>

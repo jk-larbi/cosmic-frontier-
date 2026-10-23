@@ -1,4 +1,4 @@
-export type AppPage = 'home' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
+export type AppPage = 'home' | 'universe' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
 
 export interface InfraredBand {
   id: string;

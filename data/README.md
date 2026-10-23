@@ -35,3 +35,4 @@ All scientific datasets stored locally or queried live through COSMIC FRONTIER a
 ## Manifest Verification
 
 Refer to [`manifest.json`](./manifest.json) for machine-readable dataset checksums, record counts, UTC retrieval timestamps, and schema definitions.
+

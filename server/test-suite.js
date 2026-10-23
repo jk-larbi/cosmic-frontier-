@@ -189,7 +189,7 @@ async function runTests() {
   }
 
   // 8. Navigation Routes & SPA Fallback
-  const appRoutes = ['/', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
+  const appRoutes = ['/', '/universe', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
   for (const route of appRoutes) {
     try {
       const resRoute = await fetch(`${BASE_URL}${route}`);
@@ -280,6 +280,31 @@ async function runTests() {
     assert(searchJson.items.some(i => i.name.includes('Jupiter')), 'Test 10.21: Search for "Jupiter" returns matching records');
   } catch (err) {
     assert(false, `Test 10: NASA Data Centre test failed: ${err.message}`);
+  }
+
+  // 11. Interactive 3D Universe Architecture & Science Tests
+  try {
+    const universeFile = fs.readFileSync(path.resolve(__dirname, '../src/components/Universe3DExplorer.tsx'), 'utf8');
+    assert(universeFile.includes('THREE.WebGLRenderer'), 'Test 11.1: 3D Universe uses Three.js WebGLRenderer');
+    assert(universeFile.includes('PerspectiveCamera'), 'Test 11.2: 3D Universe configures PerspectiveCamera');
+    assert(universeFile.includes('isWebGLAvailable'), 'Test 11.3: Implements WebGL hardware detection and fallback');
+    assert(universeFile.includes('hasRings') && universeFile.includes('hasMoon'), 'Test 11.4: Models Saturn rings and Earth moon');
+    assert(universeFile.includes('presentation') && universeFile.includes('proportional'), 'Test 11.5: Supports both Presentation and Proportional distance scaling');
+    assert(universeFile.includes('distMoved < 6'), 'Test 11.6: Disambiguates drag rotation from click selection');
+
+    const textureFile = fs.readFileSync(path.resolve(__dirname, '../src/utils/planetTextureGenerator.ts'), 'utf8');
+    assert(textureFile.includes('createSunTexture') && textureFile.includes('createSaturnRingsTexture'), 'Test 11.7: Procedural texture generator creates solar and ring textures');
+    assert(textureFile.includes('createEarthTexture') && textureFile.includes('createJupiterTexture'), 'Test 11.8: Generates procedural textures for Earth and Jupiter');
+
+    const resChat = await fetch(`${BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Can I view the planets and Saturn in 3D?' })
+    });
+    const chatData = await resChat.json();
+    assert(chatData.links && chatData.links.some(l => l.page === 'universe'), 'Test 11.9: AI Guide provides contextual link to 3D Universe');
+  } catch (err) {
+    assert(false, `Test 11: 3D Universe test failed: ${err.message}`);
   }
 
   console.log('\n====================================================');
