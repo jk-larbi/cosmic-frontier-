@@ -1,0 +1,132 @@
+{
+  "metadata": {
+    "source": "NASA/JPL Solar System Dynamics Small-Body Database (SBDB)",
+    "sourceUrl": "https://ssd-api.jpl.nasa.gov/",
+    "retrievalDateUTC": "2026-10-23T23:22:20.187Z",
+    "recordCount": 8,
+    "dataStatus": "Real Archival Data",
+    "description": "Confirmed asteroids, comets, and trans-Neptunian objects with verified Keplerian elements from NASA/JPL astrometric orbit solutions."
+  },
+  "confirmedObjects": [
+    {
+      "designation": "99942",
+      "fullName": "99942 Apophis (2004 MN4)",
+      "orbitClass": "Aten",
+      "semiMajorAxisAU": 0.922,
+      "perihelionAU": 0.746,
+      "eccentricity": 0.191,
+      "inclinationDeg": 3.34,
+      "orbitalPeriodYears": null,
+      "diameterKm": 0.34,
+      "dataStatus": "Real Archival Data",
+      "sourceUrl": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=99942"
+    },
+    {
+      "designation": "433",
+      "fullName": "433 Eros (A898 PA)",
+      "orbitClass": "Amor",
+      "semiMajorAxisAU": 1.46,
+      "perihelionAU": 1.13,
+      "eccentricity": 0.223,
+      "inclinationDeg": 10.8,
+      "orbitalPeriodYears": null,
+      "diameterKm": 16.84,
+      "dataStatus": "Real Archival Data",
+      "sourceUrl": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=433"
+    },
+    {
+      "designation": "4179",
+      "fullName": "4179 Toutatis (1989 AC)",
+      "orbitClass": "Apollo",
+      "semiMajorAxisAU": 2.54,
+      "perihelionAU": 0.955,
+      "eccentricity": 0.625,
+      "inclinationDeg": 0.448,
+      "orbitalPeriodYears": null,
+      "diameterKm": 5.4,
+      "dataStatus": "Real Archival Data",
+      "sourceUrl": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=4179"
+    },
+    {
+      "designation": "1",
+      "fullName": "1 Ceres (A801 AA)",
+      "orbitClass": "Main-belt Asteroid",
+      "semiMajorAxisAU": 2.77,
+      "perihelionAU": 2.55,
+      "eccentricity": 0.0797,
+      "inclinationDeg": 10.6,
+      "orbitalPeriodYears": null,
+      "diameterKm": 939.4,
+      "dataStatus": "Real Archival Data",
+      "sourceUrl": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=1"
+    },
+    {
+      "designation": "4",
+      "fullName": "4 Vesta (A807 FA)",
+      "orbitClass": "Main-belt Asteroid",
+      "semiMajorAxisAU": 2.36,
+      "perihelionAU": 2.15,
+      "eccentricity": 0.0902,
+      "inclinationDeg": 7.14,
+      "orbitalPeriodYears": null,
+      "diameterKm": 522.77,
+      "dataStatus": "Real Archival Data",
+      "sourceUrl": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=4"
+    },
+    {
+      "designation": "1P",
+      "fullName": "1P/Halley",
+      "orbitClass": "Halley-type Comet*",
+      "semiMajorAxisAU": 17.9,
+      "perihelionAU": 0.575,
+      "eccentricity": 0.968,
+      "inclinationDeg": 162,
+      "orbitalPeriodYears": null,
+      "diameterKm": 11,
+      "dataStatus": "Real Archival Data",
+      "sourceUrl": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=1P"
+    },
+    {
+      "designation": "90377",
+      "fullName": "90377 Sedna (2003 VB12)",
+      "orbitClass": "TransNeptunian Object",
+      "semiMajorAxisAU": 544,
+      "perihelionAU": 76.2,
+      "eccentricity": 0.86,
+      "inclinationDeg": 11.9,
+      "orbitalPeriodYears": null,
+      "diameterKm": null,
+      "dataStatus": "Real Archival Data",
+      "sourceUrl": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=90377"
+    },
+    {
+      "designation": "2012 VP113",
+      "fullName": "(2012 VP113) Sednoid",
+      "orbitClass": "Extreme Trans-Neptunian Object (Sednoid)",
+      "semiMajorAxisAU": 261,
+      "perihelionAU": 80.5,
+      "eccentricity": 0.69,
+      "inclinationDeg": 24.1,
+      "orbitalPeriodYears": 4210,
+      "diameterKm": 600,
+      "dataStatus": "Real Archival Data",
+      "sourceUrl": "https://www.minorplanetcenter.net/db_search/show_object?object_id=2012+VP113"
+    }
+  ],
+  "hypotheticalScenarios": [
+    {
+      "scenarioId": "planet-x-batygin-brown",
+      "designation": "Planet X / Planet Nine (Hypothetical)",
+      "proposedStatus": "Hypothetical (Unconfirmed)",
+      "isConfirmed": false,
+      "semiMajorAxisAU": 420,
+      "perihelionAU": 240,
+      "eccentricity": 0.6,
+      "inclinationDeg": 18,
+      "estimatedMassEarthRelative": "5 – 8 Earth masses",
+      "proposers": "Konstantin Batygin & Mike Brown (Caltech, 2016, 2021)",
+      "scientificNote": "A mathematical hypothesis proposed to explain the orbital clustering of extreme trans-Neptunian objects. No observational confirmation or physical detection has occurred.",
+      "dataStatus": "Theoretical Model (Unconfirmed)"
+    }
+  ]
+}

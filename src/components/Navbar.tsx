@@ -8,7 +8,8 @@ import {
   Home, 
   Menu, 
   X,
-  Compass
+  Compass,
+  Database
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -23,6 +24,7 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
     { page: 'home', label: 'Home', icon: <Home className="w-4 h-4" /> },
     { page: 'spherex', label: 'SPHEREx Explorer', icon: <Telescope className="w-4 h-4" /> },
     { page: 'planet-x', label: 'Planet X Explorer', icon: <Orbit className="w-4 h-4" /> },
+    { page: 'data-centre', label: 'NASA Data Centre', icon: <Database className="w-4 h-4" /> },
     { page: 'ai-guide', label: 'COSMIC AI GUIDE', icon: <Sparkles className="w-4 h-4" /> },
     { page: 'about', label: 'About', icon: <Info className="w-4 h-4" /> },
   ];

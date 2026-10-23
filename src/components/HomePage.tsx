@@ -12,7 +12,8 @@ import {
   ChevronRight, 
   Waves, 
   ShieldAlert, 
-  ArrowRight 
+  ArrowRight,
+  Database
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -41,7 +42,7 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           {/* Card 1: Infrared Spectroscopy */}
           <div 
             onClick={() => onNavigate('spherex')}
@@ -123,7 +124,34 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Card 4: AI Space Guide */}
+          {/* Card 4: NASA Data Centre */}
+          <div 
+            onClick={() => onNavigate('data-centre')}
+            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#38BDF8]/15 transition-all cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
+                <Database className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono text-[#38BDF8] font-bold uppercase tracking-wider">
+                  Multi-Mission Archive
+                </span>
+                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors mt-0.5">
+                  NASA Data Centre
+                </h3>
+              </div>
+              <p className="text-xs text-[#A7B4CC] leading-relaxed">
+                Query confirmed exoplanets, JPL Horizons planetary ephemerides, small body orbits, and CDS SIMBAD stellar benchmarks.
+              </p>
+            </div>
+            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
+              <span>Live TAP & SBDB</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+            </div>
+          </div>
+
+          {/* Card 5: AI Space Guide */}
           <div 
             onClick={() => onNavigate('ai-guide')}
             className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#10B981] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#10B981]/15 transition-all cursor-pointer flex flex-col justify-between"

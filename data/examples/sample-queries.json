@@ -1,0 +1,53 @@
+{
+  "description": "Verified sample queries for official NASA/JPL/IPAC and international astronomy APIs used by COSMIC FRONTIER",
+  "queries": [
+    {
+      "service": "NASA Exoplanet Archive TAP API",
+      "endpoint": "https://exoplanetarchive.ipac.caltech.edu/TAP/sync",
+      "method": "GET",
+      "exampleQuery": "SELECT top 10 pl_name, hostname, discoverymethod, disc_year, pl_orbper, pl_rade, pl_bmasse, st_teff, sy_dist FROM ps WHERE default_flag=1 ORDER BY disc_year DESC",
+      "fullUrl": "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+top+10+pl_name,hostname,discoverymethod,disc_year,pl_orbper,pl_rade,pl_bmasse,st_teff,sy_dist+from+ps+where+default_flag=1+order+by+disc_year+desc&format=json",
+      "documentation": "https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html"
+    },
+    {
+      "service": "NASA/JPL Small-Body Database (SBDB) API",
+      "endpoint": "https://ssd-api.jpl.nasa.gov/sbdb.api",
+      "method": "GET",
+      "exampleQuery": "sstr=99942&phys-par=1",
+      "fullUrl": "https://ssd-api.jpl.nasa.gov/sbdb.api?sstr=99942&phys-par=1",
+      "documentation": "https://ssd-api.jpl.nasa.gov/doc/sbdb.html"
+    },
+    {
+      "service": "NASA/JPL Small-Body Radar Astrometry API",
+      "endpoint": "https://ssd-api.jpl.nasa.gov/sb_radar.api",
+      "method": "GET",
+      "exampleQuery": "des=433&fullname=1",
+      "fullUrl": "https://ssd-api.jpl.nasa.gov/sb_radar.api?des=433&fullname=1",
+      "documentation": "https://ssd-api.jpl.nasa.gov/doc/sb_radar.html"
+    },
+    {
+      "service": "NASA/JPL Horizons API",
+      "endpoint": "https://ssd.jpl.nasa.gov/api/horizons.api",
+      "method": "GET",
+      "exampleQuery": "COMMAND='499'&OBJ_DATA='YES'&MAKE_EPHEM='NO'",
+      "fullUrl": "https://ssd.jpl.nasa.gov/api/horizons.api?format=json&COMMAND=%27499%27&OBJ_DATA=%27YES%27&MAKE_EPHEM=%27NO%27",
+      "documentation": "https://ssd-api.jpl.nasa.gov/doc/horizons.html"
+    },
+    {
+      "service": "CDS SIMBAD Astronomical TAP Service",
+      "endpoint": "https://simbad.cds.unistra.fr/simbad/sim-tap/sync",
+      "method": "GET",
+      "exampleQuery": "SELECT TOP 5 main_id, ra, dec, sp_type FROM basic WHERE main_id LIKE 'Sirius%'",
+      "fullUrl": "https://simbad.cds.unistra.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=SELECT+TOP+5+main_id,ra,dec,sp_type+FROM+basic+WHERE+main_id+like+%27Sirius%25%27",
+      "documentation": "https://simbad.cds.unistra.fr/guide/sim-tap.htx"
+    },
+    {
+      "service": "NASA Image and Video Library API",
+      "endpoint": "https://images-api.nasa.gov/search",
+      "method": "GET",
+      "exampleQuery": "q=SPHEREx&media_type=image",
+      "fullUrl": "https://images-api.nasa.gov/search?q=SPHEREx&media_type=image",
+      "documentation": "https://images.nasa.gov/docs/images.nasa.gov_api_docs.pdf"
+    }
+  ]
+}

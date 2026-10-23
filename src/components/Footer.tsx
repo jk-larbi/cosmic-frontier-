@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import type { AppPage } from '../types';
-import { Telescope, Orbit, Sparkles, Compass, ShieldAlert, ExternalLink } from 'lucide-react';
+import { Telescope, Orbit, Sparkles, Compass, ShieldAlert, ExternalLink, Database } from 'lucide-react';
 
 interface FooterProps {
   onNavigate: (page: AppPage) => void;
@@ -51,6 +51,15 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
                 >
                   <Orbit className="w-3.5 h-3.5 text-[#8B5CF6]" />
                   <span>Planet X Outer System Map</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('data-centre')}
+                  className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors"
+                >
+                  <Database className="w-3.5 h-3.5 text-[#38BDF8]" />
+                  <span>NASA Astronomical Data Centre</span>
                 </button>
               </li>
               <li>

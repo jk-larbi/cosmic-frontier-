@@ -1,4 +1,4 @@
-export type AppPage = 'home' | 'spherex' | 'planet-x' | 'guide' | 'ai-guide' | 'about';
+export type AppPage = 'home' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
 
 export interface InfraredBand {
   id: string;
@@ -131,4 +131,80 @@ export interface NasaMissionPhoto {
   description: string;
   dateCreated?: string;
   center?: string;
+}
+
+export interface ExoplanetRecord {
+  planetName: string;
+  hostStar: string;
+  discoveryMethod: string;
+  discoveryYear: number;
+  orbitalPeriodDays: number | null;
+  radiusEarthRadii: number | null;
+  massEarthMasses: number | null;
+  stellarEffectiveTempK: number | null;
+  distanceParsecs: number | null;
+  distanceLightYears: number | null;
+  dataStatus: string;
+}
+
+export interface SmallBodyRecord {
+  designation: string;
+  fullName: string;
+  orbitClass: string;
+  semiMajorAxisAU: number | null;
+  perihelionAU: number | null;
+  eccentricity: number | null;
+  inclinationDeg: number | null;
+  orbitalPeriodYears: number | null;
+  diameterKm: number | null;
+  dataStatus: string;
+  sourceUrl: string;
+}
+
+export interface GalaxyRecord {
+  name: string;
+  catalogIdentifier: string;
+  morphologicalType: string;
+  constellation: string;
+  rightAscension: string;
+  declination: string;
+  redshift: number;
+  radialVelocityKmS: number;
+  distanceMly: number;
+  distanceMpc: number;
+  description: string;
+  sourceUrl: string;
+}
+
+export interface StarRecord {
+  name: string;
+  designation: string;
+  spectralType: string;
+  constellation: string;
+  apparentMagnitudeV: number;
+  absoluteMagnitudeV: number;
+  effectiveTemperatureK: number;
+  distanceLightYears: number;
+  distanceParsecs: number;
+  description: string;
+  sourceUrl: string;
+}
+
+export type CatalogCategory = 'all' | 'planets' | 'exoplanets' | 'small-bodies' | 'galaxies' | 'stars' | 'spherex';
+
+export interface CatalogItem {
+  id: string;
+  name: string;
+  category: 'planets' | 'exoplanets' | 'small-bodies' | 'galaxies' | 'stars' | 'spherex';
+  categoryLabel: string;
+  subtitle: string;
+  description: string;
+  dataStatus: string;
+  sourceName: string;
+  sourceUrl: string;
+  properties: Array<{
+    label: string;
+    value: string | number;
+    unit?: string;
+  }>;
 }

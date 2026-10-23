@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { findVerifiedAnswer, VERIFIED_KNOWLEDGE_BASE } from './knowledge.js';
@@ -288,6 +289,384 @@ app.get('/api/nasa/spherex', async (req, res) => {
       photos: fallbackPhotos
     });
   }
+});
+
+// -------------------------------------------------------------
+// NASA ASTRONOMICAL DATA CENTRE PROXY & NORMALIZATION ENDPOINTS
+// -------------------------------------------------------------
+
+function readLocalData(relPath) {
+  try {
+    const fullPath = path.resolve(__dirname, '..', relPath);
+    if (fs.existsSync(fullPath)) {
+      const content = fs.readFileSync(fullPath, 'utf8');
+      return JSON.parse(content);
+    }
+  } catch (err) {
+    console.error(`[Data Layer] Error reading ${relPath}:`, err.message);
+  }
+  return null;
+}
+
+// In-memory caches for live external data
+let cachedLiveExoplanets = null;
+let cachedLiveExoplanetsTimestamp = 0;
+const EXOPLANET_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+// 1. GET /api/data/manifest
+app.get('/api/data/manifest', (req, res) => {
+  const manifest = readLocalData('data/manifest.json');
+  if (manifest) {
+    return res.json({ success: true, ...manifest });
+  }
+  return res.status(500).json({ error: 'Manifest not found' });
+});
+
+// 2. GET /api/data/solar-system
+app.get('/api/data/solar-system', (req, res) => {
+  const data = readLocalData('data/solar-system/planets.json');
+  if (data) {
+    return res.json({ success: true, source: 'NASA/JPL Horizons Ephemerides', ...data });
+  }
+  return res.status(500).json({ error: 'Solar system data not found' });
+});
+
+// 3. GET /api/data/exoplanets
+app.get('/api/data/exoplanets', async (req, res) => {
+  const search = req.query.search ? String(req.query.search).toLowerCase() : null;
+  const now = Date.now();
+
+  let records = null;
+  let source = 'NASA Exoplanet Archive (Caltech/IPAC Live TAP)';
+  let isLive = false;
+
+  // Try cached live exoplanets first
+  if (cachedLiveExoplanets && (now - cachedLiveExoplanetsTimestamp < EXOPLANET_CACHE_TTL)) {
+    records = cachedLiveExoplanets;
+    source = 'NASA Exoplanet Archive (TAP Cache)';
+    isLive = true;
+  } else {
+    // Attempt live ADQL query
+    try {
+      const adql = 'select top 30 pl_name,hostname,discoverymethod,disc_year,pl_orbper,pl_rade,pl_bmasse,st_teff,sy_dist from ps where default_flag=1 and pl_orbper is not null order by disc_year desc';
+      const tapUrl = `https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=${encodeURIComponent(adql)}&format=json`;
+      const tapRes = await fetch(tapUrl, {
+        headers: { 'User-Agent': 'CosmicFrontier/1.0' },
+        signal: AbortSignal.timeout(6000)
+      });
+      if (tapRes.ok) {
+        const raw = await tapRes.json();
+        if (Array.isArray(raw) && raw.length > 0) {
+          records = raw.map(p => ({
+            planetName: p.pl_name,
+            hostStar: p.hostname,
+            discoveryMethod: p.discoverymethod,
+            discoveryYear: p.disc_year,
+            orbitalPeriodDays: p.pl_orbper ? parseFloat(p.pl_orbper.toFixed(4)) : null,
+            radiusEarthRadii: p.pl_rade ? parseFloat(p.pl_rade.toFixed(2)) : null,
+            massEarthMasses: p.pl_bmasse ? parseFloat(p.pl_bmasse.toFixed(2)) : null,
+            stellarEffectiveTempK: p.st_teff ? Math.round(p.st_teff) : null,
+            distanceParsecs: p.sy_dist ? parseFloat(p.sy_dist.toFixed(2)) : null,
+            distanceLightYears: p.sy_dist ? parseFloat((p.sy_dist * 3.26156).toFixed(2)) : null,
+            confirmedStatus: 'Confirmed',
+            sourceUrl: `https://exoplanetarchive.ipac.caltech.edu/overview/${encodeURIComponent(p.pl_name)}`
+          }));
+          cachedLiveExoplanets = records;
+          cachedLiveExoplanetsTimestamp = now;
+          isLive = true;
+        }
+      }
+    } catch (err) {
+      console.warn('[Data Layer] Live Exoplanet TAP query failed/timed out, falling back to local archive:', err.message);
+    }
+  }
+
+  // Fallback to local verified file if live query failed
+  if (!records) {
+    const local = readLocalData('data/exoplanets/confirmed-exoplanets.json');
+    records = local ? local.records : [];
+    source = 'NASA Exoplanet Archive (Verified Local Benchmark)';
+  }
+
+  if (search && records) {
+    records = records.filter(r => 
+      (r.planetName && r.planetName.toLowerCase().includes(search)) ||
+      (r.hostStar && r.hostStar.toLowerCase().includes(search)) ||
+      (r.discoveryMethod && r.discoveryMethod.toLowerCase().includes(search))
+    );
+  }
+
+  return res.json({
+    success: true,
+    source,
+    isLive,
+    recordCount: records.length,
+    records
+  });
+});
+
+// 4. GET /api/data/small-bodies
+app.get('/api/data/small-bodies', async (req, res) => {
+  const sstr = req.query.sstr ? String(req.query.sstr).trim() : null;
+  const localData = readLocalData('data/small-bodies/asteroids-comets.json') || { confirmedObjects: [], hypotheticalScenarios: [] };
+
+  if (sstr) {
+    // Attempt live JPL SBDB lookup
+    try {
+      const url = `https://ssd-api.jpl.nasa.gov/sbdb.api?sstr=${encodeURIComponent(sstr)}&phys-par=1`;
+      const liveRes = await fetch(url, {
+        headers: { 'User-Agent': 'CosmicFrontier/1.0' },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (liveRes.ok) {
+        const liveJson = await liveRes.json();
+        if (liveJson.object) {
+          const fields = liveJson.orbit?.data || [];
+          const getVal = (name) => {
+            const row = fields.find(r => r[0] === name);
+            return row ? parseFloat(row[1]) : null;
+          };
+          const liveRecord = {
+            designation: liveJson.object.des || sstr,
+            fullName: liveJson.object.fullname || sstr,
+            orbitClass: liveJson.object.orbit_class?.name || 'Small Body',
+            semiMajorAxisAU: getVal('a'),
+            perihelionAU: getVal('q'),
+            eccentricity: getVal('e'),
+            inclinationDeg: getVal('i'),
+            orbitalPeriodYears: null,
+            diameterKm: liveJson.phys_par?.find(p => p.name === 'diameter')?.value ? parseFloat(liveJson.phys_par.find(p => p.name === 'diameter').value) : null,
+            dataStatus: 'Real Archival Data (JPL Live SBDB)',
+            sourceUrl: `https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=${encodeURIComponent(sstr)}`
+          };
+
+          return res.json({
+            success: true,
+            source: 'NASA/JPL SBDB Live API',
+            isLive: true,
+            confirmedObjects: [liveRecord, ...localData.confirmedObjects.filter(o => o.designation !== liveRecord.designation)],
+            hypotheticalScenarios: localData.hypotheticalScenarios
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[Data Layer] JPL SBDB live query failed:', err.message);
+    }
+  }
+
+  return res.json({
+    success: true,
+    source: 'NASA/JPL Solar System Dynamics SBDB',
+    isLive: false,
+    ...localData
+  });
+});
+
+// 5. GET /api/data/galaxies
+app.get('/api/data/galaxies', (req, res) => {
+  const data = readLocalData('data/galaxies/deep-sky-galaxies.json');
+  if (data) {
+    return res.json({ success: true, source: 'NASA/IPAC Extragalactic Database (NED)', ...data });
+  }
+  return res.status(500).json({ error: 'Galaxies data not found' });
+});
+
+// 6. GET /api/data/stars
+app.get('/api/data/stars', (req, res) => {
+  const data = readLocalData('data/stars/bright-stars.json');
+  if (data) {
+    return res.json({ success: true, source: 'CDS SIMBAD Astronomical Database', ...data });
+  }
+  return res.status(500).json({ error: 'Stars data not found' });
+});
+
+// 7. GET /api/data/spherex
+app.get('/api/data/spherex', (req, res) => {
+  const data = readLocalData('data/spherex/mission-products.json');
+  if (data) {
+    return res.json({ success: true, source: 'NASA/IPAC IRSA & SPHEREx Project', ...data });
+  }
+  return res.status(500).json({ error: 'SPHEREx data not found' });
+});
+
+// 8. GET /api/data/images
+app.get('/api/data/images', (req, res) => {
+  const data = readLocalData('data/images/nasa-archives.json');
+  if (data) {
+    return res.json({ success: true, source: 'NASA Image and Video Library', ...data });
+  }
+  return res.status(500).json({ error: 'Images data not found' });
+});
+
+// 9. GET /api/data/catalog (Aggregated unified search & filter catalog)
+app.get('/api/data/catalog', (req, res) => {
+  const { category, q } = req.query;
+  const items = [];
+
+  const planetsData = readLocalData('data/solar-system/planets.json');
+  if (planetsData?.records) {
+    for (const p of planetsData.records) {
+      items.push({
+        id: `planet-${p.id}`,
+        name: p.name,
+        category: 'planets',
+        categoryLabel: 'Solar System',
+        subtitle: p.objectType,
+        description: p.description,
+        dataStatus: planetsData.metadata?.dataStatus || 'Reference Standard',
+        sourceName: 'NASA/JPL Horizons',
+        sourceUrl: p.sourceUrl,
+        properties: [
+          { label: 'Semi-Major Axis', value: p.semiMajorAxisAU, unit: 'AU' },
+          { label: 'Orbital Period', value: p.orbitalPeriodDays, unit: 'days' },
+          { label: 'Mean Radius', value: p.meanRadiusKm.toLocaleString(), unit: 'km' },
+          { label: 'Mass', value: p.massEarthRelative, unit: 'M⊕ (Earth)' },
+          { label: 'Rotation Period', value: p.rotationPeriodHours, unit: 'hours' },
+          { label: 'Orbital Inclination', value: p.inclinationDeg, unit: '°' }
+        ]
+      });
+    }
+  }
+
+  const exoplanetsData = readLocalData('data/exoplanets/confirmed-exoplanets.json');
+  if (exoplanetsData?.records) {
+    for (const ep of exoplanetsData.records) {
+      items.push({
+        id: `exoplanet-${ep.planetName.replace(/\\s+/g, '-').toLowerCase()}`,
+        name: ep.planetName,
+        category: 'exoplanets',
+        categoryLabel: 'Exoplanets',
+        subtitle: `Host Star: ${ep.hostStar} (${ep.discoveryMethod}, ${ep.discoveryYear})`,
+        description: `Confirmed exoplanet discovered via ${ep.discoveryMethod} in ${ep.discoveryYear}. Located ${ep.distanceLightYears ? ep.distanceLightYears + ' light-years away' : 'in deep space'}.`,
+        dataStatus: 'Real Archival Data',
+        sourceName: 'NASA Exoplanet Archive (IPAC)',
+        sourceUrl: ep.sourceUrl,
+        properties: [
+          { label: 'Orbital Period', value: ep.orbitalPeriodDays ?? 'Unmeasured', unit: ep.orbitalPeriodDays ? 'days' : undefined },
+          { label: 'Radius', value: ep.radiusEarthRadii ?? 'Unmeasured', unit: ep.radiusEarthRadii ? 'R⊕' : undefined },
+          { label: 'Mass', value: ep.massEarthMasses ?? 'Unmeasured', unit: ep.massEarthMasses ? 'M⊕' : undefined },
+          { label: 'Stellar Temp', value: ep.stellarEffectiveTempK ?? 'Unmeasured', unit: ep.stellarEffectiveTempK ? 'K' : undefined },
+          { label: 'Distance', value: ep.distanceLightYears ?? 'Unmeasured', unit: ep.distanceLightYears ? 'ly' : undefined },
+          { label: 'Discovery Year', value: ep.discoveryYear }
+        ]
+      });
+    }
+  }
+
+  const smallBodiesData = readLocalData('data/small-bodies/asteroids-comets.json');
+  if (smallBodiesData?.confirmedObjects) {
+    for (const sb of smallBodiesData.confirmedObjects) {
+      items.push({
+        id: `smallbody-${sb.designation}`,
+        name: sb.fullName,
+        category: 'small-bodies',
+        categoryLabel: 'Asteroids & TNOs',
+        subtitle: `Orbit Class: ${sb.orbitClass}`,
+        description: `Keplerian orbital solution from NASA/JPL Small-Body Database. Perihelion at ${sb.perihelionAU} AU, inclination ${sb.inclinationDeg}°.`,
+        dataStatus: sb.dataStatus || 'Real Archival Data',
+        sourceName: 'NASA/JPL SBDB',
+        sourceUrl: sb.sourceUrl,
+        properties: [
+          { label: 'Semi-Major Axis', value: sb.semiMajorAxisAU ?? 'N/A', unit: sb.semiMajorAxisAU ? 'AU' : undefined },
+          { label: 'Perihelion Distance', value: sb.perihelionAU ?? 'N/A', unit: sb.perihelionAU ? 'AU' : undefined },
+          { label: 'Eccentricity', value: sb.eccentricity ?? 'N/A' },
+          { label: 'Inclination', value: sb.inclinationDeg ?? 'N/A', unit: '°' },
+          { label: 'Diameter', value: sb.diameterKm ?? 'Unmeasured', unit: sb.diameterKm ? 'km' : undefined }
+        ]
+      });
+    }
+  }
+
+  const galaxiesData = readLocalData('data/galaxies/deep-sky-galaxies.json');
+  if (galaxiesData?.records) {
+    for (const g of galaxiesData.records) {
+      items.push({
+        id: `galaxy-${g.name.replace(/\\s+/g, '-').toLowerCase()}`,
+        name: g.name,
+        category: 'galaxies',
+        categoryLabel: 'Galaxies',
+        subtitle: `${g.morphologicalType} • Constellation: ${g.constellation}`,
+        description: g.description,
+        dataStatus: 'Real Archival Data',
+        sourceName: 'NASA/IPAC NED & SIMBAD',
+        sourceUrl: g.sourceUrl,
+        properties: [
+          { label: 'Catalog ID', value: g.catalogIdentifier },
+          { label: 'Morphology', value: g.morphologicalType },
+          { label: 'Redshift (z)', value: g.redshift },
+          { label: 'Radial Velocity', value: g.radialVelocityKmS.toLocaleString(), unit: 'km/s' },
+          { label: 'Distance', value: g.distanceMly, unit: 'Mly' },
+          { label: 'Distance', value: g.distanceMpc, unit: 'Mpc' }
+        ]
+      });
+    }
+  }
+
+  const starsData = readLocalData('data/stars/bright-stars.json');
+  if (starsData?.records) {
+    for (const s of starsData.records) {
+      items.push({
+        id: `star-${s.name.replace(/\\s+/g, '-').toLowerCase()}`,
+        name: s.name,
+        category: 'stars',
+        categoryLabel: 'Stars',
+        subtitle: `Spectral Type: ${s.spectralType} • Constellation: ${s.constellation}`,
+        description: s.description,
+        dataStatus: 'Real Archival Data',
+        sourceName: 'CDS SIMBAD',
+        sourceUrl: s.sourceUrl,
+        properties: [
+          { label: 'Spectral Class', value: s.spectralType },
+          { label: 'Apparent Mag (V)', value: s.apparentMagnitudeV },
+          { label: 'Absolute Mag (V)', value: s.absoluteMagnitudeV },
+          { label: 'Effective Temp', value: s.effectiveTemperatureK.toLocaleString(), unit: 'K' },
+          { label: 'Distance', value: s.distanceLightYears, unit: 'light-years' }
+        ]
+      });
+    }
+  }
+
+  const spherexData = readLocalData('data/spherex/mission-products.json');
+  if (spherexData?.primaryScienceTracers) {
+    for (const tr of spherexData.primaryScienceTracers) {
+      items.push({
+        id: `spherex-${tr.tracer.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`,
+        name: tr.tracer,
+        category: 'spherex',
+        categoryLabel: 'SPHEREx Tracers',
+        subtitle: `Central Wavelength: ${tr.centralWavelengthMicrons} µm`,
+        description: tr.scientificRole,
+        dataStatus: 'Mission Science Specification',
+        sourceName: 'NASA SPHEREx / Caltech IRSA',
+        sourceUrl: 'https://irsa.ipac.caltech.edu/',
+        properties: [
+          { label: 'Wavelength', value: tr.centralWavelengthMicrons, unit: 'µm' },
+          { label: 'Observatory Bands', value: '102 Spectral Channels' },
+          { label: 'Survey Coverage', value: 'All-Sky 4π Steradians' }
+        ]
+      });
+    }
+  }
+
+  let filtered = items;
+  if (category && category !== 'all') {
+    filtered = filtered.filter(item => item.category === category);
+  }
+
+  if (q && typeof q === 'string') {
+    const searchTerms = q.toLowerCase().trim().split(/\\s+/);
+    filtered = filtered.filter(item => {
+      const haystack = `${item.name} ${item.subtitle} ${item.description} ${item.properties.map(p => `${p.label} ${p.value}`).join(' ')}`.toLowerCase();
+      return searchTerms.every(term => haystack.includes(term));
+    });
+  }
+
+  return res.json({
+    success: true,
+    totalCount: items.length,
+    filteredCount: filtered.length,
+    items: filtered
+  });
 });
 
 // POST /api/chat - Main conversation endpoint

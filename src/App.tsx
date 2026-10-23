@@ -5,6 +5,7 @@ import { Footer } from './components/Footer';
 import { HomePage } from './components/HomePage';
 import { SPHERExExplorer } from './components/SPHERExExplorer';
 import { PlanetXExplorer } from './components/PlanetXExplorer';
+import { NasaDataCentre } from './components/NasaDataCentre';
 import { AIGuide } from './components/AIGuide';
 import { AboutPage } from './components/AboutPage';
 
@@ -29,7 +30,7 @@ export function App() {
       const candidate = hash || pathname;
       if (candidate === 'ai-guide' || candidate === 'guide') {
         setCurrentPage('ai-guide');
-      } else if (['home', 'spherex', 'planet-x', 'about'].includes(candidate)) {
+      } else if (['home', 'spherex', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
         setCurrentPage(candidate);
       } else if (!candidate) {
         setCurrentPage('home');
@@ -55,6 +56,7 @@ export function App() {
         {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
         {currentPage === 'spherex' && <SPHERExExplorer />}
         {currentPage === 'planet-x' && <PlanetXExplorer />}
+        {currentPage === 'data-centre' && <NasaDataCentre onNavigate={handleNavigate} />}
         {(currentPage === 'guide' || currentPage === 'ai-guide') && (
           <AIGuide onNavigate={handleNavigate} />
         )}

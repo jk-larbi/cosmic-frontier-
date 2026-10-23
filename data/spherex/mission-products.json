@@ -1,0 +1,62 @@
+{
+  "metadata": {
+    "source": "NASA/IPAC Infrared Science Archive (IRSA) & SPHEREx Project Science Office",
+    "sourceUrl": "https://irsa.ipac.caltech.edu/",
+    "retrievalDateUTC": "2026-10-23T23:00:00Z",
+    "mission": "SPHEREx (Spectro-Photometer for the History of the Universe, Epoch of Reionization and Ices Explorer)",
+    "dataStatus": "Mission Specification & ObsCore Schema",
+    "description": "Verified SPHEREx spectral channels, focal plane detector arrays, and IRSA TAP Obscore product schemas."
+  },
+  "telescopeSpecifications": {
+    "apertureDiameterCm": 20.0,
+    "fieldOfViewDeg": "3.5° × 11.3°",
+    "spectralBandsCount": 102,
+    "wavelengthRangeMicrons": "0.75 to 5.0",
+    "spectralResolvingPower": [
+      { "bandRange": "0.75 – 2.42 µm", "resolvingPowerR": 41 },
+      { "bandRange": "2.42 – 3.82 µm", "resolvingPowerR": 35 },
+      { "bandRange": "3.82 – 4.42 µm", "resolvingPowerR": 110 },
+      { "bandRange": "4.42 – 5.00 µm", "resolvingPowerR": 130 }
+    ],
+    "detectors": "Six 2048×2048 Teledyne Hawaii-2RG (H2RG) arrays with Linear Variable Filters (LVFs)",
+    "orbit": "Sun-synchronous low Earth polar terminator orbit (altitude ~650 km)",
+    "surveyCoverage": "All-sky 4π steradians surveyed every 6 months (4 complete all-sky maps over 2-year primary mission)"
+  },
+  "primaryScienceTracers": [
+    {
+      "tracer": "Interstellar Water Ice (H2O)",
+      "centralWavelengthMicrons": 3.05,
+      "scientificRole": "Measures absorption depth in dense molecular cloud cores to trace water delivery to forming planetary systems."
+    },
+    {
+      "tracer": "Frozen Carbon Dioxide (CO2)",
+      "centralWavelengthMicrons": 4.27,
+      "scientificRole": "Maps volatile carbon budget and ice chemistry across protostellar envelopes."
+    },
+    {
+      "tracer": "Carbon Monoxide Ice (CO)",
+      "centralWavelengthMicrons": 4.67,
+      "scientificRole": "Traces cold interstellar snow lines where temperatures drop below 20 Kelvin."
+    },
+    {
+      "tracer": "Cosmic Infrared Background (CIB)",
+      "centralWavelengthMicrons": 1.5,
+      "scientificRole": "Measures diffuse light fluctuations from the first stars and proto-galaxies during the Epoch of Reionization."
+    },
+    {
+      "tracer": "Large-Scale Galaxy Clustering",
+      "centralWavelengthMicrons": 1.0,
+      "scientificRole": "Determines 3D positions of 450+ million galaxies to measure primordial non-Gaussianity from cosmic inflation."
+    }
+  ],
+  "irsaTapSchemas": {
+    "tables": [
+      "spherex.artifact",
+      "spherex.obscore",
+      "spherex.observation",
+      "spherex.plane",
+      "spherex.provenance_input"
+    ],
+    "pipelineDataStatus": "Pre-Flight Calibration & Simulated Mission Cubes (Scheduled for post-launch operational release)"
+  }
+}

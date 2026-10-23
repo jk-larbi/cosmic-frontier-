@@ -1,0 +1,90 @@
+{
+  "metadata": {
+    "source": "CDS SIMBAD Astronomical Database (Strasbourg astronomical Data Center)",
+    "sourceUrl": "https://simbad.cds.unistra.fr/simbad/",
+    "retrievalDateUTC": "2026-10-23T23:00:00Z",
+    "recordCount": 6,
+    "dataStatus": "Real Archival Data",
+    "description": "Verified astrometric, photometric, and spectroscopic parameters for benchmark stellar targets."
+  },
+  "records": [
+    {
+      "name": "Sirius A",
+      "designation": "* alf CMa / HR 2491",
+      "spectralType": "A1V (White Main-Sequence)",
+      "constellation": "Canis Major",
+      "apparentMagnitudeV": -1.46,
+      "absoluteMagnitudeV": 1.42,
+      "effectiveTemperatureK": 9940,
+      "distanceLightYears": 8.6,
+      "distanceParsecs": 2.64,
+      "description": "The brightest star in Earth's night sky, orbited by a faint white dwarf companion (Sirius B).",
+      "sourceUrl": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Sirius"
+    },
+    {
+      "name": "Betelgeuse",
+      "designation": "* alf Ori / HR 2061",
+      "spectralType": "M1-M2Ia-ab (Red Supergiant)",
+      "constellation": "Orion",
+      "apparentMagnitudeV": 0.5,
+      "absoluteMagnitudeV": -5.85,
+      "effectiveTemperatureK": 3600,
+      "distanceLightYears": 642.5,
+      "distanceParsecs": 197.0,
+      "description": "A massive red supergiant nearing the end of its nuclear life cycle, destined to explode as a core-collapse supernova.",
+      "sourceUrl": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Betelgeuse"
+    },
+    {
+      "name": "Vega",
+      "designation": "* alf Lyr / HR 7001",
+      "spectralType": "A0Va (White Main-Sequence)",
+      "constellation": "Lyra",
+      "apparentMagnitudeV": 0.03,
+      "absoluteMagnitudeV": 0.58,
+      "effectiveTemperatureK": 9602,
+      "distanceLightYears": 25.04,
+      "distanceParsecs": 7.68,
+      "description": "The historical baseline standard for the zero-point of the astronomical magnitude system, surrounded by a circumstellar dust disk.",
+      "sourceUrl": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Vega"
+    },
+    {
+      "name": "Rigel",
+      "designation": "* bet Ori / HR 1713",
+      "spectralType": "B8Ia (Blue-White Supergiant)",
+      "constellation": "Orion",
+      "apparentMagnitudeV": 0.13,
+      "absoluteMagnitudeV": -7.84,
+      "effectiveTemperatureK": 12100,
+      "distanceLightYears": 863.0,
+      "distanceParsecs": 265.0,
+      "description": "An intensely luminous blue supergiant shining with over 100,000 times the radiant power of the Sun.",
+      "sourceUrl": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Rigel"
+    },
+    {
+      "name": "Proxima Centauri",
+      "designation": "* alf Cen C / V645 Cen",
+      "spectralType": "M5.5Ve (Red Flare Dwarf)",
+      "constellation": "Centaurus",
+      "apparentMagnitudeV": 11.13,
+      "absoluteMagnitudeV": 15.6,
+      "effectiveTemperatureK": 3042,
+      "distanceLightYears": 4.246,
+      "distanceParsecs": 1.302,
+      "description": "The closest known star to our Solar System, hosting at least two confirmed exoplanets (Proxima b and Proxima d).",
+      "sourceUrl": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Proxima+Centauri"
+    },
+    {
+      "name": "Polaris",
+      "designation": "* alf UMi / HR 424",
+      "spectralType": "F7Ib (Yellow Supergiant Classical Cepheid)",
+      "constellation": "Ursa Minor",
+      "apparentMagnitudeV": 1.98,
+      "absoluteMagnitudeV": -3.64,
+      "effectiveTemperatureK": 6015,
+      "distanceLightYears": 433.8,
+      "distanceParsecs": 133.0,
+      "description": "Earth's northern celestial pole star, a multiple star system anchored by a Classical Cepheid variable pulsating every 3.97 days.",
+      "sourceUrl": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=Polaris"
+    }
+  ]
+}

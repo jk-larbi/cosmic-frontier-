@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "source": "NASA Image and Video Library & NASA Astronomy Picture of the Day",
+    "sourceUrl": "https://images.nasa.gov/",
+    "retrievalDateUTC": "2026-10-23T23:00:00Z",
+    "recordCount": 6,
+    "dataStatus": "Real Archival Data",
+    "description": "Verified archival imagery of NASA observatories, deep-space astronomical surveys, and mission hardware with original NASA identifiers."
+  },
+  "records": [
+    {
+      "nasaId": "PIA26537",
+      "title": "SPHEREx Spacecraft Nears Completion",
+      "center": "JPL",
+      "dateCreated": "2024-08-15",
+      "credit": "NASA/JPL-Caltech/BAE Systems",
+      "thumbUrl": "https://images-assets.nasa.gov/image/PIA26537/PIA26537~medium.jpg",
+      "hdUrl": "https://images-assets.nasa.gov/image/PIA26537/PIA26537~orig.jpg",
+      "description": "The SPHEREx space observatory in a clean room following thermal and environmental vibration testing at BAE Systems in Boulder, Colorado.",
+      "sourcePage": "https://images.nasa.gov/details/PIA26537"
+    },
+    {
+      "nasaId": "PIA25784",
+      "title": "SPHEREx Outer Photon Shield",
+      "center": "JPL",
+      "dateCreated": "2024-03-20",
+      "credit": "NASA/JPL-Caltech",
+      "thumbUrl": "https://images-assets.nasa.gov/image/PIA25784/PIA25784~medium.jpg",
+      "hdUrl": "https://images-assets.nasa.gov/image/PIA25784/PIA25784~orig.jpg",
+      "description": "Payload systems engineers at NASA's Jet Propulsion Laboratory inspect the nested conical aluminum photon shields designed for passive cooling.",
+      "sourcePage": "https://images.nasa.gov/details/PIA25784"
+    },
+    {
+      "nasaId": "PIA26542",
+      "title": "SPHEREx in Horizontal Orientation",
+      "center": "JPL",
+      "dateCreated": "2024-08-22",
+      "credit": "NASA/JPL-Caltech/BAE Systems",
+      "thumbUrl": "https://images-assets.nasa.gov/image/PIA26542/PIA26542~medium.jpg",
+      "hdUrl": "https://images-assets.nasa.gov/image/PIA26542/PIA26542~orig.jpg",
+      "description": "NASA's SPHEREx observatory is rotated horizontally, displaying its triple-layered passive thermal radiation shield structure.",
+      "sourcePage": "https://images.nasa.gov/details/PIA26542"
+    },
+    {
+      "nasaId": "PIA15415",
+      "title": "Andromeda Galaxy in Infrared (WISE)",
+      "center": "JPL",
+      "dateCreated": "2012-02-17",
+      "credit": "NASA/JPL-Caltech/UCLA",
+      "thumbUrl": "https://images-assets.nasa.gov/image/PIA15415/PIA15415~medium.jpg",
+      "hdUrl": "https://images-assets.nasa.gov/image/PIA15415/PIA15415~orig.jpg",
+      "description": "NASA's Wide-field Infrared Survey Explorer (WISE) captured this infrared mosaic of the Andromeda Galaxy (M31), highlighting dust lanes where stars are forming.",
+      "sourcePage": "https://images.nasa.gov/details/PIA15415"
+    },
+    {
+      "nasaId": "GSFC_20171208_archive_e000033",
+      "title": "Hubble Ultra Deep Field (2014)",
+      "center": "GSFC",
+      "dateCreated": "2014-06-03",
+      "credit": "NASA, ESA, H. Teplitz and M. Rafelski (IPAC/Caltech), A. Koekemoer (STScI), R. Windhorst (Arizona State University), and Z. Levay (STScI)",
+      "thumbUrl": "https://images-assets.nasa.gov/image/GSFC_20171208_archive_e000033/GSFC_20171208_archive_e000033~medium.jpg",
+      "hdUrl": "https://images-assets.nasa.gov/image/GSFC_20171208_archive_e000033/GSFC_20171208_archive_e000033~orig.jpg",
+      "description": "Ultraviolet, optical, and near-infrared composite of nearly 10,000 galaxies stretching back to within a few hundred million years of the Big Bang.",
+      "sourcePage": "https://images.nasa.gov/details/GSFC_20171208_archive_e000033"
+    },
+    {
+      "nasaId": "PIA00122",
+      "title": "Earth and Moon from Galileo",
+      "center": "JPL",
+      "dateCreated": "1992-12-16",
+      "credit": "NASA/JPL",
+      "thumbUrl": "https://images-assets.nasa.gov/image/PIA00122/PIA00122~medium.jpg",
+      "hdUrl": "https://images-assets.nasa.gov/image/PIA00122/PIA00122~orig.jpg",
+      "description": "Eight days after its encounter with Earth, NASA's Galileo spacecraft looked back and captured this remarkable view of the Moon in orbit around Earth.",
+      "sourcePage": "https://images.nasa.gov/details/PIA00122"
+    }
+  ]
+}

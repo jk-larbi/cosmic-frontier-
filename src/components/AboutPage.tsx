@@ -199,6 +199,15 @@ export const AboutPage: FC = () => {
             <strong className="text-[#F8FAFC]">International Astronomical Union (IAU) Minor Planet Center:</strong> Ephemerides and orbital elements for Sedna, 2012 VP113, and Leleākūhonua.
           </li>
           <li className="p-3 rounded-lg bg-[#050B1A] border border-[#1E293B]">
+            <strong className="text-[#F8FAFC]">NASA Exoplanet Archive (Caltech/IPAC):</strong> Table Access Protocol (TAP) ADQL queries for confirmed exoplanet physical and stellar parameters.
+          </li>
+          <li className="p-3 rounded-lg bg-[#050B1A] border border-[#1E293B]">
+            <strong className="text-[#F8FAFC]">NASA/JPL Solar System Dynamics:</strong> Horizons ephemerides and Small-Body Database (SBDB) astrometric Keplerian orbital elements and radar cross-sections.
+          </li>
+          <li className="p-3 rounded-lg bg-[#050B1A] border border-[#1E293B]">
+            <strong className="text-[#F8FAFC]">CDS SIMBAD & NASA/IPAC NED:</strong> Astronomical database for identification of stellar benchmarks and extragalactic redshift distance matrices.
+          </li>
+          <li className="p-3 rounded-lg bg-[#050B1A] border border-[#1E293B]">
             <strong className="text-[#F8FAFC]">NASA Infrared Processing and Analysis Center (IPAC):</strong> Infrared astronomical data archives from WISE, Spitzer, and Herschel.
           </li>
         </ul>

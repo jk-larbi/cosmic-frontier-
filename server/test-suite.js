@@ -189,7 +189,7 @@ async function runTests() {
   }
 
   // 8. Navigation Routes & SPA Fallback
-  const appRoutes = ['/', '/spherex', '/planet-x', '/ai-guide', '/about'];
+  const appRoutes = ['/', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
   for (const route of appRoutes) {
     try {
       const resRoute = await fetch(`${BASE_URL}${route}`);
@@ -218,6 +218,68 @@ async function runTests() {
     assert(evidenceFile.includes('Alternative Scientific Explanations'), 'Test 9.8: Evidence includes alternative scientific hypotheses');
   } catch (err) {
     assert(false, `Test 9: Static data audit failed: ${err.message}`);
+  }
+
+  // 10. NASA Astronomical Data Centre & Catalog Endpoints
+  try {
+    // 10.1 Manifest
+    const resManifest = await fetch(`${BASE_URL}/api/data/manifest`);
+    assert(resManifest.status === 200, 'Test 10.1: /api/data/manifest returns HTTP 200');
+    const manifestJson = await resManifest.json();
+    assert(manifestJson.manifestVersion === '1.0', 'Test 10.2: Manifest version is 1.0');
+    assert(Array.isArray(manifestJson.modules) && manifestJson.modules.length === 7, 'Test 10.3: Manifest contains 7 documented scientific modules');
+
+    // 10.2 Solar System
+    const resSolar = await fetch(`${BASE_URL}/api/data/solar-system`);
+    assert(resSolar.status === 200, 'Test 10.4: /api/data/solar-system returns HTTP 200');
+    const solarJson = await resSolar.json();
+    assert(Array.isArray(solarJson.records) && solarJson.records.length === 9, 'Test 10.5: Solar system returns Sun and 8 recognized planets');
+    assert(solarJson.records.some(p => p.id === 'earth' && p.semiMajorAxisAU === 1), 'Test 10.6: Earth is present with 1 AU semi-major axis');
+
+    // 10.3 Exoplanets
+    const resExo = await fetch(`${BASE_URL}/api/data/exoplanets`);
+    assert(resExo.status === 200, 'Test 10.7: /api/data/exoplanets returns HTTP 200');
+    const exoJson = await resExo.json();
+    assert(Array.isArray(exoJson.records) && exoJson.records.length >= 25, 'Test 10.8: Exoplanets returns 25+ verified confirmed records');
+    assert(exoJson.records.every(r => r.confirmedStatus === 'Confirmed'), 'Test 10.9: All exoplanet records preserve confirmedStatus: Confirmed');
+
+    // 10.4 Small Bodies
+    const resSb = await fetch(`${BASE_URL}/api/data/small-bodies`);
+    assert(resSb.status === 200, 'Test 10.10: /api/data/small-bodies returns HTTP 200');
+    const sbJson = await resSb.json();
+    assert(Array.isArray(sbJson.confirmedObjects) && sbJson.confirmedObjects.length >= 8, 'Test 10.11: Confirmed small bodies includes asteroids/comets');
+    assert(Array.isArray(sbJson.hypotheticalScenarios) && sbJson.hypotheticalScenarios.length === 1, 'Test 10.12: Planet X is segregated in hypotheticalScenarios');
+
+    // 10.5 Galaxies
+    const resGalaxies = await fetch(`${BASE_URL}/api/data/galaxies`);
+    assert(resGalaxies.status === 200, 'Test 10.13: /api/data/galaxies returns HTTP 200');
+    const galJson = await resGalaxies.json();
+    assert(Array.isArray(galJson.records) && galJson.records.length === 6, 'Test 10.14: Galaxies catalog contains 6 deep-sky targets');
+
+    // 10.6 Stars
+    const resStars = await fetch(`${BASE_URL}/api/data/stars`);
+    assert(resStars.status === 200, 'Test 10.15: /api/data/stars returns HTTP 200');
+    const starJson = await resStars.json();
+    assert(Array.isArray(starJson.records) && starJson.records.length === 6, 'Test 10.16: Stars catalog contains 6 SIMBAD benchmark targets');
+
+    // 10.7 SPHEREx Products
+    const resSph = await fetch(`${BASE_URL}/api/data/spherex`);
+    assert(resSph.status === 200, 'Test 10.17: /api/data/spherex returns HTTP 200');
+    const sphJson = await resSph.json();
+    assert(sphJson.telescopeSpecifications?.spectralBandsCount === 102, 'Test 10.18: SPHEREx data verifies 102 spectral channels');
+
+    // 10.8 Aggregated Catalog
+    const resCatalog = await fetch(`${BASE_URL}/api/data/catalog?category=all`);
+    assert(resCatalog.status === 200, 'Test 10.19: /api/data/catalog?category=all returns HTTP 200');
+    const catJson = await resCatalog.json();
+    assert(Array.isArray(catJson.items) && catJson.items.length >= 50, 'Test 10.20: Unified catalog aggregates 50+ total items across modules');
+
+    // 10.9 Catalog Search
+    const resSearch = await fetch(`${BASE_URL}/api/data/catalog?q=Jupiter`);
+    const searchJson = await resSearch.json();
+    assert(searchJson.items.some(i => i.name.includes('Jupiter')), 'Test 10.21: Search for "Jupiter" returns matching records');
+  } catch (err) {
+    assert(false, `Test 10: NASA Data Centre test failed: ${err.message}`);
   }
 
   console.log('\n====================================================');

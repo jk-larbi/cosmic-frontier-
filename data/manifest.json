@@ -1,0 +1,128 @@
+{
+  "manifestVersion": "1.0",
+  "project": "COSMIC FRONTIER — NASA Space Apps Challenge 2026",
+  "generatedDateUTC": "2026-10-23T23:00:00Z",
+  "modules": [
+    {
+      "id": "solar-system",
+      "name": "Solar System Major Planets Catalog",
+      "path": "data/solar-system/planets.json",
+      "source": "NASA/JPL Solar System Dynamics & Horizons Ephemerides",
+      "sourceUrl": "https://ssd.jpl.nasa.gov/horizons/",
+      "retrievalMethod": "JPL Horizons API & IAU Reference Ephemerides",
+      "recordCount": 9,
+      "dataStatus": "Reference Standard",
+      "units": {
+        "meanRadiusKm": "kilometres (km)",
+        "massEarthRelative": "ratio relative to Earth mass (5.972e24 kg)",
+        "semiMajorAxisAU": "Astronomical Units (1 AU = 149,597,870.7 km)",
+        "orbitalPeriodDays": "sidereal Earth days",
+        "orbitalPeriodYears": "Julian tropical years",
+        "inclinationDeg": "degrees to ecliptic plane",
+        "rotationPeriodHours": "sidereal hours (negative indicates retrograde rotation)"
+      },
+      "knownLimitations": "Elliptical orbits assume fixed mean Keplerian elements; real-time planetary perturbations require full numerical N-body integration."
+    },
+    {
+      "id": "exoplanets",
+      "name": "Confirmed Exoplanet Archive Catalog",
+      "path": "data/exoplanets/confirmed-exoplanets.json",
+      "source": "NASA Exoplanet Archive (Caltech/IPAC)",
+      "sourceUrl": "https://exoplanetarchive.ipac.caltech.edu/",
+      "retrievalMethod": "TAP (Table Access Protocol) ADQL query over table 'ps'",
+      "recordCount": 25,
+      "dataStatus": "Real Archival Data",
+      "units": {
+        "orbitalPeriodDays": "days",
+        "radiusEarthRadii": "Earth radii (1 R_earth = 6,371 km)",
+        "massEarthMasses": "Earth masses (1 M_earth = 5.972e24 kg)",
+        "stellarEffectiveTempK": "Kelvin (K)",
+        "distanceParsecs": "parsecs (1 pc = 3.26156 light-years)",
+        "distanceLightYears": "light-years"
+      },
+      "knownLimitations": "Bounded sample query limited to confirmed planets with measured radius; unmeasured properties preserved as null."
+    },
+    {
+      "id": "small-bodies",
+      "name": "JPL Asteroids, Comets & Trans-Neptunian Objects",
+      "path": "data/small-bodies/asteroids-comets.json",
+      "source": "NASA/JPL Solar System Dynamics Small-Body Database (SBDB)",
+      "sourceUrl": "https://ssd-api.jpl.nasa.gov/",
+      "retrievalMethod": "REST query over ssd-api.jpl.nasa.gov/sbdb.api and sb_radar.api",
+      "recordCount": 8,
+      "dataStatus": "Real Archival Data (with 1 distinctly separated hypothetical scenario)",
+      "units": {
+        "semiMajorAxisAU": "Astronomical Units (AU)",
+        "perihelionAU": "Astronomical Units (AU)",
+        "inclinationDeg": "degrees to ecliptic",
+        "orbitalPeriodYears": "years",
+        "diameterKm": "kilometres"
+      },
+      "knownLimitations": "Planet X is strictly segregated into hypotheticalScenarios and identified as unconfirmed."
+    },
+    {
+      "id": "galaxies",
+      "name": "Extragalactic Deep-Sky Targets",
+      "path": "data/galaxies/deep-sky-galaxies.json",
+      "source": "NASA/IPAC Extragalactic Database (NED) & CDS SIMBAD",
+      "sourceUrl": "https://ned.ipac.caltech.edu/",
+      "retrievalMethod": "Astrometric and redshift database query",
+      "recordCount": 6,
+      "dataStatus": "Real Archival Data",
+      "units": {
+        "redshift": "dimensionless z",
+        "radialVelocityKmS": "kilometres per second (km/s)",
+        "distanceMly": "millions of light-years (Mly)",
+        "distanceMpc": "megaparsecs (Mpc)"
+      },
+      "knownLimitations": "Cosmic distances are based on standard Lambda-CDM cosmological parameters (H0 = 67.8 km/s/Mpc)."
+    },
+    {
+      "id": "stars",
+      "name": "CDS SIMBAD Benchmark Stellar Catalog",
+      "path": "data/stars/bright-stars.json",
+      "source": "CDS SIMBAD Astronomical Database",
+      "sourceUrl": "https://simbad.cds.unistra.fr/simbad/",
+      "retrievalMethod": "SIMBAD TAP ADQL query over table 'basic'",
+      "recordCount": 6,
+      "dataStatus": "Real Archival Data",
+      "units": {
+        "apparentMagnitudeV": "standard Johnson V magnitude",
+        "absoluteMagnitudeV": "absolute visual magnitude at 10 parsecs",
+        "effectiveTemperatureK": "Kelvin (K)",
+        "distanceLightYears": "light-years"
+      },
+      "knownLimitations": "Selected primary benchmark stars for observational and calibration comparison."
+    },
+    {
+      "id": "spherex",
+      "name": "SPHEREx Mission Architecture & IRSA Schema",
+      "path": "data/spherex/mission-products.json",
+      "source": "NASA/IPAC Infrared Science Archive (IRSA) & SPHEREx Science Office",
+      "sourceUrl": "https://irsa.ipac.caltech.edu/",
+      "retrievalMethod": "IRSA ObsCore TAP Schema & Mission White Paper specifications",
+      "recordCount": 5,
+      "dataStatus": "Mission Specification & ObsCore Schema",
+      "units": {
+        "apertureDiameterCm": "centimetres (cm)",
+        "wavelengthRangeMicrons": "micrometres (µm)",
+        "centralWavelengthMicrons": "micrometres (µm)"
+      },
+      "knownLimitations": "SPHEREx is scheduled for launch; current public IRSA products represent pre-flight calibration pipelines."
+    },
+    {
+      "id": "images",
+      "name": "NASA Image and Video Library Archival Imagery",
+      "path": "data/images/nasa-archives.json",
+      "source": "NASA Image and Video Library",
+      "sourceUrl": "https://images.nasa.gov/",
+      "retrievalMethod": "NASA Image API query (images-api.nasa.gov)",
+      "recordCount": 6,
+      "dataStatus": "Real Archival Data",
+      "units": {
+        "dateCreated": "ISO 8601 YYYY-MM-DD"
+      },
+      "knownLimitations": "Images are subject to official NASA image use guidelines and retain original NASA identifiers."
+    }
+  ]
+}

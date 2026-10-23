@@ -1,0 +1,96 @@
+{
+  "metadata": {
+    "source": "NASA/IPAC Extragalactic Database (NED) & CDS SIMBAD",
+    "sourceUrl": "https://ned.ipac.caltech.edu/",
+    "retrievalDateUTC": "2026-10-23T23:00:00Z",
+    "recordCount": 6,
+    "dataStatus": "Real Archival Data",
+    "description": "Verified astrometric positions, redshifts, morphological classifications, and distances for representative extragalactic targets."
+  },
+  "records": [
+    {
+      "name": "Andromeda Galaxy (M31)",
+      "catalogIdentifier": "MESSIER 031 / NGC 0224",
+      "morphologicalType": "SA(s)b (Spiral Galaxy)",
+      "constellation": "Andromeda",
+      "rightAscension": "00h 42m 44.3s",
+      "declination": "+41° 16′ 09″",
+      "redshift": -0.001001,
+      "radialVelocityKmS": -300.0,
+      "distanceMly": 2.54,
+      "distanceMpc": 0.778,
+      "description": "The largest galaxy in the Local Group, heading toward a gravitational merger with our Milky Way in ~4.5 billion years.",
+      "sourceUrl": "https://ned.ipac.caltech.edu/byname?objname=MESSIER+031"
+    },
+    {
+      "name": "Triangulum Galaxy (M33)",
+      "catalogIdentifier": "MESSIER 033 / NGC 0598",
+      "morphologicalType": "SA(s)cd (Sc Spiral)",
+      "constellation": "Triangulum",
+      "rightAscension": "01h 33m 50.9s",
+      "declination": "+30° 39′ 36″",
+      "redshift": -0.000597,
+      "radialVelocityKmS": -179.0,
+      "distanceMly": 2.73,
+      "distanceMpc": 0.837,
+      "description": "The third-largest member of the Local Group, rich in giant ionized hydrogen star-forming regions such as NGC 604.",
+      "sourceUrl": "https://ned.ipac.caltech.edu/byname?objname=MESSIER+033"
+    },
+    {
+      "name": "Whirlpool Galaxy (M51a)",
+      "catalogIdentifier": "MESSIER 051 / NGC 5194",
+      "morphologicalType": "SA(s)bc pec (Grand Design Spiral)",
+      "constellation": "Canes Venatici",
+      "rightAscension": "13h 29m 52.7s",
+      "declination": "+47° 11′ 43″",
+      "redshift": 0.001544,
+      "radialVelocityKmS": 463.0,
+      "distanceMly": 23.5,
+      "distanceMpc": 7.2,
+      "description": "A classic grand-design spiral galaxy tidally interacting with its companion dwarf galaxy NGC 5195.",
+      "sourceUrl": "https://ned.ipac.caltech.edu/byname?objname=MESSIER+051"
+    },
+    {
+      "name": "Sombrero Galaxy (M104)",
+      "catalogIdentifier": "MESSIER 104 / NGC 4594",
+      "morphologicalType": "SA(s)a (Unbarred Spiral)",
+      "constellation": "Virgo",
+      "rightAscension": "12h 39m 59.4s",
+      "declination": "-11° 37′ 23″",
+      "redshift": 0.003416,
+      "radialVelocityKmS": 1024.0,
+      "distanceMly": 31.1,
+      "distanceMpc": 9.55,
+      "description": "Characterized by an exceptionally luminous white central bulge and a prominent dark absorption lane of interstellar dust.",
+      "sourceUrl": "https://ned.ipac.caltech.edu/byname?objname=MESSIER+104"
+    },
+    {
+      "name": "Large Magellanic Cloud (LMC)",
+      "catalogIdentifier": "ESO 056-115 / PGC 017223",
+      "morphologicalType": "SB(s)m (Magellanic Spiral)",
+      "constellation": "Dorado / Mensa",
+      "rightAscension": "05h 23m 34.5s",
+      "declination": "-69° 45′ 22″",
+      "redshift": 0.000927,
+      "radialVelocityKmS": 278.0,
+      "distanceMly": 0.163,
+      "distanceMpc": 0.050,
+      "description": "A major satellite galaxy of the Milky Way, housing the Tarantula Nebula (30 Doradus), the most active starburst nursery in the Local Group.",
+      "sourceUrl": "https://ned.ipac.caltech.edu/byname?objname=Large+Magellanic+Cloud"
+    },
+    {
+      "name": "Pinwheel Galaxy (M101)",
+      "catalogIdentifier": "MESSIER 101 / NGC 5457",
+      "morphologicalType": "SAB(rs)cd (Grand Design Spiral)",
+      "constellation": "Ursa Major",
+      "rightAscension": "14h 03m 12.6s",
+      "declination": "+54° 20′ 57″",
+      "redshift": 0.000804,
+      "radialVelocityKmS": 241.0,
+      "distanceMly": 20.9,
+      "distanceMpc": 6.4,
+      "description": "A face-on spiral galaxy twice the diameter of our Milky Way containing massive young star clusters and prominent spiral arms.",
+      "sourceUrl": "https://ned.ipac.caltech.edu/byname?objname=MESSIER+101"
+    }
+  ]
+}
