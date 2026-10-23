@@ -14,7 +14,8 @@ import {
   ShieldAlert, 
   ArrowRight,
   Database,
-  Globe
+  Globe,
+  Compass
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -67,6 +68,33 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
               <span>Three.js Visualizer</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+            </div>
+          </div>
+
+          {/* Card 2: Exoplanet Discovery Lab */}
+          <div 
+            onClick={() => onNavigate('exoplanets')}
+            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#8B5CF6] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#8B5CF6]/15 transition-all cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#C084FC] group-hover:scale-110 transition-transform">
+                <Compass className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono text-[#C084FC] font-bold uppercase tracking-wider">
+                  NASA Exoplanet Archive
+                </span>
+                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#C084FC] transition-colors mt-0.5">
+                  Exoplanet Lab
+                </h3>
+              </div>
+              <p className="text-xs text-[#A7B4CC] leading-relaxed">
+                Discover worlds beyond our Solar System. Filter by transit, radial velocity, or direct imaging, and compare physical parameters.
+              </p>
+            </div>
+            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#C084FC]">
+              <span>Comparative Lab</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
             </div>
           </div>

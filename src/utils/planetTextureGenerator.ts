@@ -432,3 +432,4 @@ export function createNeptuneTexture(): THREE.CanvasTexture {
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
+

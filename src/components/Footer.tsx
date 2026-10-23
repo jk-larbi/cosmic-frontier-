@@ -46,6 +46,15 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
               </li>
               <li>
                 <button
+                  onClick={() => onNavigate('exoplanets')}
+                  className="hover:text-[#8B5CF6] flex items-center gap-1.5 transition-colors"
+                >
+                  <Compass className="w-3.5 h-3.5 text-[#8B5CF6]" />
+                  <span>Exoplanet Discovery Lab</span>
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => onNavigate('spherex')}
                   className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors"
                 >

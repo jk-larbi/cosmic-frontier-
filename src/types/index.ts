@@ -1,4 +1,4 @@
-export type AppPage = 'home' | 'universe' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
+export type AppPage = 'home' | 'universe' | 'exoplanets' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
 
 export interface InfraredBand {
   id: string;
@@ -141,10 +141,15 @@ export interface ExoplanetRecord {
   orbitalPeriodDays: number | null;
   radiusEarthRadii: number | null;
   massEarthMasses: number | null;
+  massJupiterMasses?: number | null;
+  semiMajorAxisAU?: number | null;
+  eccentricity?: number | null;
   stellarEffectiveTempK: number | null;
   distanceParsecs: number | null;
   distanceLightYears: number | null;
   dataStatus: string;
+  disposition?: 'Confirmed' | 'Candidate';
+  sourceUrl?: string;
 }
 
 export interface SmallBodyRecord {

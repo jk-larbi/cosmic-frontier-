@@ -189,7 +189,7 @@ async function runTests() {
   }
 
   // 8. Navigation Routes & SPA Fallback
-  const appRoutes = ['/', '/universe', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
+  const appRoutes = ['/', '/universe', '/exoplanets', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
   for (const route of appRoutes) {
     try {
       const resRoute = await fetch(`${BASE_URL}${route}`);
@@ -305,6 +305,35 @@ async function runTests() {
     assert(chatData.links && chatData.links.some(l => l.page === 'universe'), 'Test 11.9: AI Guide provides contextual link to 3D Universe');
   } catch (err) {
     assert(false, `Test 11: 3D Universe test failed: ${err.message}`);
+  }
+
+  // 12. Exoplanet Discovery Lab Architecture & Science Tests
+  try {
+    const resExoCand = await fetch(`${BASE_URL}/api/data/exoplanets?candidates=true`);
+    assert(resExoCand.status === 200, 'Test 12.1: /api/data/exoplanets?candidates=true returns HTTP 200');
+    const exoCandJson = await resExoCand.json();
+    assert(Array.isArray(exoCandJson.records) && exoCandJson.records.length >= 25, 'Test 12.2: Exoplanet query returns 25+ records');
+    assert(exoCandJson.records.some(r => r.disposition === 'Confirmed'), 'Test 12.3: Confirmed exoplanets are present');
+
+    const resSearch = await fetch(`${BASE_URL}/api/data/exoplanets?search=K2`);
+    const searchJson = await resSearch.json();
+    assert(searchJson.records.every(r => r.planetName.toLowerCase().includes('k2') || r.hostStar.toLowerCase().includes('k2')), 'Test 12.4: Search correctly filters by keyword');
+
+    const labFile = fs.readFileSync(path.resolve(__dirname, '../src/components/ExoplanetDiscoveryLab.tsx'), 'utf8');
+    assert(labFile.includes('compareList'), 'Test 12.5: Implements comparison workspace state');
+    assert(labFile.includes('getHabitableZoneEstimate'), 'Test 12.6: Implements stellar habitable zone estimator');
+    assert(labFile.includes('transit') && labFile.includes('radial-velocity') && labFile.includes('direct-imaging') && labFile.includes('microlensing'), 'Test 12.7: Covers 4+ major astronomical discovery techniques');
+    assert(labFile.includes('Non-Fabrication Policy on Life'), 'Test 12.8: Features explicit non-fabrication policy and habitability caveats');
+
+    const resChatExo = await fetch(`${BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'How do astronomers detect exoplanets like TRAPPIST-1 e?' })
+    });
+    const chatExoData = await resChatExo.json();
+    assert(chatExoData.links && chatExoData.links.some(l => l.page === 'exoplanets'), 'Test 12.9: AI Guide provides contextual link to Exoplanet Lab');
+  } catch (err) {
+    assert(false, `Test 12: Exoplanet Lab test failed: ${err.message}`);
   }
 
   console.log('\n====================================================');

@@ -36,8 +36,11 @@ export async function fetchSolarSystemPlanets() {
   return safeFetch('/api/data/solar-system', []);
 }
 
-export async function fetchConfirmedExoplanets(search?: string) {
-  const query = search ? `?search=${encodeURIComponent(search)}` : '';
+export async function fetchConfirmedExoplanets(search?: string, includeCandidates = true) {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  if (includeCandidates) params.append('candidates', 'true');
+  const query = params.toString() ? `?${params.toString()}` : '';
   return safeFetch<ExoplanetRecord[]>(`/api/data/exoplanets${query}`, []);
 }
 

@@ -3,6 +3,32 @@
 
 export const VERIFIED_KNOWLEDGE_BASE = [
   {
+    id: 'exoplanets',
+    keywords: ['exoplanet', 'exoplanets', 'alien', 'trappist', 'kepler', 'habitable', 'goldilocks', 'detect', 'alien world', 'proxima'],
+    question: 'What is an exoplanet and how do astronomers detect them?',
+    answer: `An **exoplanet** (extrasolar planet) is any planet that orbits a star outside our Solar System. Over 5,500 confirmed exoplanets have been verified across our Milky Way galaxy.
+
+Astronomers discover exoplanets using five primary observational techniques:
+1. **Transit Photometry**: Measuring periodic dips in starlight when a planet crosses in front of its star (used by NASA Kepler and TESS).
+2. **Radial Velocity (Doppler Wobble)**: Measuring periodic shifts in stellar spectral lines as an orbiting planet tugs on its host star.
+3. **Direct Imaging**: Using coronagraphs to block blinding starlight and photograph young, hot giant planets directly in infrared light.
+4. **Gravitational Microlensing**: Using gravitational warping of space-time to magnify background starlight.
+5. **Astrometry**: Tracking microscopic 2D wobbles of stars across the sky with ultra-precise observatories like ESA Gaia.`,
+    suggestions: [
+      'How does the transit method work?',
+      'What is the habitable zone?',
+      'What are the closest confirmed exoplanets?'
+    ],
+    links: [
+      {
+        label: 'Open Exoplanet Discovery Lab',
+        page: 'exoplanets',
+        reason: 'Search, filter, inspect, and compare confirmed exoplanets from the NASA Exoplanet Archive.'
+      }
+    ],
+    scientificReference: 'NASA Exoplanet Exploration Program & Caltech/IPAC Exoplanet Archive'
+  },
+  {
     id: 'infrared-light',
     keywords: ['infrared', 'light', 'wavelength', 'heat', 'radiation', 'electromagnetic', 'see', 'spectrum'],
     question: 'What is infrared light?',

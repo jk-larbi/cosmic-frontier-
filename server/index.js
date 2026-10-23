@@ -93,6 +93,24 @@ function getExplorerLinks(text) {
     });
   }
 
+  const mentionsExoplanets = lower.includes('exoplanet') ||
+    lower.includes('trappist') ||
+    lower.includes('kepler') ||
+    lower.includes('habitable') ||
+    lower.includes('goldilocks') ||
+    lower.includes('transit') ||
+    lower.includes('radial velocity') ||
+    lower.includes('alien world') ||
+    lower.includes('proxima b');
+
+  if (mentionsExoplanets) {
+    links.push({
+      label: 'Explore in Exoplanet Discovery Lab',
+      page: 'exoplanets',
+      reason: 'Search, filter, and compare confirmed exoplanets from the NASA Exoplanet Archive.'
+    });
+  }
+
   if (mentionsSpherex) {
     links.push({
       label: 'Explore in SPHEREx Explorer',
@@ -355,6 +373,7 @@ app.get('/api/data/solar-system', (req, res) => {
 // 3. GET /api/data/exoplanets
 app.get('/api/data/exoplanets', async (req, res) => {
   const search = req.query.search ? String(req.query.search).toLowerCase() : null;
+  const includeCandidates = req.query.candidates === 'true';
   const now = Date.now();
 
   let records = null;
@@ -367,13 +386,13 @@ app.get('/api/data/exoplanets', async (req, res) => {
     source = 'NASA Exoplanet Archive (TAP Cache)';
     isLive = true;
   } else {
-    // Attempt live ADQL query
+    // Attempt live ADQL query with complete orbital and physical parameters
     try {
-      const adql = 'select top 30 pl_name,hostname,discoverymethod,disc_year,pl_orbper,pl_rade,pl_bmasse,st_teff,sy_dist from ps where default_flag=1 and pl_orbper is not null order by disc_year desc';
+      const adql = 'select top 100 pl_name,hostname,discoverymethod,disc_year,pl_orbper,pl_rade,pl_bmasse,pl_bmassj,pl_orbsmax,pl_orbeccen,st_teff,sy_dist from ps where default_flag=1 order by disc_year desc';
       const tapUrl = `https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=${encodeURIComponent(adql)}&format=json`;
       const tapRes = await fetch(tapUrl, {
         headers: { 'User-Agent': 'CosmicFrontier/1.0' },
-        signal: AbortSignal.timeout(6000)
+        signal: AbortSignal.timeout(8000)
       });
       if (tapRes.ok) {
         const raw = await tapRes.json();
@@ -381,15 +400,20 @@ app.get('/api/data/exoplanets', async (req, res) => {
           records = raw.map(p => ({
             planetName: p.pl_name,
             hostStar: p.hostname,
-            discoveryMethod: p.discoverymethod,
+            discoveryMethod: p.discoverymethod || 'Transit',
             discoveryYear: p.disc_year,
             orbitalPeriodDays: p.pl_orbper ? parseFloat(p.pl_orbper.toFixed(4)) : null,
             radiusEarthRadii: p.pl_rade ? parseFloat(p.pl_rade.toFixed(2)) : null,
             massEarthMasses: p.pl_bmasse ? parseFloat(p.pl_bmasse.toFixed(2)) : null,
+            massJupiterMasses: p.pl_bmassj ? parseFloat(p.pl_bmassj.toFixed(4)) : null,
+            semiMajorAxisAU: p.pl_orbsmax ? parseFloat(p.pl_orbsmax.toFixed(4)) : null,
+            eccentricity: p.pl_orbeccen != null ? parseFloat(p.pl_orbeccen.toFixed(4)) : null,
             stellarEffectiveTempK: p.st_teff ? Math.round(p.st_teff) : null,
             distanceParsecs: p.sy_dist ? parseFloat(p.sy_dist.toFixed(2)) : null,
             distanceLightYears: p.sy_dist ? parseFloat((p.sy_dist * 3.26156).toFixed(2)) : null,
             confirmedStatus: 'Confirmed',
+            disposition: 'Confirmed',
+            dataStatus: 'Confirmed Exoplanet',
             sourceUrl: `https://exoplanetarchive.ipac.caltech.edu/overview/${encodeURIComponent(p.pl_name)}`
           }));
           cachedLiveExoplanets = records;
@@ -409,8 +433,49 @@ app.get('/api/data/exoplanets', async (req, res) => {
     source = 'NASA Exoplanet Archive (Verified Local Benchmark)';
   }
 
-  if (search && records) {
-    records = records.filter(r => 
+  // Optionally include unconfirmed candidate planets from NASA Kepler/K2/TESS candidate archives
+  let candidateRecords = [];
+  if (includeCandidates) {
+    try {
+      const candAdql = 'select top 20 kepoi_name, koi_disposition, koi_period, koi_prad, koi_steff from cumulative where koi_disposition = \'CANDIDATE\' and koi_period is not null and koi_prad is not null';
+      const candUrl = `https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=${encodeURIComponent(candAdql)}&format=json`;
+      const candRes = await fetch(candUrl, {
+        headers: { 'User-Agent': 'CosmicFrontier/1.0' },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (candRes.ok) {
+        const candRaw = await candRes.json();
+        if (Array.isArray(candRaw)) {
+          candidateRecords = candRaw.map(c => ({
+            planetName: c.kepoi_name,
+            hostStar: `Kepler Target (${c.kepoi_name.split('.')[0]})`,
+            discoveryMethod: 'Transit (Kepler Pipeline)',
+            discoveryYear: 2015,
+            orbitalPeriodDays: c.koi_period ? parseFloat(c.koi_period.toFixed(4)) : null,
+            radiusEarthRadii: c.koi_prad ? parseFloat(c.koi_prad.toFixed(2)) : null,
+            massEarthMasses: null, // Mass unmeasured for transit-only candidate
+            massJupiterMasses: null,
+            semiMajorAxisAU: null,
+            eccentricity: null,
+            stellarEffectiveTempK: c.koi_steff ? Math.round(c.koi_steff) : null,
+            distanceParsecs: null,
+            distanceLightYears: null,
+            confirmedStatus: 'Candidate',
+            disposition: 'Candidate',
+            dataStatus: 'Candidate (Unconfirmed)',
+            sourceUrl: `https://exoplanetarchive.ipac.caltech.edu/overview/${encodeURIComponent(c.kepoi_name)}`
+          }));
+        }
+      }
+    } catch (candErr) {
+      console.warn('[Data Layer] Candidate TAP query failed:', candErr.message);
+    }
+  }
+
+  let combined = [...(records || []), ...candidateRecords];
+
+  if (search && combined.length > 0) {
+    combined = combined.filter(r => 
       (r.planetName && r.planetName.toLowerCase().includes(search)) ||
       (r.hostStar && r.hostStar.toLowerCase().includes(search)) ||
       (r.discoveryMethod && r.discoveryMethod.toLowerCase().includes(search))
@@ -421,8 +486,8 @@ app.get('/api/data/exoplanets', async (req, res) => {
     success: true,
     source,
     isLive,
-    recordCount: records.length,
-    records
+    recordCount: combined.length,
+    records: combined
   });
 });
 
@@ -729,12 +794,19 @@ app.post('/api/chat', async (req, res) => {
       const verified = findVerifiedAnswer(trimmedMessage);
 
       if (verified) {
+        const mergedLinks = [...(verified.links || [])];
+        for (const el of explorerLinks) {
+          if (!mergedLinks.some(l => l.page === el.page)) {
+            mergedLinks.push(el);
+          }
+        }
+
         return res.json({
           reply: verified.answer,
           mode: 'demonstration',
           isAiConnected: false,
           suggestions: verified.suggestions,
-          links: verified.links && verified.links.length > 0 ? verified.links : explorerLinks,
+          links: mergedLinks,
           scientificReference: verified.scientificReference,
           notice: 'Demonstration Mode: Operating with verified scientific knowledge base (AI API key not configured).'
         });
