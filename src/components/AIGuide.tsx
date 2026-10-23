@@ -1,236 +1,482 @@
-import { useState, useRef, useEffect, type FC } from 'react';
-import type { GuideMessage } from '../types';
-import { findVerifiedAnswer } from '../data/guideKnowledge';
+import { useState, useRef, useEffect, type FC, type FormEvent } from 'react';
+import type { GuideMessage, AppPage } from '../types';
+import { STARTER_QUESTIONS, findVerifiedAnswer } from '../data/guideKnowledge';
 import { 
   Sparkles, 
   Send, 
   Bot, 
   User, 
-  Key, 
-  ShieldAlert, 
-  BookOpen 
+  RotateCcw, 
+  ShieldCheck, 
+  BookOpen, 
+  Telescope, 
+  Orbit, 
+  AlertCircle,
+  HelpCircle,
+  Loader2,
+  CheckCircle2
 } from 'lucide-react';
 
-const INITIAL_MESSAGES: GuideMessage[] = [
-  {
-    id: 'msg-init-1',
-    sender: 'assistant',
-    text: "Hello! I am your Cosmic Space Guide. I'm here to help you understand infrared astronomy, how NASA's SPHEREx mission maps the cosmos, and the scientific clues behind the hypothetical Planet X.\n\nWhat would you like to explore today?",
-    timestamp: 'Just now',
-    suggestions: [
-      'What is infrared light?',
-      'What is Planet X?',
-      'Why do scientists study distant galaxies?',
-      'What am I seeing in the infrared viewer?'
-    ]
-  }
-];
+interface AIGuideProps {
+  onNavigate?: (page: AppPage) => void;
+}
 
-export const AIGuide: FC = () => {
-  const [messages, setMessages] = useState<GuideMessage[]>(INITIAL_MESSAGES);
+interface BackendStatus {
+  isAiConfigured: boolean;
+  mode: 'live' | 'demonstration';
+  model?: string;
+  message?: string;
+}
+
+let msgSequence = 0;
+function createMessageId(prefix: string): string {
+  msgSequence += 1;
+  return `${prefix}-${msgSequence}-${Date.now()}`;
+}
+
+function getFormattedTime(): string {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+export const AIGuide: FC<AIGuideProps> = ({ onNavigate }) => {
+  const [messages, setMessages] = useState<GuideMessage[]>([]);
   const [inputValue, setInputValue] = useState<string>('');
-  const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [apiKeyModalOpen, setApiKeyModalOpen] = useState<boolean>(false);
-  const [apiKeyInput, setApiKeyInput] = useState<string>('');
-  const [activeApiKey, setActiveApiKey] = useState<string>('');
-  const [apiStatusMessage, setApiStatusMessage] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [backendStatus, setBackendStatus] = useState<BackendStatus | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-scroll chat to bottom
+  // Check backend AI status on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function checkStatus() {
+      try {
+        const res = await fetch('/api/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setBackendStatus(data);
+          }
+        } else {
+          if (isMounted) {
+            setBackendStatus({
+              isAiConfigured: false,
+              mode: 'demonstration',
+              message: 'Backend API unavailable. Operating with local verified educational database.'
+            });
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setBackendStatus({
+            isAiConfigured: false,
+            mode: 'demonstration',
+            message: 'Operating in client-side demonstration mode with verified educational database.'
+          });
+        }
+      }
+    }
+    checkStatus();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Auto-scroll chat to bottom smoothly
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+  }, [messages, isLoading]);
 
-  const handleSendMessage = (textToSend?: string) => {
+  // Focus input when loading ends
+  useEffect(() => {
+    if (!isLoading) {
+      inputRef.current?.focus();
+    }
+  }, [isLoading]);
+
+  // Handle starting a new conversation
+  const handleStartNewConversation = () => {
+    setMessages([]);
+    setErrorMessage(null);
+    setInputValue('');
+  };
+
+  // Send a message to backend /api/chat with fallback
+  const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || inputValue).trim();
-    if (!query) return;
+    if (!query || isLoading) return;
+
+    setErrorMessage(null);
 
     // 1. Add User Message
     const userMsg: GuideMessage = {
-      id: `user-${Date.now()}`,
+      id: createMessageId('user'),
       sender: 'user',
       text: query,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: getFormattedTime()
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    const nextMessages = [...messages, userMsg];
+    setMessages(nextMessages);
     setInputValue('');
-    setIsTyping(true);
+    setIsLoading(true);
 
-    // 2. Resolve Response using Verified Scientific Knowledge Base
-    setTimeout(() => {
-      const verified = findVerifiedAnswer(query);
+    // Build recent conversation history for multi-turn context
+    const historyPayload = nextMessages.slice(-6).map(m => ({
+      role: m.sender === 'user' ? 'user' : 'model',
+      text: m.text
+    }));
 
-      let responseText = '';
-      let suggestions: string[] = [];
-      let scientificRef = '';
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: query,
+          history: historyPayload
+        })
+      });
 
-      if (verified) {
-        responseText = verified.answer;
-        suggestions = verified.suggestions;
-        scientificRef = verified.scientificReference;
-      } else {
-        responseText = `That's an intriguing question about the cosmos! While our verified educational database focuses specifically on infrared astrophysics (SPHEREx), water ice detection, and outer Solar System dynamics (Planet X), here is what is scientifically established:\n\nAstronomers study celestial bodies by combining multi-wavelength observations (optical, infrared, radio) with rigorous orbital mechanics. If you're exploring our tools, I can guide you through the physics of infrared light, how extreme trans-Neptunian objects point toward possible unseen planets, or what each color palette in our viewer represents.`;
-        suggestions = [
-          'What is infrared light and why do astronomers use it?',
-          'What is NASA’s SPHEREx mission and what makes it special?',
-          'What is Planet X (or Planet Nine)?',
-          'How do scientists discover new planets?'
-        ];
-        scientificRef = 'NASA Cosmic Origins & Minor Planet Center Educational Archive';
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server responded with status ${response.status}`);
       }
 
-      const botMsg: GuideMessage = {
-        id: `bot-${Date.now()}`,
+      const data = await response.json();
+
+      const assistantMsg: GuideMessage = {
+        id: createMessageId('bot'),
         sender: 'assistant',
-        text: responseText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        suggestions,
-        scientificReference: scientificRef
+        text: data.reply,
+        timestamp: getFormattedTime(),
+        mode: data.mode,
+        isAiConnected: data.isAiConnected,
+        suggestions: data.suggestions,
+        links: data.links,
+        scientificReference: data.scientificReference,
+        notice: data.notice,
+        warning: data.warning
       };
 
-      setMessages(prev => [...prev, botMsg]);
-      setIsTyping(false);
-    }, 600);
+      setMessages(prev => [...prev, assistantMsg]);
+    } catch (err: unknown) {
+      const errorText = err instanceof Error ? err.message : 'Failed to connect to the assistant.';
+      console.warn('AI Guide request failed, falling back to verified educational knowledge base:', errorText);
+
+      // Gracefully switch to verified educational knowledge base
+      const localVerified = findVerifiedAnswer(query);
+
+      let fallbackReply = '';
+      let fallbackSuggestions = STARTER_QUESTIONS.slice(0, 4);
+      let fallbackLinks = [
+        { label: 'SPHEREx Explorer', page: 'spherex' as AppPage, reason: 'Inspect 102 infrared spectral channels and interstellar ices' },
+        { label: 'Planet X Explorer', page: 'planet-x' as AppPage, reason: 'Review extreme TNO orbits and gravitational clustering models' }
+      ];
+      let fallbackRef = 'NASA Astrophysics & Minor Planet Center Educational Archive';
+
+      if (localVerified) {
+        fallbackReply = localVerified.answer;
+        fallbackSuggestions = localVerified.suggestions;
+        fallbackLinks = localVerified.links || fallbackLinks;
+        fallbackRef = localVerified.scientificReference;
+      } else {
+        fallbackReply = `That is an interesting question about the cosmos!
+
+In educational demonstration mode, our verified database focuses on infrared astrophysics (SPHEREx), interstellar water ices, and outer Solar System dynamics (hypothetical Planet X).
+
+Key astronomical principles:
+- **Observation vs. Simulation**: Astronomical knowledge is established through multi-wavelength observations (optical, infrared, radio) and rigorous orbital mechanics. Visualizations and models in this app help illustrate concepts but are not observational discoveries.
+- **Hypotheses vs. Confirmations**: Hypothesized bodies (like Planet X) remain unconfirmed until direct observational proof is verified by the astronomical community.
+
+You can explore any of our core educational questions or inspect our interactive explorers.`;
+      }
+
+      const fallbackMsg: GuideMessage = {
+        id: createMessageId('bot'),
+        sender: 'assistant',
+        text: fallbackReply,
+        timestamp: getFormattedTime(),
+        mode: 'demonstration',
+        isAiConnected: false,
+        suggestions: fallbackSuggestions,
+        links: fallbackLinks,
+        scientificReference: fallbackRef,
+        notice: 'Demonstration Mode: Operating with verified educational knowledge base.'
+      };
+
+      setMessages(prev => [...prev, fallbackMsg]);
+      setErrorMessage(`Network notice: External AI service was unreachable. Verified educational fallback was used.`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSaveApiKey = () => {
-    if (!apiKeyInput.trim()) {
-      setActiveApiKey('');
-      setApiStatusMessage('Using verified offline educational knowledge base.');
-      setApiKeyModalOpen(false);
-      return;
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    handleSendMessage();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
-    // Store in state only (never committed or exposed)
-    setActiveApiKey(apiKeyInput.trim());
-    setApiStatusMessage('Custom API configuration saved for current session.');
-    setApiKeyModalOpen(false);
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fadeIn">
-      {/* Header */}
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1E293B]">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5C451]/10 text-[#F5C451] border border-[#F5C451]/30 text-xs font-semibold uppercase tracking-wider mb-2">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Educational Space Assistant</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-xs font-semibold uppercase tracking-wider mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-[#38BDF8]" />
+            <span>Educational Astronomy Assistant</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-[#F8FAFC]">
-            AI Space Guide
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#F8FAFC] tracking-tight">
+            COSMIC AI GUIDE
           </h1>
-          <p className="text-xs sm:text-sm text-[#A7B4CC] mt-1">
-            Ask questions about infrared astronomy, the SPHEREx mission, and the search for Planet X in simple language.
+          <p className="text-sm sm:text-base text-[#A7B4CC] mt-1">
+            Your friendly guide to the universe.
           </p>
         </div>
 
-        {/* API Settings Button */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        {/* Header Action Controls */}
+        <div className="flex items-center gap-3">
+          {/* New Conversation Button */}
           <button
-            onClick={() => setApiKeyModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B1630] border border-[#1E293B] hover:border-[#F5C451] text-xs font-mono text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
+            onClick={handleStartNewConversation}
+            disabled={isLoading || messages.length === 0}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] text-xs font-medium text-[#A7B4CC] hover:text-[#F8FAFC] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer focus:ring-2 focus:ring-[#38BDF8] focus:outline-none"
+            aria-label="Start a new conversation"
           >
-            <Key className="w-3.5 h-3.5 text-[#F5C451]" />
-            <span>{activeApiKey ? 'Custom API Active' : 'Verified Knowledge Mode'}</span>
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>New Conversation</span>
+          </button>
+
+          {/* Operational Mode Badge */}
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono ${
+              backendStatus?.isAiConfigured
+                ? 'bg-[#10B981]/10 text-[#34D399] border-[#10B981]/30'
+                : 'bg-[#F5C451]/10 text-[#F5C451] border-[#F5C451]/30'
+            }`}
+            title={backendStatus?.message || 'Operational status'}
+          >
+            {backendStatus?.isAiConfigured ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>AI Live: {backendStatus.model || 'Gemini'}</span>
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Demonstration Mode</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Scientific Integrity & Educational Mission Notice */}
+      <div className="p-4 rounded-xl bg-[#0B1630] border border-[#1E293B] flex items-start gap-3 text-xs text-[#A7B4CC]">
+        <ShieldCheck className="w-4 h-4 text-[#38BDF8] shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <p className="text-[#F8FAFC] font-medium">
+            Scientific Accuracy & Beginner-Friendly Guidelines
+          </p>
+          <p className="leading-relaxed">
+            COSMIC AI GUIDE explains astronomy concepts in simple language without unnecessary jargon. All answers strictly distinguish verified observational facts from hypothetical models (such as Planet X) and educational simulations. No telescope observations, coordinates, or measurements are fabricated.
+          </p>
+        </div>
+      </div>
+
+      {/* Error Alert Display */}
+      {errorMessage && (
+        <div 
+          role="alert"
+          className="p-3.5 rounded-xl bg-[#EF4444]/10 border border-[#EF4444]/30 text-xs text-[#FCA5A5] flex items-center justify-between gap-3 animate-fadeIn"
+        >
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-[#EF4444] shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            onClick={() => setErrorMessage(null)}
+            className="text-[#FCA5A5] hover:text-[#FFFFFF] text-xs font-mono font-bold"
+            aria-label="Dismiss error notice"
+          >
+            ✕
           </button>
         </div>
-      </div>
+      )}
 
-      {/* Scientific Integrity Banner */}
-      <div className="p-3.5 rounded-xl bg-[#0B1630] border border-[#1E293B] flex items-center justify-between gap-3 text-xs text-[#A7B4CC]">
-        <div className="flex items-center gap-2.5">
-          <ShieldAlert className="w-4 h-4 text-[#38BDF8] shrink-0" />
-          <span>
-            Operating in <strong className="text-[#F8FAFC]">Verified Science Mode</strong>. Explanations cite peer-reviewed research and official NASA/JPL mission data. No simulated data is fabricated as real observations.
-          </span>
-        </div>
-        <span className="hidden sm:inline-block px-2 py-0.5 rounded bg-[#38BDF8]/10 text-[#38BDF8] text-[10px] font-mono shrink-0">
-          Peer-Reviewed Corroboration
-        </span>
-      </div>
-
-      {/* Chat Container */}
-      <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-2xl overflow-hidden flex flex-col h-[580px]">
-        {/* Messages List Area */}
+      {/* Main Chat Interface */}
+      <div 
+        className="rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-2xl overflow-hidden flex flex-col h-[600px]"
+        role="region"
+        aria-label="Chat conversation area"
+      >
+        {/* Messages Scroll Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-          {messages.map((msg) => {
-            const isBot = msg.sender === 'assistant';
-            return (
-              <div
-                key={msg.id}
-                className={`flex gap-3 sm:gap-4 ${isBot ? 'items-start' : 'items-start flex-row-reverse'}`}
-              >
-                {/* Avatar */}
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-md ${
-                    isBot
-                      ? 'bg-gradient-to-br from-[#8B5CF6] to-[#38BDF8] text-[#FFFFFF]'
-                      : 'bg-[#F5C451] text-[#050B1A]'
-                  }`}
-                >
-                  {isBot ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5 font-bold" />}
-                </div>
+          {/* Empty State / Starter Questions */}
+          {messages.length === 0 ? (
+            <div className="h-full flex flex-col justify-center items-center text-center p-4 max-w-xl mx-auto space-y-6">
+              <div className="w-14 h-14 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] shadow-inner">
+                <HelpCircle className="w-7 h-7" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-[#F8FAFC]">
+                  Welcome to COSMIC AI GUIDE
+                </h3>
+                <p className="text-xs sm:text-sm text-[#A7B4CC] leading-relaxed">
+                  I can help you understand infrared astronomy, how NASA’s SPHEREx mission explores the early universe and water ices, and the scientific clues behind hypothetical Planet X.
+                </p>
+              </div>
 
-                {/* Message Bubble */}
-                <div className={`space-y-2 max-w-[85%] sm:max-w-[78%] ${!isBot && 'text-right'}`}>
+              {/* Clickable Starter Questions */}
+              <div className="w-full space-y-2 text-left">
+                <p className="text-[11px] font-mono text-[#F5C451] uppercase font-bold tracking-wider text-center">
+                  Suggested Questions to Get Started:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {STARTER_QUESTIONS.map((question, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSendMessage(question)}
+                      className="p-3 text-left rounded-xl bg-[#050B1A] border border-[#1E293B] hover:border-[#38BDF8] hover:bg-[#0B1630] text-xs text-[#A7B4CC] hover:text-[#F8FAFC] transition-all flex items-start gap-2.5 group cursor-pointer focus:ring-2 focus:ring-[#38BDF8] focus:outline-none"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-[#38BDF8] shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                      <span className="font-medium leading-snug">{question}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isAssistant = msg.sender === 'assistant';
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex gap-3 sm:gap-4 ${isAssistant ? 'items-start' : 'items-start flex-row-reverse'}`}
+                >
+                  {/* Clean SVG/Lucide Avatar (No emoji avatars) */}
                   <div
-                    className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-line ${
-                      isBot
-                        ? 'bg-[#050B1A] border border-[#1E293B] text-[#F8FAFC]'
-                        : 'bg-[#38BDF8] text-[#050B1A] font-medium'
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-md ${
+                      isAssistant
+                        ? 'bg-gradient-to-br from-[#0F172A] to-[#1E293B] border border-[#38BDF8]/30 text-[#38BDF8]'
+                        : 'bg-[#38BDF8] text-[#050B1A]'
                     }`}
+                    aria-hidden="true"
                   >
-                    {msg.text}
+                    {isAssistant ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5 font-bold" />}
                   </div>
 
-                  {/* Scientific Reference Attribution */}
-                  {isBot && msg.scientificReference && (
-                    <div className="flex items-center gap-1.5 text-[10px] text-[#38BDF8] font-mono px-1">
-                      <BookOpen className="w-3 h-3" />
-                      <span>Reference: {msg.scientificReference}</span>
+                  {/* Message Bubble & Supplementary Content */}
+                  <div className={`space-y-2.5 max-w-[85%] sm:max-w-[80%] ${!isAssistant ? 'text-right' : ''}`}>
+                    <div
+                      className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-line text-left ${
+                        isAssistant
+                          ? 'bg-[#050B1A] border border-[#1E293B] text-[#F8FAFC]'
+                          : 'bg-[#38BDF8] text-[#050B1A] font-medium shadow-md'
+                      }`}
+                    >
+                      {msg.text}
                     </div>
-                  )}
 
-                  {/* Follow-up Suggestions Chips */}
-                  {isBot && msg.suggestions && msg.suggestions.length > 0 && (
-                    <div className="pt-2 space-y-1.5">
-                      <span className="text-[10px] font-mono text-[#A7B4CC] block uppercase tracking-wider">
-                        Suggested Follow-ups:
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {msg.suggestions.map((sug, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => handleSendMessage(sug)}
-                            className="px-2.5 py-1 rounded-lg bg-[#0E1B38] hover:bg-[#38BDF8] text-[#A7B4CC] hover:text-[#050B1A] border border-[#1E293B] hover:border-[#38BDF8] text-xs font-mono transition-all text-left"
-                          >
-                            {sug}
-                          </button>
-                        ))}
+                    {/* Demonstration Mode Notice */}
+                    {isAssistant && msg.notice && (
+                      <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#F5C451] px-1">
+                        <ShieldCheck className="w-3 h-3 text-[#F5C451]" />
+                        <span>{msg.notice}</span>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  <span className="text-[10px] text-[#A7B4CC]/60 block px-1">
-                    {msg.timestamp}
-                  </span>
+                    {/* Links to Relevant Explorers */}
+                    {isAssistant && msg.links && msg.links.length > 0 && onNavigate && (
+                      <div className="pt-1 space-y-1.5 text-left">
+                        <span className="text-[10px] font-mono text-[#38BDF8] uppercase tracking-wider block">
+                          Related Explorers:
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {msg.links.map((link, lIdx) => {
+                            const isSpherex = link.page === 'spherex';
+                            return (
+                              <button
+                                key={lIdx}
+                                onClick={() => onNavigate(link.page)}
+                                className={`px-3 py-1.5 rounded-lg border text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer ${
+                                  isSpherex
+                                    ? 'bg-[#38BDF8]/10 text-[#38BDF8] border-[#38BDF8]/30 hover:bg-[#38BDF8]/20 hover:border-[#38BDF8]'
+                                    : 'bg-[#8B5CF6]/10 text-[#A78BFA] border-[#8B5CF6]/30 hover:bg-[#8B5CF6]/20 hover:border-[#8B5CF6]'
+                                }`}
+                                title={link.reason}
+                              >
+                                {isSpherex ? (
+                                  <Telescope className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Orbit className="w-3.5 h-3.5" />
+                                )}
+                                <span>{link.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Scientific Reference Attribution */}
+                    {isAssistant && msg.scientificReference && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-[#A7B4CC] font-mono px-1 text-left">
+                        <BookOpen className="w-3 h-3 text-[#38BDF8]" />
+                        <span>Reference: {msg.scientificReference}</span>
+                      </div>
+                    )}
+
+                    {/* Follow-up Suggestions Chips */}
+                    {isAssistant && msg.suggestions && msg.suggestions.length > 0 && (
+                      <div className="pt-1.5 space-y-1 text-left">
+                        <span className="text-[10px] font-mono text-[#A7B4CC] uppercase tracking-wider block">
+                          Suggested Inquiries:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {msg.suggestions.map((sug, sIdx) => (
+                            <button
+                              key={sIdx}
+                              onClick={() => handleSendMessage(sug)}
+                              disabled={isLoading}
+                              className="px-2.5 py-1 rounded-lg bg-[#0E1B38] hover:bg-[#38BDF8] text-[#A7B4CC] hover:text-[#050B1A] border border-[#1E293B] hover:border-[#38BDF8] text-xs font-mono transition-all text-left cursor-pointer focus:ring-1 focus:ring-[#38BDF8] focus:outline-none disabled:opacity-40"
+                            >
+                              {sug}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Timestamp */}
+                    <span className="text-[10px] text-[#A7B4CC]/60 block px-1">
+                      {msg.timestamp}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
 
-          {/* Typing Indicator */}
-          {isTyping && (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[#8B5CF6]/20 text-[#8B5CF6] flex items-center justify-center">
-                <Bot className="w-4 h-4 animate-spin" />
+          {/* Loading Indicator */}
+          {isLoading && (
+            <div className="flex items-center gap-3 animate-fadeIn" role="status" aria-live="polite">
+              <div className="w-9 h-9 rounded-xl bg-[#0F172A] border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8]">
+                <Loader2 className="w-4 h-4 animate-spin" />
               </div>
-              <div className="px-4 py-2.5 rounded-2xl bg-[#050B1A] border border-[#1E293B] text-xs text-[#A7B4CC] flex items-center gap-1.5">
+              <div className="px-4 py-3 rounded-2xl bg-[#050B1A] border border-[#1E293B] text-xs text-[#A7B4CC] flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#38BDF8] animate-bounce" />
-                <span className="w-2 h-2 rounded-full bg-[#8B5CF6] animate-bounce delay-150" />
-                <span className="w-2 h-2 rounded-full bg-[#F5C451] animate-bounce delay-300" />
-                <span className="ml-2 font-mono">Analyzing scientific records...</span>
+                <span className="w-2 h-2 rounded-full bg-[#8B5CF6] animate-bounce [animation-delay:150ms]" />
+                <span className="w-2 h-2 rounded-full bg-[#F5C451] animate-bounce [animation-delay:300ms]" />
+                <span className="ml-1 font-mono text-xs">Formulating educational explanation...</span>
               </div>
             </div>
           )}
@@ -238,128 +484,51 @@ export const AIGuide: FC = () => {
           <div ref={chatEndRef} />
         </div>
 
-        {/* Quick Question Prompts Bar */}
-        <div className="px-4 py-2.5 bg-[#050B1A]/80 border-t border-[#1E293B] flex items-center gap-2 overflow-x-auto text-xs whitespace-nowrap">
-          <span className="text-[10px] font-mono text-[#F5C451] uppercase font-bold shrink-0">
-            Quick Inquiries:
-          </span>
-          <button
-            onClick={() => handleSendMessage('What is infrared light?')}
-            className="px-2.5 py-1 rounded-md bg-[#0E1B38] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B] hover:border-[#38BDF8] transition-colors"
-          >
-            What is infrared light?
-          </button>
-          <button
-            onClick={() => handleSendMessage('What is Planet X?')}
-            className="px-2.5 py-1 rounded-md bg-[#0E1B38] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B] hover:border-[#8B5CF6] transition-colors"
-          >
-            What is Planet X?
-          </button>
-          <button
-            onClick={() => handleSendMessage('Why do scientists study distant galaxies?')}
-            className="px-2.5 py-1 rounded-md bg-[#0E1B38] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B] hover:border-[#38BDF8] transition-colors"
-          >
-            Why study distant galaxies?
-          </button>
-          <button
-            onClick={() => handleSendMessage('How do scientists discover planets?')}
-            className="px-2.5 py-1 rounded-md bg-[#0E1B38] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B] hover:border-[#F5C451] transition-colors"
-          >
-            How are planets found?
-          </button>
-        </div>
-
-        {/* Input Bar */}
+        {/* Input Bar Form */}
         <div className="p-3 sm:p-4 bg-[#0B1630] border-t border-[#1E293B]">
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
-            className="flex items-center gap-2"
+            onSubmit={handleSubmit}
+            className="flex items-center gap-2 sm:gap-3"
+            aria-label="Ask a space question form"
           >
+            <label htmlFor="ai-guide-input" className="sr-only">
+              Ask any space question
+            </label>
             <input
+              id="ai-guide-input"
+              ref={inputRef}
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Ask any space question (e.g. 'What are interstellar ices?')"
-              className="flex-1 bg-[#050B1A] text-[#F8FAFC] placeholder-[#A7B4CC]/60 px-4 py-3 rounded-xl border border-[#1E293B] focus:outline-none focus:border-[#38BDF8] text-xs sm:text-sm"
-              disabled={isTyping}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask an astronomy question (e.g., 'What is an astronomical unit?')"
+              maxLength={1000}
+              className="flex-1 bg-[#050B1A] text-[#F8FAFC] placeholder-[#A7B4CC]/60 px-4 py-3 rounded-xl border border-[#1E293B] focus:outline-none focus:ring-2 focus:ring-[#38BDF8] focus:border-transparent text-xs sm:text-sm disabled:opacity-50"
+              disabled={isLoading}
+              aria-required="true"
             />
             <button
               type="submit"
-              disabled={isTyping || !inputValue.trim()}
-              className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#F5C451] to-[#EAB308] text-[#050B1A] font-bold text-sm hover:shadow-lg hover:shadow-[#F5C451]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center shrink-0 cursor-pointer"
+              disabled={isLoading || !inputValue.trim()}
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#38BDF8] to-[#0284C7] text-[#050B1A] font-bold text-xs sm:text-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-md focus:ring-2 focus:ring-[#38BDF8] focus:outline-none"
+              aria-label="Send message"
             >
-              <Send className="w-4 h-4" />
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span className="hidden sm:inline">Send</span>
+                </>
+              )}
             </button>
           </form>
-        </div>
-      </div>
-
-      {/* API Key / Fallback Settings Modal */}
-      {apiKeyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050B1A]/80 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="max-w-md w-full bg-[#0B1630] border border-[#1E293B] rounded-2xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#1E293B] pb-3">
-              <div className="flex items-center gap-2 text-[#F5C451]">
-                <Key className="w-5 h-5" />
-                <h3 className="font-bold text-base text-[#F8FAFC]">AI Guide Configuration</h3>
-              </div>
-              <button
-                onClick={() => setApiKeyModalOpen(false)}
-                className="text-[#A7B4CC] hover:text-[#F8FAFC] text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-[#A7B4CC] leading-relaxed">
-              COSMIC FRONTIER includes a rich, fully functional offline knowledge base with verified astrophysics explanations. If you wish to connect an external Google Gemini API key during testing, you can input it here for this browser session.
-            </p>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-mono text-[#F8FAFC] block">
-                API Key (Optional / Session only):
-              </label>
-              <input
-                type="password"
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="AIzaSy... (leave blank for verified offline mode)"
-                className="w-full bg-[#050B1A] text-[#F8FAFC] placeholder-[#A7B4CC]/50 px-3.5 py-2.5 rounded-xl border border-[#1E293B] text-xs font-mono focus:outline-none focus:border-[#38BDF8]"
-              />
-            </div>
-
-            {apiStatusMessage && (
-              <div className="p-2.5 rounded-lg bg-[#38BDF8]/10 text-[#38BDF8] text-xs font-mono">
-                {apiStatusMessage}
-              </div>
-            )}
-
-            <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] text-[11px] text-[#A7B4CC] space-y-1">
-              <span className="text-[#38BDF8] font-bold block">Security Guarantee:</span>
-              <p>Secrets are never transmitted to unauthorized third parties or hardcoded into the frontend repository.</p>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                onClick={() => setApiKeyModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs text-[#A7B4CC] hover:text-[#F8FAFC]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveApiKey}
-                className="px-4 py-2 rounded-xl bg-[#38BDF8] text-[#050B1A] font-bold text-xs hover:bg-[#0284C7] transition-all"
-              >
-                Save Settings
-              </button>
-            </div>
+          <div className="mt-2 flex items-center justify-between text-[11px] text-[#A7B4CC]/60 px-1">
+            <span>Press Enter to send. Max 1,000 characters.</span>
+            <span>Educational Astronomy Assistant</span>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
-

@@ -23,7 +23,7 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
     { page: 'home', label: 'Home', icon: <Home className="w-4 h-4" /> },
     { page: 'spherex', label: 'SPHEREx Explorer', icon: <Telescope className="w-4 h-4" /> },
     { page: 'planet-x', label: 'Planet X Explorer', icon: <Orbit className="w-4 h-4" /> },
-    { page: 'guide', label: 'AI Space Guide', icon: <Sparkles className="w-4 h-4" /> },
+    { page: 'ai-guide', label: 'COSMIC AI GUIDE', icon: <Sparkles className="w-4 h-4" /> },
     { page: 'about', label: 'About', icon: <Info className="w-4 h-4" /> },
   ];
 
@@ -65,7 +65,7 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main Navigation">
             {navItems.map((item) => {
-              const isActive = currentPage === item.page;
+              const isActive = currentPage === item.page || (item.page === 'ai-guide' && currentPage === 'guide');
               return (
                 <button
                   key={item.page}
@@ -89,11 +89,11 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
           {/* Action Badge & Mobile Menu Button */}
           <div className="flex items-center gap-2">
             <button
-              onClick={() => handleNavClick('guide')}
+              onClick={() => handleNavClick('ai-guide')}
               className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F5C451]/10 text-[#F5C451] hover:bg-[#F5C451]/20 border border-[#F5C451]/30 text-xs font-semibold tracking-wide transition-all"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Ask Space Guide</span>
+              <span>Ask AI Guide</span>
             </button>
 
             {/* Mobile menu trigger */}
@@ -113,7 +113,7 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
       {mobileMenuOpen && (
         <div className="md:hidden bg-[#0B1630] border-b border-[#1E293B] px-4 pt-2 pb-4 space-y-1 animate-fadeIn">
           {navItems.map((item) => {
-            const isActive = currentPage === item.page;
+            const isActive = currentPage === item.page || (item.page === 'ai-guide' && currentPage === 'guide');
             return (
               <button
                 key={item.page}

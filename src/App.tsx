@@ -13,23 +13,33 @@ export function App() {
 
   // Handle URL hash routing or direct navigation
   const handleNavigate = (page: AppPage) => {
-    setCurrentPage(page);
-    window.location.hash = page;
+    const targetPage = (page === 'guide' || page === 'ai-guide') ? 'ai-guide' : page;
+    setCurrentPage(targetPage);
+    window.location.hash = targetPage;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Sync with browser hash on initial load and hash change
+  // Sync with browser hash and path on initial load and hash change
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '') as AppPage;
-      if (['home', 'spherex', 'planet-x', 'guide', 'about'].includes(hash)) {
-        setCurrentPage(hash);
+    const handleLocationChange = () => {
+      const hash = window.location.hash.replace('#', '').replace('/', '') as AppPage;
+      const pathname = window.location.pathname.replace('/', '') as AppPage;
+
+      const candidate = hash || pathname;
+      if (candidate === 'ai-guide' || candidate === 'guide') {
+        setCurrentPage('ai-guide');
+      } else if (['home', 'spherex', 'planet-x', 'about'].includes(candidate)) {
+        setCurrentPage(candidate);
       }
     };
 
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    handleLocationChange();
+    window.addEventListener('hashchange', handleLocationChange);
+    window.addEventListener('popstate', handleLocationChange);
+    return () => {
+      window.removeEventListener('hashchange', handleLocationChange);
+      window.removeEventListener('popstate', handleLocationChange);
+    };
   }, []);
 
   return (
@@ -42,7 +52,9 @@ export function App() {
         {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
         {currentPage === 'spherex' && <SPHERExExplorer />}
         {currentPage === 'planet-x' && <PlanetXExplorer />}
-        {currentPage === 'guide' && <AIGuide />}
+        {(currentPage === 'guide' || currentPage === 'ai-guide') && (
+          <AIGuide onNavigate={handleNavigate} />
+        )}
         {currentPage === 'about' && <AboutPage />}
       </main>
 

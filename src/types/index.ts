@@ -1,4 +1,4 @@
-export type AppPage = 'home' | 'spherex' | 'planet-x' | 'guide' | 'about';
+export type AppPage = 'home' | 'spherex' | 'planet-x' | 'guide' | 'ai-guide' | 'about';
 
 export interface InfraredBand {
   id: string;
@@ -76,6 +76,16 @@ export interface GuideMessage {
   suggestions?: string[];
   scientificReference?: string;
   topic?: string;
+  mode?: 'live' | 'demonstration';
+  isAiConnected?: boolean;
+  links?: Array<{
+    label: string;
+    page: AppPage;
+    reason?: string;
+  }>;
+  notice?: string;
+  warning?: string;
+  error?: boolean;
 }
 
 export interface EvidenceTopic {

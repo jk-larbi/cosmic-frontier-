@@ -443,16 +443,16 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
               Have Questions About Space?
             </h2>
             <p className="text-sm text-[#A7B4CC]">
-              Ask our verified AI Space Guide about infrared wavelengths, why scientists study distant galaxies, or how astronomers calculate hypothetical planetary orbits.
+              Ask our COSMIC AI GUIDE about infrared wavelengths, why scientists study distant galaxies, or how astronomers calculate hypothetical planetary orbits.
             </p>
           </div>
           <div className="pt-2">
             <button
-              onClick={() => onNavigate('guide')}
+              onClick={() => onNavigate('ai-guide')}
               className="px-6 py-3 rounded-xl bg-[#8B5CF6] hover:bg-[#7C3AED] text-[#FFFFFF] font-semibold text-sm shadow-lg hover:shadow-[#8B5CF6]/30 transition-all inline-flex items-center gap-2 cursor-pointer"
             >
               <Sparkles className="w-4 h-4" />
-              <span>Talk to the AI Space Guide</span>
+              <span>Talk to COSMIC AI GUIDE</span>
             </button>
           </div>
         </div>

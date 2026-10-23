@@ -55,11 +55,11 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('guide')}
+                  onClick={() => onNavigate('ai-guide')}
                   className="hover:text-[#F5C451] flex items-center gap-1.5 transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[#F5C451]" />
-                  <span>AI Space Guide (Q&A)</span>
+                  <span>COSMIC AI GUIDE</span>
                 </button>
               </li>
               <li>
