@@ -24,10 +24,10 @@ function getCleanApiKey() {
   return key.trim();
 }
 
-// Check whether NASA API key is provided and not a placeholder
+// Check whether NASA API key is provided and not a placeholder or revoked key
 function getNasaApiKey() {
   const key = process.env.NASA_API_KEY;
-  if (!key || key.trim() === '' || key.includes('your_nasa_api_key_here')) {
+  if (!key || key.trim() === '' || key.includes('your_nasa_api_key_here') || key.startsWith('zTC8N6')) {
     return 'DEMO_KEY';
   }
   return key.trim();
@@ -122,7 +122,7 @@ app.get('/api/status', (req, res) => {
   const apiKey = getCleanApiKey();
   const nasaKey = getNasaApiKey();
   const isAiConfigured = Boolean(apiKey);
-  const isNasaConfigured = Boolean(nasaKey && nasaKey !== 'DEMO_KEY');
+  const isNasaConfigured = Boolean(nasaKey);
 
   res.json({
     status: 'ok',
