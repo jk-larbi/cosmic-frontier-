@@ -33,6 +33,9 @@ export interface CelestialTarget {
   instrumentDetails: string; // "Not available" if unverified
   telescope: string;
   sourceAttribution: string;
+  coordinates?: { ra: string; dec: string };
+  calibrationStatus?: string;
+  archiveUrl?: string;
   bandsData: {
     [bandWavelength: string]: {
       features: string[];

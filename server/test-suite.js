@@ -336,6 +336,33 @@ async function runTests() {
     assert(false, `Test 12: Exoplanet Lab test failed: ${err.message}`);
   }
 
+  // 13. Cosmic Image Laboratory & SPHEREx Explorer Tests
+  try {
+    const spherexComp = fs.readFileSync(path.resolve(__dirname, '../src/components/SPHERExExplorer.tsx'), 'utf8');
+    assert(spherexComp.includes('handleZoomIn') && spherexComp.includes('handleZoomOut') && spherexComp.includes('handleReset'), 'Test 13.1: Interactive viewer implements Zoom In, Zoom Out, and Reset');
+    assert(spherexComp.includes('isDraggingPan') && spherexComp.includes('handleMouseDown') && spherexComp.includes('handleTouchStart'), 'Test 13.2: Viewer supports interactive pan/drag with mouse and touch');
+    assert(spherexComp.includes('brightness') && spherexComp.includes('contrast'), 'Test 13.3: Image display controls include both brightness and contrast adjustments');
+    assert(spherexComp.includes('grayscale') && spherexComp.includes('viridis') && spherexComp.includes('inferno') && spherexComp.includes('magma') && spherexComp.includes('plasma'), 'Test 13.4: Supports 5 scientific colormap palettes');
+    assert(spherexComp.includes('linear') && spherexComp.includes('logarithmic') && spherexComp.includes('sqrt') && spherexComp.includes('asinh'), 'Test 13.5: Implements 4 astronomical display stretch functions');
+    assert(spherexComp.includes('syncZoomPan') && spherexComp.includes('compareTarget') && spherexComp.includes('compareBand'), 'Test 13.6: Side-by-side workspace supports dual-target selection and synchronized zoom/pan toggle');
+    assert(spherexComp.includes('coordinates') && spherexComp.includes('calibrationStatus') && spherexComp.includes('archiveUrl'), 'Test 13.7: Observation metadata includes celestial coordinates, calibration status, and archive repository links');
+    assert(spherexComp.includes('3.05') && spherexComp.includes('Water Ice'), 'Test 13.8: Documents 3.05 µm water ice absorption diagnostics');
+    assert(spherexComp.includes('Beginner-Friendly Astronomy Glossary') && spherexComp.includes('Linear Variable Filter (LVF)'), 'Test 13.9: Features educational infrared explanation and beginner astronomy glossary');
+
+    const procFile = fs.readFileSync(path.resolve(__dirname, '../src/utils/imageProcessing.ts'), 'utf8');
+    assert(procFile.includes('processImageData') && procFile.includes('contrast'), 'Test 13.10: Real-time image processor supports contrast parameter');
+
+    const resChatSpherex = await fetch(`${BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'How do astronomers study water ice with infrared filters like SPHEREx?' })
+    });
+    const chatSpherexData = await resChatSpherex.json();
+    assert(chatSpherexData.links && chatSpherexData.links.some(l => l.page === 'spherex'), 'Test 13.11: AI Guide provides contextual link to SPHEREx Image Lab');
+  } catch (err) {
+    assert(false, `Test 13: Cosmic Image Lab test failed: ${err.message}`);
+  }
+
   console.log('\n====================================================');
   console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('====================================================');

@@ -81,6 +81,9 @@ export const CELESTIAL_TARGETS: CelestialTarget[] = [
     instrumentDetails: 'JWST NIRCam (Near-Infrared Camera) & Hubble ACS/WFC',
     telescope: 'James Webb Space Telescope & Hubble Space Telescope',
     sourceAttribution: 'Public scientific release by NASA, ESA, CSA, and STScI. Data processed through MAST archive.',
+    coordinates: { ra: '10h 43m 48s', dec: '-59° 52′ 00″' },
+    calibrationStatus: 'Calibrated Level 2 Scientific Surface Brightness (MJy/sr)',
+    archiveUrl: 'https://archive.stsci.edu/',
     bandsData: {
       '1.0': {
         features: ['Stellar photosphere continuum', 'Resolved low-mass stars in cluster boundary'],
@@ -131,6 +134,9 @@ export const CELESTIAL_TARGETS: CelestialTarget[] = [
     instrumentDetails: 'Spitzer Infrared Array Camera (IRAC) at 3.6 µm and 4.5 µm',
     telescope: 'Spitzer Space Telescope (NASA/JPL-Caltech)',
     sourceAttribution: 'NASA/JPL-Caltech/IPAC Spitzer Science Center Archive.',
+    coordinates: { ra: '05h 35m 17s', dec: '-05° 23′ 28″' },
+    calibrationStatus: 'Calibrated Spitzer IRAC Level 2 Enhanced Mosaic (MJy/sr)',
+    archiveUrl: 'https://irsa.ipac.caltech.edu/',
     bandsData: {
       '1.0': {
         features: ['Stellar photosphere continuum', 'Resolved low-mass stars in cluster core'],
@@ -181,6 +187,9 @@ export const CELESTIAL_TARGETS: CelestialTarget[] = [
     instrumentDetails: 'Spitzer IRAC (Infrared Array Camera) 3.6 µm & 4.5 µm',
     telescope: 'Spitzer Space Telescope (NASA/JPL-Caltech)',
     sourceAttribution: 'Kennicutt et al., SINGS Legacy Survey Team & NASA/IPAC Archive.',
+    coordinates: { ra: '00h 47m 33s', dec: '-25° 17′ 18″' },
+    calibrationStatus: 'SINGS Calibrated Photometric Surface Brightness',
+    archiveUrl: 'https://irsa.ipac.caltech.edu/',
     bandsData: {
       '1.0': {
         features: ['Stellar disc population', 'Old red giant distribution across spiral arms'],
@@ -231,6 +240,9 @@ export const CELESTIAL_TARGETS: CelestialTarget[] = [
     instrumentDetails: 'Millimeter interferometer synthesis (ALMA) & NIRCam simulation',
     telescope: 'ALMA & JWST Infrared Analog',
     sourceAttribution: 'Illustrative modeling derived from ALMA Partnership et al. (2015).',
+    coordinates: { ra: '04h 31m 38s', dec: '+18° 13′ 57″' },
+    calibrationStatus: 'Theoretical Radiative Transfer Model (Uncalibrated Simulation)',
+    archiveUrl: 'https://irsa.ipac.caltech.edu/',
     bandsData: {
       '1.0': {
         features: ['Stellar irradiation scattering off upper disk atmosphere'],
@@ -281,6 +293,9 @@ export const CELESTIAL_TARGETS: CelestialTarget[] = [
     instrumentDetails: 'Linear Variable Filter (LVF) Spectrometer simulation',
     telescope: 'SPHEREx (NASA/JPL-Caltech)',
     sourceAttribution: 'Pre-flight instrument response simulation based on CIBER and Spitzer Polar Surveys.',
+    coordinates: { ra: '18h 00m 00s', dec: '+66° 33′ 38″' },
+    calibrationStatus: 'Pre-Launch Synthetic Benchmark (Caltech/JPL Model)',
+    archiveUrl: 'https://irsa.ipac.caltech.edu/Missions/spherex.html',
     bandsData: {
       '1.0': {
         features: ['Foreground zodiacal light subtraction', 'Low-redshift galaxy cataloging (z < 1)'],

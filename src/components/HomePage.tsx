@@ -110,10 +110,10 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
               </div>
               <div>
                 <span className="text-[10px] font-mono text-[#38BDF8] font-bold uppercase tracking-wider">
-                  NASA Observatory
+                  SPHEREx Mission
                 </span>
                 <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors mt-0.5">
-                  SPHEREx Explorer
+                  Cosmic Image Lab
                 </h3>
               </div>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">

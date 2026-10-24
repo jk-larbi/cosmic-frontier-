@@ -107,7 +107,7 @@ export function applyStretch(normalizedVal: number, stretch: StretchFunction): n
 }
 
 /**
- * Transforms an image data array by calculating luminance, applying brightness,
+ * Transforms an image data array by calculating luminance, applying brightness and contrast,
  * calculating mathematical astronomical display stretch (Linear, Sqrt, Log, Asinh),
  * and mapping to scientific color palette (Viridis, Inferno, Magma, Plasma, Grayscale).
  */
@@ -116,12 +116,14 @@ export function processImageData(
   destData: ImageData,
   palette: ColorPalette,
   stretch: StretchFunction,
-  brightness: number // 50 to 200, 100 is 1.0x
+  brightness: number, // 50 to 200, 100 is 1.0x
+  contrast: number = 100 // 50 to 200, 100 is 1.0x
 ): void {
   const src = sourceData.data;
   const dest = destData.data;
   const lut = COLORMAP_LUTS[palette];
   const bMultiplier = brightness / 100;
+  const cFactor = contrast / 100;
 
   for (let i = 0; i < src.length; i += 4) {
     const r = src[i];
@@ -133,10 +135,14 @@ export function processImageData(
     const rawLum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
     // Apply brightness
-    const lumBright = Math.min(1, rawLum * bMultiplier);
+    let lum = rawLum * bMultiplier;
+
+    // Apply contrast centered around midpoint 0.5
+    lum = (lum - 0.5) * cFactor + 0.5;
+    lum = Math.max(0, Math.min(1, lum));
 
     // Apply astronomical stretch
-    const stretched = applyStretch(lumBright, stretch);
+    const stretched = applyStretch(lum, stretch);
 
     // Map through colormap LUT (0 to 255)
     const lutIdx = Math.max(0, Math.min(255, Math.round(stretched * 255))) * 3;

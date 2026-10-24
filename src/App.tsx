@@ -26,14 +26,16 @@ export function App() {
   useEffect(() => {
     const handleLocationChange = () => {
       // Strip leading and trailing slashes and hashes
-      const hash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '') as AppPage;
-      const pathname = window.location.pathname.replace(/^\/+|\/+$/g, '') as AppPage;
+      const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '');
+      const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
+      const candidate = (rawHash || rawPath).toLowerCase();
 
-      const candidate = hash || pathname;
       if (candidate === 'ai-guide' || candidate === 'guide') {
         setCurrentPage('ai-guide');
-      } else if (['home', 'universe', 'exoplanets', 'spherex', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
-        setCurrentPage(candidate);
+      } else if (candidate === 'spherex' || candidate === 'image-lab') {
+        setCurrentPage('spherex');
+      } else if (['home', 'universe', 'exoplanets', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
+        setCurrentPage(candidate as AppPage);
       } else if (!candidate) {
         setCurrentPage('home');
       }
