@@ -528,7 +528,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
                     </div>
                     <div className="w-full h-2 rounded-full bg-[#050B1A] overflow-hidden">
                       <div 
-                        className="h-full rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#F5C451]" 
+                        className="h-full rounded-full bg-linear-to-r from-[#8B5CF6] to-[#F5C451]" 
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -626,7 +626,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
                 <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-mono text-[#A7B4CC] truncate max-w-[200px]">
+                      <span className="text-[11px] font-mono text-[#A7B4CC] truncate max-w-50">
                         {galaxy.catalogIdentifier.split('/')[0].trim()}
                       </span>
                       <span className="text-[10px] text-[#38BDF8] font-mono">
@@ -990,11 +990,11 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
             <div className="space-y-4">
               {selectedGalaxy.image?.url ? (
                 <div className="p-4 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-4">
-                  <div className="relative rounded-xl overflow-hidden bg-black max-h-[500px] flex items-center justify-center">
+                  <div className="relative rounded-xl overflow-hidden bg-black max-h-125 flex items-center justify-center">
                     <img
                       src={selectedGalaxy.image.url}
                       alt={selectedGalaxy.image.title}
-                      className="max-h-[500px] w-auto object-contain rounded-xl"
+                      className="max-h-125 w-auto object-contain rounded-xl"
                     />
                   </div>
                   <div className="space-y-2 text-xs">
@@ -1053,7 +1053,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
         <div className="space-y-4 pt-2">
           <div className="relative pt-6 pb-2">
             {/* Timeline Line */}
-            <div className="w-full h-1.5 bg-gradient-to-r from-[#38BDF8] via-[#8B5CF6] to-[#F5C451] rounded-full" />
+            <div className="w-full h-1.5 bg-linear-to-r from-[#38BDF8] via-[#8B5CF6] to-[#F5C451] rounded-full" />
 
             {/* Benchmark Milestone Pins */}
             <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 pt-4 text-center text-xs font-mono">

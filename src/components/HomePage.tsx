@@ -15,7 +15,8 @@ import {
   Database,
   Globe,
   Compass,
-  Disc
+  Disc,
+  Radio
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -45,6 +46,60 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Card: Live Space Observatory (Stage 7 Upgrade) */}
+          <div 
+            onClick={() => onNavigate('live-space')}
+            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#38BDF8]/15 transition-all cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
+                <Globe className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono text-[#38BDF8] font-bold uppercase tracking-wider">
+                  NASA JPL Horizons Ephemeris
+                </span>
+                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors mt-0.5">
+                  Live Space Observatory
+                </h3>
+              </div>
+              <p className="text-xs text-[#A7B4CC] leading-relaxed">
+                Monitor real-time planetary motion, J2000 state vectors, orbital velocities, and distances for 18 Solar System objects in 3D and 2D.
+              </p>
+            </div>
+            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
+              <span>Real-Time Ephemerides</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+            </div>
+          </div>
+
+          {/* Card: Asteroid Watch (Stage 7 Upgrade) */}
+          <div 
+            onClick={() => onNavigate('asteroid-watch')}
+            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-emerald-500 p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/15 transition-all cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                <Radio className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
+                  NASA JPL CNEOS CAD Feed
+                </span>
+                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-emerald-400 transition-colors mt-0.5">
+                  Earth Approach Monitor
+                </h3>
+              </div>
+              <p className="text-xs text-[#A7B4CC] leading-relaxed">
+                Track upcoming near-Earth asteroid close passes in Lunar Distances, inspect encounter geometry, and learn how NASA assesses impact risk.
+              </p>
+            </div>
+            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-emerald-400">
+              <span>CNEOS Close Approaches</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+            </div>
+          </div>
+
           {/* Card 1: 3D Solar System Explorer */}
           <div 
             onClick={() => onNavigate('universe')}
@@ -52,7 +107,7 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
           >
             <div className="space-y-4">
               <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-                <Globe className="w-6 h-6" />
+                <Orbit className="w-6 h-6" />
               </div>
               <div>
                 <span className="text-[10px] font-mono text-[#38BDF8] font-bold uppercase tracking-wider">

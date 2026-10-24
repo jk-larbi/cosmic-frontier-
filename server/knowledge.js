@@ -309,6 +309,56 @@ You can inspect verified archival JPL cleanroom photos (such as PIA25784, PIA265
       }
     ],
     scientificReference: 'NASA Image and Video Library & NASA/JPL-Caltech SPHEREx Project Office'
+  },
+  {
+    id: 'live-space-monitoring',
+    keywords: ['live space', 'ephemeris', 'celestial motion', 'planetary motion', 'orbit', 'real time position', 'jpl horizons', 'where is mars', 'where is jupiter', 'speed of earth'],
+    question: 'How do astronomers track celestial motion in real time?',
+    answer: `Astronomers track celestial motion in real time using **orbital ephemerides**—mathematical models based on Newton's and Einstein's laws of gravitation and continuously refined by radar ranging, spacecraft telemetry, and ground-based telescope astrometry.
+
+Key concepts of celestial tracking:
+1. **Keplerian Orbits**: Planets travel in elliptical paths around the Sun with the Sun at one focus (Kepler's First Law). Objects move fastest at perihelion (closest to Sun) and slowest at aphelion (farthest from Sun).
+2. **Speed Differences**: Inner planets travel much faster than outer planets because solar gravity is stronger closer in (Mercury travels at ~47.4 km/s, Earth at ~29.8 km/s, and distant Neptune at ~5.4 km/s).
+3. **Ephemeris Epochs**: An ephemeris specifies precise 3D coordinates (X, Y, Z in Astronomical Units) and velocities for an exact timestamp (epoch). In COSMIC FRONTIER, the Live Space Observatory uses NASA/JPL Solar System Dynamics state vectors propagated to the current UTC epoch.`,
+    suggestions: [
+      'What is an astronomical unit?',
+      'What is an asteroid close approach?',
+      'Why do planets move at different speeds?'
+    ],
+    links: [
+      {
+        label: 'Open Live Space Observatory',
+        page: 'live-space',
+        reason: 'Explore real-time 3D planetary positions, velocities, and J2000 coordinates.'
+      }
+    ],
+    scientificReference: 'NASA/JPL Solar System Dynamics Group & Horizons Ephemeris System'
+  },
+  {
+    id: 'asteroid-close-approaches',
+    keywords: ['asteroid', 'close approach', 'potentially hazardous', 'pha', 'impact', 'risk', 'sentry', 'apophis', 'near earth object', 'neo', 'hit earth', 'meteor'],
+    question: 'What is a near-Earth asteroid close approach and should we be worried?',
+    answer: `A **close approach** occurs when a natural space body (asteroid or comet) passes within a relatively small astronomical distance from Earth (typically defined as within 0.05 Astronomical Units, or approximately 19.5 Lunar Distances / 7.5 million kilometres).
+
+**Essential Scientific Distinctions**:
+1. **Close Approach**: An object is predicted to pass within a stated distance of Earth. Because space is immensely vast, passing "near" Earth astronomically almost always means passing safely hundreds of thousands or millions of kilometres away.
+2. **Potentially Hazardous Asteroid (PHA)**: A classification based strictly on two geometric criteria: the asteroid's Minimum Orbit Intersection Distance (MOID) to Earth is $\\le 0.05$ AU, and its absolute magnitude $H \\le 22.0$ (roughly $\\ge 140$ metres in diameter). **This classification does NOT mean an impact is predicted.**
+3. **Impact Risk**: A separate statistical assessment calculated by specialized orbital monitoring programs such as NASA/JPL Center for Near Earth Object Studies (CNEOS) **Sentry**. Sentry continuously scans known asteroid orbits over the next 100+ years.
+
+*“An asteroid passing near Earth does not automatically mean it will hit Earth. Its predicted trajectory, uncertainty, and any independently assessed impact risk must be considered.”*`,
+    suggestions: [
+      'How does NASA calculate asteroid sizes?',
+      'What happened to asteroid Apophis?',
+      'How do astronomers track celestial motion in real time?'
+    ],
+    links: [
+      {
+        label: 'Open Asteroid Approach Monitor',
+        page: 'asteroid-watch',
+        reason: 'Inspect upcoming close approaches, miss distances in Lunar Distances, and PHA tracking.'
+      }
+    ],
+    scientificReference: 'NASA/JPL Center for Near Earth Object Studies (CNEOS) & Sentry Risk Table'
   }
 ];
 
@@ -345,6 +395,12 @@ export function findVerifiedAnswer(query) {
     }
     if (item.id === 'infrared-light' && normalized.includes('infrared')) {
       score += 12;
+    }
+    if (item.id === 'live-space-monitoring' && (normalized.includes('live space') || normalized.includes('ephemeris') || normalized.includes('celestial motion'))) {
+      score += 15;
+    }
+    if (item.id === 'asteroid-close-approaches' && (normalized.includes('asteroid') || normalized.includes('close approach') || normalized.includes('pha') || normalized.includes('sentry'))) {
+      score += 15;
     }
     if (score > highestScore) {
       highestScore = score;

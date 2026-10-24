@@ -5,7 +5,7 @@ import {
   EVIDENCE_TOPICS, 
   CANDIDATE_CASES 
 } from '../data/evidenceData';
-import type { SolarSystemObject, EvidenceTopic, CandidateCase } from '../types';
+import type { SolarSystemObject, EvidenceTopic, CandidateCase, AppPage } from '../types';
 import { 
   Orbit, 
   ZoomIn, 
@@ -20,12 +20,18 @@ import {
   Scale,
   CheckCircle2,
   Info,
-  Radio
+  Radio,
+  Globe,
+  ArrowRight
 } from 'lucide-react';
 
 type ScalePreset = 'inner' | 'outer' | 'distant';
 
-export const PlanetXExplorer: FC = () => {
+interface PlanetXExplorerProps {
+  onNavigate?: (page: AppPage) => void;
+}
+
+export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
   // 1. Selected Object State
   const [selectedObject, setSelectedObject] = useState<SolarSystemObject>(
     SOLAR_SYSTEM_OBJECTS.find(o => o.id === 'planet-x') || SOLAR_SYSTEM_OBJECTS[0]
@@ -479,6 +485,37 @@ export const PlanetXExplorer: FC = () => {
             </span>
           </div>
         </div>
+
+        {/* Cross-Navigation to Live Space & Asteroid Watch */}
+        {onNavigate && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div 
+              onClick={() => onNavigate('live-space')}
+              className="p-3.5 rounded-xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] cursor-pointer transition-all flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-2.5">
+                <Globe className="w-4 h-4 text-[#38BDF8]" />
+                <span className="text-xs font-mono font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
+                  Explore Live Planetary Ephemerides
+                </span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#A7B4CC] group-hover:translate-x-1 group-hover:text-[#38BDF8] transition-all" />
+            </div>
+
+            <div 
+              onClick={() => onNavigate('asteroid-watch')}
+              className="p-3.5 rounded-xl bg-[#0B1630] border border-[#1E293B] hover:border-emerald-500 cursor-pointer transition-all flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-2.5">
+                <Radio className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs font-mono font-bold text-[#F8FAFC] group-hover:text-emerald-400 transition-colors">
+                  Monitor Real Earth Close-Approaches
+                </span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#A7B4CC] group-hover:translate-x-1 group-hover:text-emerald-400 transition-all" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 3. DISTANCE CONTROL & SCALE NOTICE (SECTION 5) */}

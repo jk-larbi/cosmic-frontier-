@@ -189,7 +189,7 @@ async function runTests() {
   }
 
   // 8. Navigation Routes & SPA Fallback
-  const appRoutes = ['/', '/universe', '/exoplanets', '/galaxies', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
+  const appRoutes = ['/', '/universe', '/live-space', '/asteroid-watch', '/exoplanets', '/galaxies', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
   for (const route of appRoutes) {
     try {
       const resRoute = await fetch(`${BASE_URL}${route}`);
@@ -408,6 +408,70 @@ async function runTests() {
     assert(chatGalaxiesData.links && chatGalaxiesData.links.some(l => l.page === 'galaxies'), 'Test 14.12: AI Guide provides contextual link to Galaxy Explorer');
   } catch (err) {
     assert(false, `Test 14: Galaxy Explorer test failed: ${err.message}`);
+  }
+
+  // 15. Live Space Observatory & Earth Approach Tracker Tests (Stage 7 Upgrade)
+  try {
+    // 15.1 - 15.8: Ephemeris Endpoints
+    const resEphem = await fetch(`${BASE_URL}/api/data/live-space/ephemeris`);
+    assert(resEphem.status === 200, 'Test 15.1: /api/data/live-space/ephemeris returns HTTP 200');
+    const ephemJson = await resEphem.json();
+
+    assert(Array.isArray(ephemJson.objects) && ephemJson.totalObjects >= 18, 'Test 15.2: Ephemeris returns Sun, Moon, 8 planets, and small bodies (18+ total)');
+    assert(ephemJson.statusLabel === 'LIVE DATA' || ephemJson.statusLabel === 'PREDICTED', 'Test 15.3: Ephemeris statusLabel is LIVE DATA or PREDICTED');
+    assert(ephemJson.coordinateFrame === 'ICRF / J2000 Ecliptic' && typeof ephemJson.julianDate === 'number', 'Test 15.4: Coordinates include ICRF / J2000 Ecliptic frame and valid Julian Date');
+
+    const earthObj = ephemJson.objects.find(o => o.id === 'earth');
+    assert(earthObj && earthObj.distSunAU >= 0.98 && earthObj.distSunAU <= 1.02 && earthObj.orbitalSpeedKmS >= 29 && earthObj.orbitalSpeedKmS <= 31, 'Test 15.5: Earth distance from Sun is realistic (~0.98 to 1.02 AU) and orbital speed is ~29-30 km/s');
+
+    const moonObj = ephemJson.objects.find(o => o.id === 'moon');
+    assert(moonObj && moonObj.distEarthLunar >= 0.8 && moonObj.distEarthLunar <= 1.2, 'Test 15.6: Moon distance from Earth is ~1.0 Lunar Distance (~384,400 km)');
+
+    const resFutureEphem = await fetch(`${BASE_URL}/api/data/live-space/ephemeris?date=2029-04-13T00:00:00Z`);
+    const futureJson = await resFutureEphem.json();
+    assert(futureJson.statusLabel === 'PREDICTED' && futureJson.epoch.includes('2029-04-13'), 'Test 15.7: Ephemeris accepts custom epoch date parameter and calculates predicted coordinates');
+
+    const resTarget = await fetch(`${BASE_URL}/api/data/live-space/ephemeris?target=apophis`);
+    const targetJson = await resTarget.json();
+    assert(targetJson.totalObjects === 1 && targetJson.objects[0].id === 'apophis', 'Test 15.8: Ephemeris supports target filtering');
+
+    // 15.9 - 15.14: Close Approaches Endpoints
+    const resCad = await fetch(`${BASE_URL}/api/data/live-space/close-approaches?timeframe=30d`);
+    assert(resCad.status === 200, 'Test 15.9: /api/data/live-space/close-approaches returns HTTP 200');
+    const cadJson = await resCad.json();
+
+    assert(cadJson.statusLabel === 'LIVE DATA' || cadJson.statusLabel === 'RECENT DATA', 'Test 15.10: Close approaches response has statusLabel LIVE DATA or RECENT DATA');
+    assert(Array.isArray(cadJson.approaches) && cadJson.approaches.length > 0, 'Test 15.11: Close approaches returns array of verified encounters');
+
+    const sampleApp = cadJson.approaches[0];
+    assert(sampleApp.designation && sampleApp.closeApproachDate && typeof sampleApp.missDistanceKm === 'number' && typeof sampleApp.missDistanceLunar === 'number' && typeof sampleApp.relativeVelocityKmS === 'number', 'Test 15.12: Close approach records include designation, date, miss distance (km & LD), and velocity');
+
+    const res24h = await fetch(`${BASE_URL}/api/data/live-space/close-approaches?timeframe=24h`);
+    const cad24h = await res24h.json();
+    assert(cad24h.success && typeof cad24h.count === 'number', 'Test 15.13: Handles strict 24h timeframe filter with exact timestamps');
+
+    const resPha = await fetch(`${BASE_URL}/api/data/live-space/close-approaches?phaOnly=true`);
+    const cadPha = await resPha.json();
+    assert(cadPha.success && cadPha.approaches.every(a => a.isPotentiallyHazardous), 'Test 15.14: Supports PHA filter, verifying all returned objects are flagged as PHA');
+
+    assert(sampleApp.impactRisk && sampleApp.impactRisk.sentryUrl.includes('cneos.jpl.nasa.gov/sentry'), 'Test 15.15: Close approaches state impact risk separately and link to NASA CNEOS Sentry');
+
+    // 15.16 - 15.18: Static Component & Science Integrity Audit
+    const liveSpaceFile = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveSpaceObservatory.tsx'), 'utf8');
+    assert(liveSpaceFile.includes('THREE.WebGLRenderer') && liveSpaceFile.includes('canvas2DRef'), 'Test 15.16: LiveSpaceObservatory supports 3D Three.js renderer and smooth 2D canvas fallback');
+
+    const asteroidWatchFile = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidWatch.tsx'), 'utf8');
+    assert(asteroidWatchFile.includes('An asteroid passing near Earth does not automatically mean it will hit Earth'), 'Test 15.17: AsteroidWatch displays mandatory scientific distinction quote regarding close approach vs impact');
+
+    const resChatLive = await fetch(`${BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'What is a near-Earth asteroid close approach and what is impact risk?' })
+    });
+    const chatLiveData = await resChatLive.json();
+    assert(chatLiveData.links && chatLiveData.links.some(l => l.page === 'asteroid-watch' || l.page === 'live-space'), 'Test 15.18: AI Guide provides contextual link to Asteroid Watch or Live Space');
+  } catch (err) {
+    assert(false, `Test 15: Live Space Observatory & Earth Approach Tracker test failed: ${err.message}`);
   }
 
   console.log('\n====================================================');

@@ -4,6 +4,8 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { HomePage } from './components/HomePage';
 import { Universe3DExplorer } from './components/Universe3DExplorer';
+import { LiveSpaceObservatory } from './components/LiveSpaceObservatory';
+import { AsteroidWatch } from './components/AsteroidWatch';
 import { ExoplanetDiscoveryLab } from './components/ExoplanetDiscoveryLab';
 import { GalaxyExplorer } from './components/GalaxyExplorer';
 import { SPHERExExplorer } from './components/SPHERExExplorer';
@@ -35,7 +37,7 @@ export function App() {
         setCurrentPage('ai-guide');
       } else if (candidate === 'spherex' || candidate === 'image-lab') {
         setCurrentPage('spherex');
-      } else if (['home', 'universe', 'exoplanets', 'galaxies', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
+      } else if (['home', 'universe', 'live-space', 'asteroid-watch', 'exoplanets', 'galaxies', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
         setCurrentPage(candidate as AppPage);
       } else if (!candidate) {
         setCurrentPage('home');
@@ -60,10 +62,12 @@ export function App() {
       <main className="flex-1">
         {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
         {currentPage === 'universe' && <Universe3DExplorer onNavigate={handleNavigate} />}
+        {currentPage === 'live-space' && <LiveSpaceObservatory onNavigate={handleNavigate} />}
+        {currentPage === 'asteroid-watch' && <AsteroidWatch onNavigate={handleNavigate} />}
         {currentPage === 'exoplanets' && <ExoplanetDiscoveryLab onNavigate={handleNavigate} />}
         {currentPage === 'galaxies' && <GalaxyExplorer onNavigate={handleNavigate} />}
         {currentPage === 'spherex' && <SPHERExExplorer />}
-        {currentPage === 'planet-x' && <PlanetXExplorer />}
+        {currentPage === 'planet-x' && <PlanetXExplorer onNavigate={handleNavigate} />}
         {currentPage === 'data-centre' && <NasaDataCentre onNavigate={handleNavigate} />}
         {(currentPage === 'guide' || currentPage === 'ai-guide') && (
           <AIGuide onNavigate={handleNavigate} />

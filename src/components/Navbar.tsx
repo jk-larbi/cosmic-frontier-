@@ -7,11 +7,12 @@ import {
   Info, 
   Home, 
   Menu, 
-  X,
-  Compass,
-  Database,
-  Globe,
-  Disc
+  X, 
+  Compass, 
+  Database, 
+  Globe, 
+  Disc,
+  Radio
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -24,13 +25,15 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
 
   const navItems: { page: AppPage; label: string; icon: ReactNode }[] = [
     { page: 'home', label: 'Home', icon: <Home className="w-4 h-4" /> },
+    { page: 'live-space', label: 'Live Space', icon: <Radio className="w-4 h-4" /> },
+    { page: 'asteroid-watch', label: 'Asteroid Watch', icon: <Compass className="w-4 h-4" /> },
     { page: 'universe', label: '3D Universe', icon: <Globe className="w-4 h-4" /> },
-    { page: 'exoplanets', label: 'Exoplanet Lab', icon: <Compass className="w-4 h-4" /> },
-    { page: 'galaxies', label: 'Galaxy Explorer', icon: <Disc className="w-4 h-4" /> },
+    { page: 'exoplanets', label: 'Exoplanet Lab', icon: <Disc className="w-4 h-4" /> },
+    { page: 'galaxies', label: 'Galaxies', icon: <Sparkles className="w-4 h-4" /> },
     { page: 'spherex', label: 'Cosmic Image Lab', icon: <Telescope className="w-4 h-4" /> },
-    { page: 'planet-x', label: 'Planet X Explorer', icon: <Orbit className="w-4 h-4" /> },
-    { page: 'data-centre', label: 'NASA Data Centre', icon: <Database className="w-4 h-4" /> },
-    { page: 'ai-guide', label: 'COSMIC AI GUIDE', icon: <Sparkles className="w-4 h-4" /> },
+    { page: 'planet-x', label: 'Planet X', icon: <Orbit className="w-4 h-4" /> },
+    { page: 'data-centre', label: 'Data Centre', icon: <Database className="w-4 h-4" /> },
+    { page: 'ai-guide', label: 'AI Guide', icon: <Sparkles className="w-4 h-4" /> },
     { page: 'about', label: 'About', icon: <Info className="w-4 h-4" /> },
   ];
 

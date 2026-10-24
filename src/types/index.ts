@@ -1,4 +1,4 @@
-export type AppPage = 'home' | 'universe' | 'exoplanets' | 'galaxies' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
+export type AppPage = 'home' | 'universe' | 'live-space' | 'asteroid-watch' | 'exoplanets' | 'galaxies' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
 
 export type GalaxyCategory = 'spiral' | 'elliptical' | 'irregular' | 'active-agn' | 'cluster';
 
@@ -258,4 +258,104 @@ export interface CatalogItem {
     value: string | number;
     unit?: string;
   }>;
+}
+
+export type LiveDataBadgeStatus = 'LIVE DATA' | 'RECENT DATA' | 'PREDICTED' | 'SIMULATION' | 'UNAVAILABLE';
+
+export interface LiveEphemerisObject {
+  id: string;
+  name: string;
+  designation: string;
+  classification: string;
+  color: string;
+  radiusKm: number | string;
+  heliocentricAU: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  distSunAU: number;
+  distSunMillionKm: number;
+  distEarthAU: number;
+  distEarthMillionKm: number;
+  distEarthLunar: number;
+  orbitalSpeedKmS: number;
+  rightAscension: string;
+  declination: string;
+  orbitalElements: {
+    semiMajorAxisAU: number;
+    eccentricity: number;
+    inclinationDeg: number;
+    longitudeOfAscendingNodeDeg: number;
+    argumentOfPerihelionDeg: number;
+    meanAnomalyDeg: number;
+    trueAnomalyDeg: number;
+    orbitalPeriodYears: number;
+  };
+  dataStatus: LiveDataBadgeStatus;
+  coordinateFrame: string;
+  calculationEpoch: string;
+  retrievalTimestamp: string;
+  source: string;
+  sourceUrl: string;
+  educationalSummary: string;
+}
+
+export interface LiveEphemerisResponse {
+  epoch: string;
+  julianDate: number;
+  coordinateFrame: string;
+  statusLabel: LiveDataBadgeStatus;
+  retrievalTimestamp: string;
+  totalObjects: number;
+  earthReference: {
+    xAU: number;
+    yAU: number;
+    zAU: number;
+    orbitalVelocityKmS: number;
+  };
+  objects: LiveEphemerisObject[];
+}
+
+export interface LiveCloseApproach {
+  designation: string;
+  fullName: string;
+  orbitId: string;
+  julianDate: number;
+  closeApproachDate: string;
+  closeApproachIso: string;
+  missDistanceAU: number;
+  missDistanceKm: number;
+  missDistanceLunar: number;
+  distMinAU: number;
+  distMaxAU: number;
+  distMinKm: number;
+  distMaxKm: number;
+  relativeVelocityKmS: number;
+  vInfinityKmS: number | null;
+  uncertaintyTime: string;
+  absoluteMagnitudeH: number;
+  estimatedDiameterMeters: {
+    min: number;
+    max: number;
+    avg: number;
+  };
+  isPotentiallyHazardous: boolean;
+  impactRisk: {
+    hasRisk: boolean;
+    assessment: string;
+    sentryUrl: string;
+  };
+  source: string;
+  sourceUrl: string;
+}
+
+export interface LiveCloseApproachesResponse {
+  success: boolean;
+  statusLabel: LiveDataBadgeStatus;
+  retrievalTimestamp: string;
+  epoch: string;
+  timeframe: string;
+  count: number;
+  approaches: LiveCloseApproach[];
 }

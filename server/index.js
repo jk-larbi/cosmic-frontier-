@@ -6,6 +6,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { findVerifiedAnswer, VERIFIED_KNOWLEDGE_BASE } from './knowledge.js';
+import { getCompleteEphemeris, AU_KM, LD_KM } from './ephemerisEngine.js';
 
 dotenv.config();
 
@@ -141,6 +142,39 @@ function getExplorerLinks(text) {
       label: 'Explore in Planet X Explorer',
       page: 'planet-x',
       reason: 'View orbital models of extreme TNOs and examine candidate search fields.'
+    });
+  }
+
+  const mentionsLiveSpace = lower.includes('live space') ||
+    lower.includes('ephemeris') ||
+    lower.includes('celestial motion') ||
+    lower.includes('real time') ||
+    lower.includes('state vector') ||
+    lower.includes('j2000');
+
+  if (mentionsLiveSpace) {
+    links.push({
+      label: 'Explore in Live Space Observatory',
+      page: 'live-space',
+      reason: 'Track real-time celestial positions, orbital velocities, and J2000 state vectors from NASA JPL Horizons.'
+    });
+  }
+
+  const mentionsAsteroidWatch = lower.includes('asteroid') ||
+    lower.includes('close approach') ||
+    lower.includes('near-earth') ||
+    lower.includes('neo') ||
+    lower.includes('pha') ||
+    lower.includes('hazardous') ||
+    lower.includes('sentry') ||
+    lower.includes('impact risk') ||
+    lower.includes('apophis');
+
+  if (mentionsAsteroidWatch) {
+    links.push({
+      label: 'Explore in Asteroid Approach Monitor',
+      page: 'asteroid-watch',
+      reason: 'Track upcoming near-Earth encounters, miss distances in Lunar Distances, and NASA CNEOS impact risk assessments.'
     });
   }
 
@@ -749,6 +783,237 @@ app.get('/api/data/images', (req, res) => {
     return res.json({ success: true, source: 'NASA Image and Video Library', ...data });
   }
   return res.status(500).json({ error: 'Images data not found' });
+});
+
+// =========================================================================
+// STAGE 7: LIVE SPACE OBSERVATORY & EARTH APPROACH TRACKER ENDPOINTS
+// =========================================================================
+
+const CAD_MONTH_MAP = {
+  Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+  Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+};
+
+function parseCadDate(cd) {
+  if (!cd) return null;
+  const parts = cd.trim().split(' ');
+  if (parts.length < 2) return null;
+  const [yearStr, monStr, dayStr] = parts[0].split('-');
+  const [hourStr, minStr] = parts[1].split(':');
+  const month = CAD_MONTH_MAP[monStr];
+  if (month === undefined) return null;
+  return new Date(Date.UTC(+yearStr, month, +dayStr, +hourStr, +minStr));
+}
+
+function normalizeCadRecord(raw) {
+  const [des, orbitId, jdStr, cd, distStr, distMinStr, distMaxStr, vRelStr, vInfStr, tSigmaF, hStr] = raw;
+  const distAU = parseFloat(distStr) || 0;
+  const distMinAU = parseFloat(distMinStr) || distAU;
+  const distMaxAU = parseFloat(distMaxStr) || distAU;
+  const distKm = Math.round(distAU * AU_KM);
+  const distMinKm = Math.round(distMinAU * AU_KM);
+  const distMaxKm = Math.round(distMaxAU * AU_KM);
+  const distLunar = +(distKm / LD_KM).toFixed(2);
+  const vRelKmS = parseFloat(vRelStr) ? +parseFloat(vRelStr).toFixed(2) : 0;
+  const vInfKmS = parseFloat(vInfStr) ? +parseFloat(vInfStr).toFixed(2) : null;
+  const H = parseFloat(hStr) !== undefined && !isNaN(parseFloat(hStr)) ? parseFloat(hStr) : null;
+
+  let estimatedDiameterMeters = { min: 10, max: 25, avg: 17 };
+  if (H !== null) {
+    const dMin = Math.round((1329 * Math.pow(10, -0.2 * H)) / Math.sqrt(0.25) * 1000);
+    const dMax = Math.round((1329 * Math.pow(10, -0.2 * H)) / Math.sqrt(0.05) * 1000);
+    estimatedDiameterMeters = {
+      min: dMin,
+      max: dMax,
+      avg: Math.round((dMin + dMax) / 2)
+    };
+  }
+
+  const isPHA = (H !== null && H <= 22.0 && distAU <= 0.05);
+  const approachDateObj = parseCadDate(cd);
+  const approachIso = approachDateObj ? approachDateObj.toISOString() : new Date().toISOString();
+
+  return {
+    designation: des || 'Unknown Object',
+    fullName: des ? `Asteroid ${des}` : 'Near-Earth Object',
+    orbitId: orbitId || '1',
+    julianDate: parseFloat(jdStr) || 0,
+    closeApproachDate: cd,
+    closeApproachIso: approachIso,
+    missDistanceAU: +distAU.toFixed(6),
+    missDistanceKm: distKm,
+    missDistanceLunar: distLunar,
+    distMinAU: +distMinAU.toFixed(6),
+    distMaxAU: +distMaxAU.toFixed(6),
+    distMinKm,
+    distMaxKm,
+    relativeVelocityKmS: vRelKmS,
+    vInfinityKmS: vInfKmS,
+    uncertaintyTime: tSigmaF || '< 00:01',
+    absoluteMagnitudeH: H !== null ? +H.toFixed(2) : null,
+    estimatedDiameterMeters,
+    isPotentiallyHazardous: isPHA,
+    impactRisk: {
+      hasRisk: false,
+      assessment: 'No impact calculated for known trajectory. Monitored continuously by NASA/JPL CNEOS Sentry.',
+      sentryUrl: 'https://cneos.jpl.nasa.gov/sentry/'
+    },
+    source: 'NASA/JPL Center for Near Earth Object Studies (CNEOS) CAD API',
+    sourceUrl: `https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=${encodeURIComponent(des || '')}`
+  };
+}
+
+let cadLiveCache = new Map();
+const CAD_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
+// GET /api/data/live-space/ephemeris
+app.get('/api/data/live-space/ephemeris', (req, res) => {
+  try {
+    const { date, target } = req.query;
+    let targetDate = new Date();
+    if (date) {
+      const parsed = new Date(date);
+      if (!isNaN(parsed.getTime())) {
+        targetDate = parsed;
+      }
+    }
+
+    const ephem = getCompleteEphemeris(targetDate);
+
+    if (target && target !== 'all') {
+      const matched = ephem.objects.find(o => o.id === target.toLowerCase() || o.designation.toLowerCase().includes(target.toLowerCase()));
+      if (matched) {
+        return res.json({
+          ...ephem,
+          totalObjects: 1,
+          objects: [matched]
+        });
+      }
+    }
+
+    return res.json(ephem);
+  } catch (err) {
+    console.error('[Ephemeris] Error calculating ephemeris:', err.message);
+    return res.status(500).json({ error: 'Failed to compute celestial ephemeris' });
+  }
+});
+
+// GET /api/data/live-space/close-approaches
+app.get('/api/data/live-space/close-approaches', async (req, res) => {
+  try {
+    const { timeframe = '30d', phaOnly = 'false', sort = 'dist', limit = '50', dateMin, dateMax } = req.query;
+    const now = Date.now();
+    const isPha = phaOnly === 'true';
+
+    // Determine query date bounds
+    let minDateStr = dateMin || new Date(now - 12 * 3600 * 1000).toISOString().slice(0, 10);
+    let daysAhead = 30;
+    if (timeframe === '24h') daysAhead = 2; // fetch 2 days to cleanly bracket the 24h window
+    else if (timeframe === '7d') daysAhead = 7;
+    else if (timeframe === '30d') daysAhead = 30;
+    else if (timeframe === '90d') daysAhead = 90;
+
+    let maxDateStr = dateMax || new Date(now + daysAhead * 86400000).toISOString().slice(0, 10);
+
+    const cacheKey = `${minDateStr}_${maxDateStr}_${isPha}`;
+    let rawCadData = null;
+    let dataStatus = 'LIVE DATA';
+    let retrievalTimestamp = new Date().toISOString();
+
+    const cached = cadLiveCache.get(cacheKey);
+    if (cached && (now - cached.timestamp < CAD_CACHE_TTL)) {
+      rawCadData = cached.data;
+      dataStatus = 'RECENT DATA';
+      retrievalTimestamp = new Date(cached.timestamp).toISOString();
+    } else {
+      // Query official JPL CAD API
+      try {
+        const jplUrl = `https://ssd-api.jpl.nasa.gov/cad.api?dist-max=0.08&date-min=${minDateStr}&date-max=${maxDateStr}${isPha ? '&pha=true' : ''}&sort=dist`;
+        const jplRes = await fetch(jplUrl, {
+          headers: { 'User-Agent': 'CosmicFrontier/1.0' },
+          signal: AbortSignal.timeout(6000)
+        });
+
+        if (jplRes.ok) {
+          const jplJson = await jplRes.json();
+          if (jplJson && Array.isArray(jplJson.data)) {
+            rawCadData = jplJson.data;
+            cadLiveCache.set(cacheKey, { timestamp: now, data: rawCadData });
+          }
+        }
+      } catch (upstreamErr) {
+        console.warn('[CAD API] Live JPL request failed or timed out:', upstreamErr.message);
+      }
+    }
+
+    // Fallback to verified local CAD archive if upstream failed and no cache
+    if (!rawCadData) {
+      const localCad = readLocalData('data/small-bodies/recent-cad-records.json');
+      if (localCad && Array.isArray(localCad.data)) {
+        rawCadData = localCad.data;
+        dataStatus = 'RECENT DATA';
+      } else {
+        rawCadData = [];
+        dataStatus = 'UNAVAILABLE';
+      }
+    }
+
+    // Normalize records
+    let normalized = rawCadData.map(normalizeCadRecord);
+
+    // Filter by timeframe window strictly using timestamps
+    if (timeframe === '24h') {
+      const windowEnd = now + 24 * 3600 * 1000;
+      normalized = normalized.filter(item => {
+        const itemTime = new Date(item.closeApproachIso).getTime();
+        return itemTime >= (now - 6 * 3600 * 1000) && itemTime <= windowEnd;
+      });
+    } else if (timeframe === '7d') {
+      const windowEnd = now + 7 * 86400 * 1000;
+      normalized = normalized.filter(item => {
+        const itemTime = new Date(item.closeApproachIso).getTime();
+        return itemTime >= (now - 24 * 3600 * 1000) && itemTime <= windowEnd;
+      });
+    } else if (timeframe === '30d') {
+      const windowEnd = now + 30 * 86400 * 1000;
+      normalized = normalized.filter(item => {
+        const itemTime = new Date(item.closeApproachIso).getTime();
+        return itemTime >= (now - 24 * 3600 * 1000) && itemTime <= windowEnd;
+      });
+    }
+
+    // Filter by PHA if requested
+    if (isPha) {
+      normalized = normalized.filter(item => item.isPotentiallyHazardous);
+    }
+
+    // Sorting
+    if (sort === 'date') {
+      normalized.sort((a, b) => new Date(a.closeApproachIso).getTime() - new Date(b.closeApproachIso).getTime());
+    } else if (sort === 'size') {
+      normalized.sort((a, b) => b.estimatedDiameterMeters.avg - a.estimatedDiameterMeters.avg);
+    } else {
+      // Default: sort by closest distance
+      normalized.sort((a, b) => a.missDistanceAU - b.missDistanceAU);
+    }
+
+    // Limit
+    const limitNum = parseInt(limit, 10) || 50;
+    const limited = normalized.slice(0, limitNum);
+
+    return res.json({
+      success: true,
+      statusLabel: dataStatus,
+      retrievalTimestamp,
+      epoch: new Date().toISOString(),
+      timeframe,
+      count: limited.length,
+      approaches: limited
+    });
+  } catch (err) {
+    console.error('[CAD API] Error serving close approaches:', err.message);
+    return res.status(500).json({ error: 'Failed to retrieve close approach data' });
+  }
 });
 
 // 9. GET /api/data/catalog (Aggregated unified search & filter catalog)
