@@ -1777,8 +1777,16 @@ process.on('unhandledRejection', (reason) => {
   console.error('[COSMIC FRONTIER Backend] Unhandled Rejection:', reason?.message || reason);
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[COSMIC FRONTIER Backend] Server listening on port ${PORT}`);
   console.log(`[COSMIC FRONTIER Backend] AI Status: ${getCleanApiKey() ? 'Live Google Gen AI Configured' : 'Demonstration / Verified Offline Mode'}`);
   console.log(`[COSMIC FRONTIER Backend] NASA API Key: ${getNasaApiKey() !== 'DEMO_KEY' ? 'Configured & Active' : 'Using Demo Key'}`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`[COSMIC FRONTIER Backend] Port ${PORT} is already in use by another process.`);
+  } else {
+    console.error('[COSMIC FRONTIER Backend] Server error:', err.message || err);
+  }
 });
