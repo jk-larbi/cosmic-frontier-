@@ -7,6 +7,7 @@ import type {
   LiveDataBadgeStatus
 } from '../types';
 import { fetchObservatoryObjects } from '../services/astronomyDataService';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import {
   Play,
   Pause,
@@ -1203,6 +1204,23 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                 <div className="text-xs font-mono text-[#94A3B8]">
                   {selectedObject.designation}
                 </div>
+              </div>
+
+              {/* Visual Preview */}
+              <div className="rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A]">
+                <AstronomicalImage
+                  target={selectedObject}
+                  targetType={
+                    selectedObject.category === 'solar-system' ? 'planet'
+                    : selectedObject.category === 'exoplanets' ? 'exoplanet'
+                    : selectedObject.category === 'asteroids-comets' || selectedObject.category === 'distant-tnos' ? 'small-body'
+                    : selectedObject.category === 'spherex-targets' ? 'observation'
+                    : 'star'
+                  }
+                  aspectRatio="16/9"
+                  showBadge={true}
+                  className="w-full h-36 object-cover"
+                />
               </div>
 
               {/* Real-Time / Calculated Telemetry Grid */}

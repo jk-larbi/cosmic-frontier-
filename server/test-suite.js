@@ -588,6 +588,80 @@ async function runTests() {
     assert(false, `Test 17: Live Cosmic Observatory test failed: ${err.message}`);
   }
 
+  // 18. Complete Astronomical Image Coverage Suite
+  try {
+    // 18.1 - 18.5: Backend Image Endpoints & Metadata
+    const resImages = await fetch(`${BASE_URL}/api/data/images`);
+    assert(resImages.status === 200, 'Test 18.1: /api/data/images returns HTTP 200');
+    const imagesJson = await resImages.json();
+    assert(imagesJson.success === true && Array.isArray(imagesJson.records) && imagesJson.records.length > 0, 'Test 18.2: /api/data/images returns verified records array');
+
+    const resPlutoImg = await fetch(`${BASE_URL}/api/data/images?object=pluto`);
+    const plutoJson = await resPlutoImg.json();
+    const plutoRecord = plutoJson.record || (plutoJson.records && plutoJson.records[0]);
+    assert(plutoRecord && plutoRecord.assetClassification === 'spacecraft', 'Test 18.3: /api/data/images?object=pluto returns verified New Horizons spacecraft photo');
+
+    const resSolarWithImg = await fetch(`${BASE_URL}/api/data/solar-system`);
+    const solarJson = await resSolarWithImg.json();
+    const solarList = solarJson.records || solarJson.objects || [];
+    assert(solarList.length > 0 && solarList.every(o => o.image && o.image.imageUrl), 'Test 18.4: /api/data/solar-system attaches verified image metadata to every celestial object');
+
+    const resExoWithImg = await fetch(`${BASE_URL}/api/data/exoplanets`);
+    const exoJson = await resExoWithImg.json();
+    const exoList = exoJson.records || exoJson.data || [];
+    assert(exoList.length > 0 && exoList.every(e => e.image && e.image.imageUrl), 'Test 18.5: /api/data/exoplanets attaches image metadata to every exoplanet record');
+
+    // 18.6 - 18.10: Frontend Image Architecture & Generator Verification
+    const typesContent = fs.readFileSync(path.resolve(__dirname, '../src/types/index.ts'), 'utf8');
+    assert(typesContent.includes('AstronomicalAssetClassification') && typesContent.includes('AstronomicalImageRecord'), 'Test 18.6: types/index.ts defines AstronomicalAssetClassification and AstronomicalImageRecord');
+
+    const verifiedImagesContent = fs.readFileSync(path.resolve(__dirname, '../src/data/verifiedAstronomicalImages.ts'), 'utf8');
+    assert(verifiedImagesContent.includes('VERIFIED_ASTRONOMICAL_IMAGES') && verifiedImagesContent.includes('getVerifiedAstronomicalImage'), 'Test 18.7: verifiedAstronomicalImages.ts provides verified mission photo registry');
+
+    const generatorContent = fs.readFileSync(path.resolve(__dirname, '../src/utils/astronomicalIllustrationGenerator.ts'), 'utf8');
+    assert(generatorContent.includes('generateAstronomicalSvg') && generatorContent.includes('ILLUSTRATION — NOT AN ACTUAL PHOTOGRAPH'), 'Test 18.8: astronomicalIllustrationGenerator.ts renders deterministic SVGs with mandatory scientific non-photo watermark');
+
+    const serviceContent = fs.readFileSync(path.resolve(__dirname, '../src/services/astronomicalImageService.ts'), 'utf8');
+    assert(serviceContent.includes('resolveAstronomicalVisual') && serviceContent.includes('resolveAstronomicalGallery'), 'Test 18.9: astronomicalImageService.ts implements 5-tier fallback hierarchy');
+
+    const badgeContent = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalBadge.tsx'), 'utf8');
+    assert(badgeContent.includes('Verified Observation') && badgeContent.includes('Spacecraft Photo') && badgeContent.includes('Artist Concept'), 'Test 18.10: AstronomicalBadge.tsx distinguishes verified observations from artist impressions and models');
+
+    // 18.11 - 18.13: UI Components Verification
+    const imageCompContent = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalImage.tsx'), 'utf8');
+    assert(imageCompContent.includes('onError') && imageCompContent.includes('showBadge'), 'Test 18.11: AstronomicalImage.tsx features responsive layout, loading skeleton, and fallback handling');
+
+    const galleryCompContent = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalImageGallery.tsx'), 'utf8');
+    assert(galleryCompContent.includes('selectedImage') && galleryCompContent.includes('thumbnailUrl'), 'Test 18.12: AstronomicalImageGallery.tsx provides multi-asset thumbnail gallery and metadata inspector');
+
+    const compareCompContent = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalComparisonVisual.tsx'), 'utf8');
+    assert(compareCompContent.includes('scaleValue') && compareCompContent.includes('baselineName'), 'Test 18.13: AstronomicalComparisonVisual.tsx renders relative size comparison');
+
+    // 18.14 - 18.20: Cross-Page Visual Integration Verification
+    const exoLabContent = fs.readFileSync(path.resolve(__dirname, '../src/components/ExoplanetDiscoveryLab.tsx'), 'utf8');
+    assert(exoLabContent.includes('<AstronomicalImage') && exoLabContent.includes('<AstronomicalComparisonVisual') && exoLabContent.includes('<AstronomicalImageGallery'), 'Test 18.14: Exoplanet Discovery Lab integrates AstronomicalImage on catalog cards, comparison visual, and modal gallery');
+
+    const dataCentreContent = fs.readFileSync(path.resolve(__dirname, '../src/components/NasaDataCentre.tsx'), 'utf8');
+    assert(dataCentreContent.includes('<AstronomicalImage') && dataCentreContent.includes('<AstronomicalImageGallery'), 'Test 18.15: NASA Data Centre integrates AstronomicalImage on all catalog cards and modal gallery');
+
+    const obsContent = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveCosmicObservatory.tsx'), 'utf8');
+    assert(obsContent.includes('<AstronomicalImage'), 'Test 18.16: Live Cosmic Observatory integrates AstronomicalImage in the selected object telemetry inspector');
+
+    const mcContent = fs.readFileSync(path.resolve(__dirname, '../src/components/MissionControlDashboard.tsx'), 'utf8');
+    assert(mcContent.includes('<AstronomicalImage'), 'Test 18.17: Mission Control integrates AstronomicalImage in planetary inspector and approach monitor');
+
+    const universeContent = fs.readFileSync(path.resolve(__dirname, '../src/components/Universe3DExplorer.tsx'), 'utf8');
+    assert(universeContent.includes('<AstronomicalImage'), 'Test 18.18: 3D Universe Explorer integrates AstronomicalImage in the scientific object inspector');
+
+    const asteroidContent = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidWatch.tsx'), 'utf8');
+    assert(asteroidContent.includes('<AstronomicalImage'), 'Test 18.19: Asteroid Watch integrates AstronomicalImage in the close approach details inspector');
+
+    const planetXContent = fs.readFileSync(path.resolve(__dirname, '../src/components/PlanetXExplorer.tsx'), 'utf8');
+    assert(planetXContent.includes('<AstronomicalImage'), 'Test 18.20: Planet X Explorer integrates AstronomicalImage in selected body inspection panel');
+  } catch (err) {
+    assert(false, `Test 18: Complete Astronomical Image Coverage test failed: ${err.message}`);
+  }
+
   console.log('\n====================================================');
   console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('====================================================');

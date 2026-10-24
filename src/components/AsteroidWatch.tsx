@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, type FC } from 'react';
 import type { AppPage, LiveCloseApproach, LiveCloseApproachesResponse, LiveDataBadgeStatus } from '../types';
 import { fetchLiveCloseApproaches } from '../services/liveSpaceService';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { 
   ShieldAlert, 
   CheckCircle2, 
@@ -599,6 +600,22 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                 <div className="text-xs font-mono text-[#A7B4CC]">
                   Close Approach: {selectedApproach.closeApproachDate} (UTC)
                 </div>
+              </div>
+
+              {/* Visual Representation */}
+              <div className="rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A]">
+                <AstronomicalImage
+                  target={{
+                    id: selectedApproach.designation.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                    name: selectedApproach.designation,
+                    classification: selectedApproach.isPotentiallyHazardous ? 'Potentially Hazardous Asteroid' : 'Near-Earth Asteroid',
+                    diameterEstimateMeters: selectedApproach.estimatedDiameterMeters.avg,
+                  }}
+                  targetType="small-body"
+                  aspectRatio="16/9"
+                  showBadge={true}
+                  className="w-full h-36 object-cover"
+                />
               </div>
 
               {/* Physical & Trajectory Parameters */}

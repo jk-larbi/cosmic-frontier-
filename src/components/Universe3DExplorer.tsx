@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, type FC } from 'react';
 import * as THREE from 'three';
 import type { AppPage } from '../types';
 import { SOLAR_SYSTEM_OBJECTS } from '../data/solarSystemData';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { 
   createSunTexture,
   createMercuryTexture,
@@ -933,6 +934,17 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
               >
                 <X className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Mission Photograph / Scientific Visual */}
+            <div className="rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A]">
+              <AstronomicalImage
+                target={activeObjectData}
+                targetType={activeObjectData.id === 'sun' ? 'star' : 'planet'}
+                aspectRatio="16/9"
+                showBadge={true}
+                className="w-full h-36 object-cover"
+              />
             </div>
 
             {/* Description */}

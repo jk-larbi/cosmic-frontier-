@@ -9,6 +9,7 @@ import type {
   NasaApodData 
 } from '../types';
 import { fetchLiveEphemeris, fetchLiveCloseApproaches } from '../services/liveSpaceService';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { 
   Globe, 
   Orbit, 
@@ -614,6 +615,21 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
                   </div>
                 </div>
 
+                {/* Visual Representation */}
+                <div className="rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A]">
+                  <AstronomicalImage
+                    target={selectedObject}
+                    targetType={
+                      selectedObject.id === 'sun' ? 'star'
+                      : ['moon', 'mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto'].includes(selectedObject.id) ? 'planet'
+                      : 'small-body'
+                    }
+                    aspectRatio="16/9"
+                    showBadge={true}
+                    className="w-full h-36 object-cover"
+                  />
+                </div>
+
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-2 gap-2 font-mono text-xs">
                   <div className="p-2.5 rounded-lg bg-[#0B1630] border border-[#1E293B]">
@@ -764,6 +780,22 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
                       NEO
                     </span>
                   )}
+                </div>
+
+                {/* Visual Thumbnail */}
+                <div className="rounded-lg overflow-hidden border border-[#1E293B] bg-[#0B1630]">
+                  <AstronomicalImage
+                    target={{
+                      id: app.designation.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                      name: app.designation,
+                      classification: app.isPotentiallyHazardous ? 'Potentially Hazardous Asteroid' : 'Near-Earth Object',
+                      diameterEstimateMeters: app.estimatedDiameterMeters.avg,
+                    }}
+                    targetType="small-body"
+                    aspectRatio="16/9"
+                    showBadge={true}
+                    className="w-full h-24 object-cover"
+                  />
                 </div>
 
                 <div className="space-y-1 font-mono text-xs">

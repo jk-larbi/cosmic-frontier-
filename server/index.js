@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { findVerifiedAnswer, VERIFIED_KNOWLEDGE_BASE } from './knowledge.js';
 import { getCompleteEphemeris, AU_KM, LD_KM } from './ephemerisEngine.js';
+import { VERIFIED_IMAGES, getVerifiedServerImage, searchNasaImagesApi } from './verifiedImages.js';
 
 dotenv.config();
 
@@ -432,7 +433,11 @@ app.get('/api/data/manifest', (req, res) => {
 app.get('/api/data/solar-system', (req, res) => {
   const data = readLocalData('data/solar-system/planets.json');
   if (data) {
-    return res.json({ success: true, source: 'NASA/JPL Horizons Ephemerides', ...data });
+    const records = (data.records || []).map(p => ({
+      ...p,
+      image: getVerifiedServerImage(p.id) || null
+    }));
+    return res.json({ success: true, source: 'NASA/JPL Horizons Ephemerides', ...data, records });
   }
   return res.status(500).json({ error: 'Solar system data not found' });
 });
@@ -539,7 +544,10 @@ app.get('/api/data/exoplanets', async (req, res) => {
     }
   }
 
-  let combined = [...(records || []), ...candidateRecords];
+  let combined = [...(records || []), ...candidateRecords].map(r => ({
+    ...r,
+    image: getVerifiedServerImage(r.planetName, { isExoplanet: true }) || null
+  }));
 
   if (search && combined.length > 0) {
     combined = combined.filter(r => 
@@ -793,7 +801,25 @@ app.get('/api/data/spherex', (req, res) => {
 });
 
 // 8. GET /api/data/images
-app.get('/api/data/images', (req, res) => {
+app.get('/api/data/images', async (req, res) => {
+  const { search, object } = req.query;
+
+  // Direct object lookup in verified registry
+  if (object) {
+    const record = getVerifiedServerImage(object);
+    if (record) {
+      return res.json({ success: true, source: 'COSMIC FRONTIER Verified Imagery', record });
+    }
+  }
+
+  // Live NASA Images API search query
+  if (search) {
+    const liveResults = await searchNasaImagesApi(search);
+    if (liveResults && liveResults.length > 0) {
+      return res.json({ success: true, source: 'NASA Image and Video Library (Live API)', records: liveResults });
+    }
+  }
+
   const data = readLocalData('data/images/nasa-archives.json');
   if (data) {
     return res.json({ success: true, source: 'NASA Image and Video Library', ...data });

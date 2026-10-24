@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, type FC } from 'react';
 import type { CatalogCategory, CatalogItem, AppPage } from '../types';
 import { fetchCatalogItems } from '../services/astronomyDataService';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
+import { AstronomicalImageGallery } from './astronomy-images/AstronomicalImageGallery';
 import { 
   Database, 
   Search, 
@@ -288,6 +290,24 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
                       </span>
                     </div>
 
+                    {/* Visual Thumbnail */}
+                    <div className="mb-3 rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A] relative shadow-inner">
+                      <AstronomicalImage
+                        target={item}
+                        targetType={
+                          item.category === 'planets' ? 'planet' 
+                          : item.category === 'exoplanets' ? 'exoplanet'
+                          : item.category === 'small-bodies' ? 'small-body'
+                          : item.category === 'galaxies' ? 'galaxy'
+                          : item.category === 'stars' ? 'star'
+                          : 'observation'
+                        }
+                        aspectRatio="16/9"
+                        showBadge={true}
+                        className="w-full h-36 object-cover"
+                      />
+                    </div>
+
                     {/* Object Name & Subtitle */}
                     <h3 className="text-xl font-bold text-white group-hover:text-[#38BDF8] transition-colors">
                       {item.name}
@@ -373,6 +393,21 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-6 text-sm">
+              {/* Astronomical Visual & Gallery */}
+              <div className="space-y-2">
+                <AstronomicalImageGallery
+                  target={activeModalItem}
+                  targetType={
+                    activeModalItem.category === 'planets' ? 'planet'
+                    : activeModalItem.category === 'exoplanets' ? 'exoplanet'
+                    : activeModalItem.category === 'small-bodies' ? 'small-body'
+                    : activeModalItem.category === 'galaxies' ? 'galaxy'
+                    : activeModalItem.category === 'stars' ? 'star'
+                    : 'observation'
+                  }
+                />
+              </div>
+
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[#64748B] mb-2">Scientific Overview</h4>
                 <p className="text-[#CBD5E1] leading-relaxed text-xs sm:text-sm">

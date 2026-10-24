@@ -12,7 +12,7 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
       {/* 1. SYSTEM SCAN RADAR HUD (NOVA Command Center inspired) */}
       <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-2xl relative overflow-hidden">
         {/* Subtle grid pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(#38BDF8_1px,transparent_1px)] [background-size:16px_16px] opacity-5 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(#38BDF8_1px,transparent_1px)] bg-size-[16px_16px] opacity-5 pointer-events-none" />
 
         <div>
           {/* Header */}
@@ -42,19 +42,19 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
               <div className="absolute inset-4 rounded-full border border-[#38BDF8]/20" />
               <div className="absolute inset-14 rounded-full border border-[#38BDF8]/25" />
               <div className="absolute inset-24 rounded-full border border-[#38BDF8]/30" />
-              <div className="absolute inset-[115px] rounded-full border border-[#F5C451]/40" />
+              <div className="absolute inset-28.75 rounded-full border border-[#F5C451]/40" />
 
               {/* Crosshairs */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-full h-[1px] bg-[#38BDF8]/20" />
+                <div className="w-full h-px bg-[#38BDF8]/20" />
               </div>
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="h-full w-[1px] bg-[#38BDF8]/20" />
+                <div className="h-full w-px bg-[#38BDF8]/20" />
               </div>
 
               {/* Radar Rotating Sweep Line */}
               <div className="absolute inset-0 animate-spin [animation-duration:6s] pointer-events-none">
-                <div className="w-1/2 h-1/2 ml-auto origin-bottom-left bg-gradient-to-tr from-[#38BDF8]/30 via-[#38BDF8]/10 to-transparent" />
+                <div className="w-1/2 h-1/2 ml-auto origin-bottom-left bg-linear-to-tr from-[#38BDF8]/30 via-[#38BDF8]/10 to-transparent" />
               </div>
 
               {/* Central Sun Dot */}
@@ -203,7 +203,7 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
 
         <button
           onClick={() => onNavigate('spherex')}
-          className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#F5C451] to-[#EAB308] text-[#050B1A] font-bold text-xs shadow-lg hover:shadow-[#F5C451]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full py-3 px-4 rounded-xl bg-linear-to-r from-[#F5C451] to-[#EAB308] text-[#050B1A] font-bold text-xs shadow-lg hover:shadow-[#F5C451]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
         >
           <Telescope className="w-4 h-4" />
           <span>Examine Water Ice Bands in SPHEREx</span>

@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, type FC } from 'react';
 import type { AppPage, ExoplanetRecord } from '../types';
 import { fetchConfirmedExoplanets } from '../services/astronomyDataService';
+import { AstronomicalImageGallery } from './astronomy-images/AstronomicalImageGallery';
+import { AstronomicalComparisonVisual } from './astronomy-images/AstronomicalComparisonVisual';
 import { 
   Telescope, 
   Orbit, 
@@ -344,6 +346,19 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
               </button>
             </div>
 
+            {/* Visual Planet Comparison */}
+            <div className="p-4 bg-[#050B1A]/80 rounded-xl border border-[#1E293B]">
+              <AstronomicalComparisonVisual
+                items={compareList.map(p => ({
+                  id: p.planetName,
+                  name: p.planetName,
+                  radiusLabel: p.radiusEarthRadii !== null ? `${p.radiusEarthRadii} R⊕` : 'Unknown',
+                  radiusRelative: p.radiusEarthRadii ?? 1,
+                  image: '' as never,
+                }))}
+              />
+            </div>
+
             {/* Side-by-Side Comparison Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
@@ -527,6 +542,13 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
                       }`}>
                         {planet.dataStatus || (isCandidate ? 'Candidate' : 'Confirmed')}
                       </span>
+                    </div>
+
+                    {/* Planet Visual Representation */}
+                    <div className="mb-3 rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A] relative shadow-inner">
+                      <AstronomicalImageGallery
+                        targetType="exoplanet"
+                      />
                     </div>
 
                     {/* Planet Name & Star */}
@@ -832,6 +854,13 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-6 text-sm">
+              {/* Astronomical Visual & Gallery */}
+              <div className="space-y-2">
+                <AstronomicalImageGallery
+                  targetType="exoplanet"
+                />
+              </div>
+
               {/* Habitable Zone Estimator Banner */}
               {(() => {
                 const hz = getHabitableZoneEstimate(activePlanetModal.stellarEffectiveTempK, activePlanetModal.semiMajorAxisAU || null);

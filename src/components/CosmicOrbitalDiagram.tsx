@@ -75,7 +75,7 @@ export const CosmicOrbitalDiagram: FC<CosmicOrbitalDiagramProps> = ({ onNavigate
       {/* Diagram Canvas Area */}
       <div className="relative p-4 sm:p-8 flex flex-col lg:flex-row items-center gap-8">
         {/* SVG Orbital Plotter */}
-        <div className="relative w-full lg:w-2/3 aspect-[16/10] bg-[#050B1A]/80 rounded-2xl border border-[#1E293B]/70 overflow-hidden flex items-center justify-center">
+        <div className="relative w-full lg:w-2/3 aspect-16/10 bg-[#050B1A]/80 rounded-2xl border border-[#1E293B]/70 overflow-hidden flex items-center justify-center">
           <svg className="w-full h-full" viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <radialGradient id="sunGlowSmall" cx="50%" cy="50%" r="50%">
@@ -300,7 +300,7 @@ export const CosmicOrbitalDiagram: FC<CosmicOrbitalDiagramProps> = ({ onNavigate
 
             <button
               onClick={() => onNavigate('planet-x')}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] hover:from-[#7C3AED] hover:to-[#6D28D9] text-[#FFFFFF] font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+              className="w-full py-2.5 px-4 rounded-xl bg-linear-to-r from-[#8B5CF6] to-[#7C3AED] hover:from-[#7C3AED] hover:to-[#6D28D9] text-[#FFFFFF] font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-2"
             >
               <Orbit className="w-4 h-4" />
               <span>Simulate in Planet X Explorer</span>

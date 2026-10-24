@@ -1,5 +1,34 @@
 export type AppPage = 'home' | 'mission-control' | 'observatory' | 'universe' | 'live-space' | 'asteroid-watch' | 'exoplanets' | 'galaxies' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
 
+export type AstronomicalAssetClassification = 
+  | 'observation'
+  | 'spacecraft'
+  | 'artist-impression'
+  | 'scientific-illustration'
+  | 'simulation'
+  | 'contextual';
+
+export interface AstronomicalImageRecord {
+  id: string;
+  associatedObjectId: string;
+  imageUrl: string;
+  thumbnailUrl?: string;
+  hdUrl?: string;
+  title: string;
+  caption: string;
+  sourceOrganization: string;
+  sourceUrl?: string;
+  credit: string;
+  assetClassification: AstronomicalAssetClassification;
+  isVerifiedRealObservation: boolean;
+  observationDate?: string;
+  instrument?: string;
+  wavelength?: string;
+  processing?: string;
+  retrievalTimestamp?: string;
+  license?: string;
+}
+
 export type GalaxyCategory = 'spiral' | 'elliptical' | 'irregular' | 'active-agn' | 'cluster';
 
 export interface GalaxyImage {
@@ -112,6 +141,8 @@ export interface SolarSystemObject {
   longitudeOfAscendingNodeDeg: number;
   dataSource?: string;
   statusLabel: 'Confirmed' | 'Hypothetical (Unconfirmed)';
+  image?: AstronomicalImageRecord;
+  images?: AstronomicalImageRecord[];
 }
 
 export interface GuideMessage {
@@ -196,6 +227,8 @@ export interface ExoplanetRecord {
   dataStatus: string;
   disposition?: 'Confirmed' | 'Candidate';
   sourceUrl?: string;
+  image?: AstronomicalImageRecord;
+  images?: AstronomicalImageRecord[];
 }
 
 export interface SmallBodyRecord {
@@ -258,6 +291,7 @@ export interface CatalogItem {
     value: string | number;
     unit?: string;
   }>;
+  image?: AstronomicalImageRecord;
 }
 
 export type LiveDataBadgeStatus = 'LIVE DATA' | 'RECENT DATA' | 'PREDICTED' | 'SIMULATION' | 'UNAVAILABLE';
@@ -438,6 +472,7 @@ export interface ObservatoryObject {
   retrievalTimestamp: string;
   coordinateFrame: string;
   scientificDisclaimer: string;
+  image?: AstronomicalImageRecord;
 }
 
 export interface ObservatoryApiResponse {

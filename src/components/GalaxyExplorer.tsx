@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, type FC } from 'react';
 import type { GalaxyObject, GalaxyCategory, AppPage } from '../types';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
+import { AstronomicalImageGallery } from './astronomy-images/AstronomicalImageGallery';
 import { 
   Search, 
   Filter, 
@@ -595,18 +597,13 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
                   onClick={() => setSelectedGalaxy(galaxy)}
                   className="relative h-44 bg-[#050B1A] overflow-hidden cursor-pointer"
                 >
-                  {galaxy.image?.thumbnailUrl || galaxy.image?.url ? (
-                    <img
-                      src={galaxy.image.thumbnailUrl || galaxy.image.url}
-                      alt={galaxy.image.title || galaxy.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-[#A7B4CC]/50 space-y-2 p-4 text-center">
-                      <Disc className="w-8 h-8 animate-pulse text-[#8B5CF6]/40" />
-                      <span className="text-[10px] font-mono">No direct photographic asset in NASA image index</span>
-                    </div>
-                  )}
+                  <AstronomicalImage
+                    target={galaxy}
+                    targetType="galaxy"
+                    aspectRatio="16/9"
+                    showBadge={false}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
 
                   {/* Badges on image */}
                   <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
@@ -884,30 +881,11 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
 
               {/* Right Column: Visual Preview & Quick Links */}
               <div className="lg:col-span-5 space-y-4">
-                <div className="rounded-2xl bg-[#050B1A] border border-[#1E293B] overflow-hidden">
-                  {selectedGalaxy.image?.url ? (
-                    <div>
-                      <img
-                        src={selectedGalaxy.image.url}
-                        alt={selectedGalaxy.image.title}
-                        className="w-full h-56 object-cover"
-                      />
-                      <div className="p-3.5 space-y-1">
-                        <span className="text-[10px] font-mono text-[#8B5CF6] block font-bold">
-                          {selectedGalaxy.image.mission || 'NASA Mission Observatory'}
-                        </span>
-                        <h4 className="text-xs font-bold text-[#F8FAFC]">{selectedGalaxy.image.title}</h4>
-                        <p className="text-[11px] text-[#A7B4CC] leading-relaxed">{selectedGalaxy.image.caption}</p>
-                        <p className="text-[10px] text-[#A7B4CC]/60 font-mono pt-1">Credit: {selectedGalaxy.image.credit}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="h-56 flex flex-col items-center justify-center p-6 text-center text-[#A7B4CC] space-y-2">
-                      <Disc className="w-10 h-10 text-[#8B5CF6]/30 animate-pulse" />
-                      <span className="text-xs font-mono">No direct imagery archived in this index</span>
-                      <p className="text-[11px]">NASA Image library does not contain a verified single-target photograph for this object.</p>
-                    </div>
-                  )}
+                <div className="rounded-2xl bg-[#050B1A] border border-[#1E293B] p-4 overflow-hidden">
+                  <AstronomicalImageGallery
+                    target={selectedGalaxy}
+                    targetType="galaxy"
+                  />
                 </div>
 
                 {/* Cross-Link to Cosmic Image Lab if relevant */}

@@ -6,6 +6,7 @@ import {
   CANDIDATE_CASES 
 } from '../data/evidenceData';
 import type { SolarSystemObject, EvidenceTopic, CandidateCase, AppPage } from '../types';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { 
   Orbit, 
   ZoomIn, 
@@ -754,6 +755,17 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
                   Confirmed
                 </span>
               )}
+            </div>
+
+            {/* Visual Representation */}
+            <div className="rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A]">
+              <AstronomicalImage
+                target={selectedObject}
+                targetType={selectedObject.isHypothetical ? 'small-body' : selectedObject.type.includes('Planet') ? 'planet' : 'small-body'}
+                aspectRatio="16/9"
+                showBadge={true}
+                className="w-full h-36 object-cover"
+              />
             </div>
 
             {/* Approximate Orbital Properties Only When Verified */}
