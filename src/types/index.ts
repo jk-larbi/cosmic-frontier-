@@ -302,13 +302,40 @@ export interface ExoplanetRecord {
   semiMajorAxisAU?: number | null;
   eccentricity?: number | null;
   stellarEffectiveTempK: number | null;
+  equilibriumTempK?: number | null;
+  stellarRadiusSolar?: number | null;
+  stellarMassSolar?: number | null;
+  stellarSpectralType?: string | null;
+  discoveryReference?: string | null;
+  discoveryReferenceUrl?: string | null;
+  discoveryPublicationDate?: string | null;
   distanceParsecs: number | null;
   distanceLightYears: number | null;
   dataStatus: string;
   disposition?: 'Confirmed' | 'Candidate';
+  confirmedStatus?: string;
   sourceUrl?: string;
   image?: AstronomicalImageRecord;
   images?: AstronomicalImageRecord[];
+}
+
+export interface NasaImageRecord {
+  id: string;
+  nasaId: string;
+  title: string;
+  caption: string;
+  description?: string;
+  center?: string;
+  dateCreated?: string;
+  creator?: string;
+  credit?: string;
+  sourceUrl: string;
+  imageUrl: string;
+  thumbUrl: string;
+  hdUrl?: string;
+  assetClassification: 'observation' | 'processed-observation' | 'artist-concept' | 'simulation' | 'spacecraft-hardware';
+  isVerifiedRealObservation: boolean;
+  keywords?: string[];
 }
 
 export interface SmallBodyRecord {

@@ -433,3 +433,155 @@ export function createNeptuneTexture(): THREE.CanvasTexture {
   return texture;
 }
 
+// =========================================================================
+// AUTHENTIC NASA/JPL PLANETARY TEXTURE MAP REGISTRY & ASYNC LOADER
+// Source: NASA Solar System Exploration & JPL Solar System Simulator (space.jpl.nasa.gov/tmaps)
+// =========================================================================
+
+export interface PlanetTextureMeta {
+  url: string;
+  source: string;
+  sourceUrl: string;
+  credit: string;
+  mission: string;
+  description: string;
+  projection: string;
+}
+
+export const NASA_JPL_TEXTURE_MAPS: Record<string, PlanetTextureMeta> = {
+  mercury: {
+    url: 'https://space.jpl.nasa.gov/tmaps/pix/mer0muu2.jpg',
+    source: 'NASA/JPL/USGS',
+    sourceUrl: 'https://space.jpl.nasa.gov/tmaps/mercury.html',
+    credit: 'NASA/JPL/USGS Mariner 10 & MESSENGER Global Mosaic',
+    mission: 'Mariner 10 / MESSENGER',
+    description: 'Equirectangular cylindrical map of Mercury showing cratered silicate terrain and volcanic smooth plains',
+    projection: 'Simple Cylindrical (Equirectangular)'
+  },
+  venus: {
+    url: 'https://space.jpl.nasa.gov/tmaps/pix/ven0mss2.jpg',
+    source: 'NASA/JPL',
+    sourceUrl: 'https://space.jpl.nasa.gov/tmaps/venus.html',
+    credit: 'NASA/JPL Magellan Radar Team',
+    mission: 'Magellan SAR',
+    description: 'Global synthetic aperture radar backscatter mosaic penetrating Venusian opaque atmosphere',
+    projection: 'Simple Cylindrical (Equirectangular)'
+  },
+  earth: {
+    url: 'https://space.jpl.nasa.gov/tmaps/pix/ear0xuu2.jpg',
+    source: 'NASA Visible Earth / USGS',
+    sourceUrl: 'https://space.jpl.nasa.gov/tmaps/earth.html',
+    credit: 'NASA/GSFC/NOAA/USGS',
+    mission: 'Terra MODIS / DSCOVR',
+    description: 'True-color cloud-free global surface reflectance cylindrical map',
+    projection: 'Simple Cylindrical (Equirectangular)'
+  },
+  mars: {
+    url: 'https://space.jpl.nasa.gov/tmaps/pix/mar0kuu2.jpg',
+    source: 'NASA/JPL/USGS',
+    sourceUrl: 'https://space.jpl.nasa.gov/tmaps/mars.html',
+    credit: 'NASA/JPL/USGS Viking MDIM 2.1 Color Mosaic',
+    mission: 'Viking 1 & 2 Orbiter',
+    description: 'True-color controlled photomosaic showing Olympus Mons, Valles Marineris and polar caps',
+    projection: 'Simple Cylindrical (Equirectangular)'
+  },
+  jupiter: {
+    url: 'https://space.jpl.nasa.gov/tmaps/pix/jup0vss1.jpg',
+    source: 'NASA/JPL/SSI',
+    sourceUrl: 'https://space.jpl.nasa.gov/tmaps/jupiter.html',
+    credit: 'NASA/JPL/Space Science Institute Cassini-Huygens Global Map',
+    mission: 'Cassini-Huygens / Voyager',
+    description: 'Complete cylindrical map showing atmospheric belts, zones, vortices and the Great Red Spot',
+    projection: 'Simple Cylindrical (Equirectangular)'
+  },
+  saturn: {
+    url: 'https://space.jpl.nasa.gov/tmaps/pix/sat0fds1.jpg',
+    source: 'NASA/JPL/SSI',
+    sourceUrl: 'https://space.jpl.nasa.gov/tmaps/saturn.html',
+    credit: 'NASA/JPL/Space Science Institute Voyager / Cassini Global Mosaic',
+    mission: 'Voyager / Cassini',
+    description: 'True-color cylindrical map of Saturn gas giant atmosphere with ammonia cloud banding',
+    projection: 'Simple Cylindrical (Equirectangular)'
+  },
+  uranus: {
+    url: 'https://space.jpl.nasa.gov/tmaps/pix/ura0fss1.jpg',
+    source: 'NASA/JPL',
+    sourceUrl: 'https://space.jpl.nasa.gov/tmaps/uranus.html',
+    credit: 'NASA/JPL Voyager 2 Imaging Science Team',
+    mission: 'Voyager 2',
+    description: 'Calibrated cylindrical map of Uranus cyan methane-rich atmosphere from 1986 flyby',
+    projection: 'Simple Cylindrical (Equirectangular)'
+  },
+  neptune: {
+    url: 'https://space.jpl.nasa.gov/tmaps/pix/nep0fds1.jpg',
+    source: 'NASA/JPL',
+    sourceUrl: 'https://space.jpl.nasa.gov/tmaps/neptune.html',
+    credit: 'NASA/JPL Voyager 2 Imaging Science Team',
+    mission: 'Voyager 2',
+    description: 'Global cylindrical map featuring Great Dark Spot, Scooter and high-altitude cirrus streaks',
+    projection: 'Simple Cylindrical (Equirectangular)'
+  }
+};
+
+let textureLoader: THREE.TextureLoader | null = null;
+const loadedTextureCache = new Map<string, THREE.Texture>();
+
+/**
+ * Loads an authentic NASA/JPL planetary map texture asynchronously.
+ * Returns the procedural canvas texture immediately as a crisp zero-latency fallback,
+ * and seamlessly updates the material map when the real NASA/JPL texture loads.
+ */
+export function loadPlanetTexture(
+  bodyId: string, 
+  onLoaded?: (texture: THREE.Texture) => void
+): THREE.Texture {
+  const normId = bodyId.toLowerCase().trim();
+  
+  if (loadedTextureCache.has(normId)) {
+    return loadedTextureCache.get(normId)!;
+  }
+
+  const proceduralMap: Record<string, () => THREE.CanvasTexture> = {
+    sun: createSunTexture,
+    mercury: createMercuryTexture,
+    venus: createVenusTexture,
+    earth: createEarthTexture,
+    moon: createMoonTexture,
+    mars: createMarsTexture,
+    jupiter: createJupiterTexture,
+    saturn: createSaturnTexture,
+    uranus: createUranusTexture,
+    neptune: createNeptuneTexture
+  };
+
+  const fallbackFn = proceduralMap[normId] || createMercuryTexture;
+  const initialTexture = fallbackFn();
+
+  const meta = NASA_JPL_TEXTURE_MAPS[normId];
+  if (meta && typeof window !== 'undefined') {
+    if (!textureLoader) {
+      textureLoader = new THREE.TextureLoader();
+      textureLoader.setCrossOrigin('anonymous');
+    }
+
+    textureLoader.load(
+      meta.url,
+      (loadedTex) => {
+        loadedTex.colorSpace = THREE.SRGBColorSpace;
+        loadedTex.wrapS = THREE.RepeatWrapping;
+        loadedTex.wrapT = THREE.ClampToEdgeWrapping;
+        loadedTex.needsUpdate = true;
+        loadedTextureCache.set(normId, loadedTex);
+        if (onLoaded) {
+          onLoaded(loadedTex);
+        }
+      },
+      undefined,
+      (err) => {
+        console.warn(`[NASA Planetary Textures] Failed to load ${normId} map, retaining procedural fallback:`, err);
+      }
+    );
+  }
+
+  return initialTexture;
+}

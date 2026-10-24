@@ -811,64 +811,155 @@ function generateDeterministicModelSvg(name) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-// In-memory cache for live NASA Image & Video Library queries
+// In-memory bounded cache for live NASA Image & Video Library queries with 2-hour TTL
 const nasaApiCache = new Map();
+const NASA_CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours
 
-async function searchNasaImagesApi(query) {
-  const q = String(query).trim();
-  if (!q) return [];
-  const cacheKey = q.toLowerCase();
-  if (nasaApiCache.has(cacheKey)) {
-    return nasaApiCache.get(cacheKey);
+// Words that indicate non-planetary terrestrial/ground photos
+const IRRELEVANT_PATTERNS = [
+  'launch vehicle', 'rocket launch', 'press conference', 'auditorium', 
+  'ribbon cutting', 'award ceremony', 'portrait of', 'suit up', 'clean room inspection',
+  'center director', 'administrator', 'ground test facility', 'hangar'
+];
+
+async function searchNasaImagesApi(query, options = {}) {
+  const q = String(query || '').trim();
+  if (!q) {
+    const empty = [];
+    empty.totalHits = 0;
+    empty.page = 1;
+    empty.pageSize = 12;
+    empty.items = [];
+    return empty;
+  }
+
+  const page = Math.max(1, parseInt(options.page, 10) || 1);
+  const pageSize = Math.min(24, Math.max(1, parseInt(options.pageSize, 10) || 12));
+  const category = options.category ? String(options.category).toLowerCase().trim() : null;
+  const cacheKey = `${q.toLowerCase()}_p${page}_s${pageSize}_c${category || 'all'}`;
+
+  const cached = nasaApiCache.get(cacheKey);
+  const now = Date.now();
+  if (cached && (now - cached.timestamp < NASA_CACHE_TTL)) {
+    return cached.data;
   }
 
   try {
-    const url = `https://images-api.nasa.gov/search?q=${encodeURIComponent(q)}&media_type=image`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return [];
+    const url = `https://images-api.nasa.gov/search?q=${encodeURIComponent(q)}&media_type=image&page=${page}`;
+    const res = await fetch(url, { 
+      headers: { 'User-Agent': 'CosmicFrontier/1.0' },
+      signal: AbortSignal.timeout(6000) 
+    });
+    if (!res.ok) {
+      const fallback = [];
+      fallback.totalHits = 0;
+      fallback.page = page;
+      fallback.pageSize = pageSize;
+      fallback.items = [];
+      return fallback;
+    }
     const data = await res.json();
-    const items = data.collection?.items || [];
+    const rawItems = data.collection?.items || [];
+    const totalHits = data.collection?.metadata?.total_hits || rawItems.length;
 
-    const formatted = items.slice(0, 8).map(item => {
+    // Filter and map items
+    const filtered = [];
+    for (const item of rawItems) {
       const d = item.data?.[0] || {};
-      const link = item.links?.[0]?.href || '';
-      const text = `${d.title || ''} ${d.description || ''}`.toLowerCase();
+      const title = d.title || q;
+      const desc = d.description || '';
+      const text = `${title} ${desc} ${(d.keywords || []).join(' ')}`.toLowerCase();
 
+      // Filter out obvious non-planetary terrestrial photos unless user explicitly searched for spacecraft/hardware
+      const isIrrelevantGroundPhoto = IRRELEVANT_PATTERNS.some(p => text.includes(p));
+      const wantsHardware = category === 'spacecraft' || q.toLowerCase().includes('spacecraft') || q.toLowerCase().includes('rocket');
+      if (isIrrelevantGroundPhoto && !wantsHardware) {
+        continue;
+      }
+
+      // Find available link URLs
+      const linkMap = {};
+      for (const l of (item.links || [])) {
+        if (l.href) {
+          if (l.rel === 'preview') linkMap.thumb = l.href;
+          else if (l.href.includes('~orig')) linkMap.orig = l.href;
+          else if (l.href.includes('~large')) linkMap.large = l.href;
+          else if (l.href.includes('~medium')) linkMap.medium = l.href;
+          else if (l.href.includes('~small')) linkMap.small = l.href;
+          else if (l.href.includes('~thumb')) linkMap.thumb = l.href;
+        }
+      }
+
+      const imageUrl = linkMap.medium || linkMap.large || linkMap.orig || linkMap.small || item.links?.[0]?.href;
+      if (!imageUrl) continue;
+
+      const thumbUrl = linkMap.thumb || linkMap.small || imageUrl;
+      const hdUrl = linkMap.orig || linkMap.large || imageUrl;
+
+      // Classify according to Phase 5 distinct classifications
       let classification = 'observation';
       let isVerified = true;
 
-      if (text.includes('artist') || text.includes('concept') || text.includes('illustration') || text.includes('rendering')) {
-        classification = 'artist-impression';
+      if (text.includes('artist') || text.includes('concept') || text.includes('illustration') || text.includes('rendering') || text.includes('impression')) {
+        classification = 'artist-concept';
         isVerified = false;
-      } else if (text.includes('simulation') || text.includes('numerical model') || text.includes('computed')) {
+      } else if (text.includes('simulation') || text.includes('numerical model') || text.includes('computed') || text.includes('hydrodynamic')) {
         classification = 'simulation';
         isVerified = false;
-      } else if (text.includes('spacecraft') || text.includes('orbiter') || text.includes('rover') || text.includes('lander')) {
-        classification = 'spacecraft';
+      } else if (text.includes('radar') || text.includes('false color') || text.includes('false-color') || text.includes('mosaic') || text.includes('composite') || text.includes('elevation map') || text.includes('coronagraph')) {
+        classification = 'processed-observation';
+        isVerified = true;
+      } else if (text.includes('spacecraft') || text.includes('rover') || text.includes('lander') || text.includes('probe') || text.includes('orbiter')) {
+        classification = 'spacecraft-hardware';
         isVerified = true;
       }
 
-      return {
+      // Filter by category if requested
+      if (category === 'observation' && classification !== 'observation' && classification !== 'processed-observation') continue;
+      if (category === 'artist-concept' && classification !== 'artist-concept') continue;
+
+      filtered.push({
         id: `nasa-${d.nasa_id || Math.random()}`,
+        nasaId: d.nasa_id || '',
         associatedObjectId: q,
-        imageUrl: link,
-        thumbnailUrl: link,
-        title: d.title || q,
-        caption: d.description ? (d.description.slice(0, 240) + '...') : (d.title || q),
+        imageUrl,
+        thumbnailUrl: thumbUrl,
+        thumbUrl,
+        hdUrl,
+        title,
+        caption: desc ? (desc.length > 220 ? desc.slice(0, 220).trim() + '...' : desc) : title,
+        description: desc,
+        center: d.center ? `NASA / ${d.center}` : 'NASA',
         sourceOrganization: d.center ? `NASA / ${d.center}` : 'NASA',
-        sourceUrl: `https://images.nasa.gov/details/${d.nasa_id || ''}`,
-        credit: d.photographer || d.secondary_creator || 'NASA',
+        sourceUrl: d.nasa_id ? `https://images.nasa.gov/details/${d.nasa_id}` : 'https://images.nasa.gov/',
+        creator: d.photographer || d.secondary_creator || undefined,
+        credit: d.photographer || d.secondary_creator || (d.center ? `NASA/${d.center}` : 'NASA'),
         assetClassification: classification,
         isVerifiedRealObservation: isVerified,
-        observationDate: d.date_created ? d.date_created.split('T')[0] : undefined
-      };
-    }).filter(f => f.imageUrl);
+        dateCreated: d.date_created ? d.date_created.split('T')[0] : undefined,
+        observationDate: d.date_created ? d.date_created.split('T')[0] : undefined,
+        keywords: d.keywords || []
+      });
 
-    nasaApiCache.set(cacheKey, formatted);
-    return formatted;
+      if (filtered.length >= pageSize) break;
+    }
+
+    // Attach metadata onto array for dual format support
+    filtered.totalHits = totalHits;
+    filtered.page = page;
+    filtered.pageSize = pageSize;
+    filtered.items = filtered;
+
+    nasaApiCache.set(cacheKey, { data: filtered, timestamp: now });
+    return filtered;
   } catch (err) {
     console.warn(`[NASA Image Search] Query "${q}" failed:`, err.message);
-    return [];
+    const errFallback = [];
+    errFallback.totalHits = 0;
+    errFallback.page = page;
+    errFallback.pageSize = pageSize;
+    errFallback.items = [];
+    return errFallback;
   }
 }
 

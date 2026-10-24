@@ -6,16 +6,10 @@ import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { useReducedMotion, useDocumentVisibility } from '../utils/motion';
 import { 
   createSunTexture,
-  createMercuryTexture,
-  createVenusTexture,
-  createEarthTexture,
   createMoonTexture,
-  createMarsTexture,
-  createJupiterTexture,
-  createSaturnTexture,
   createSaturnRingsTexture,
-  createUranusTexture,
-  createNeptuneTexture
+  loadPlanetTexture,
+  NASA_JPL_TEXTURE_MAPS
 } from '../utils/planetTextureGenerator';
 import { 
   Compass, 
@@ -318,18 +312,6 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
     const planetMeshes = new Map<string, { mesh: THREE.Mesh; orbitGroup: THREE.Group; config: Body3DConfig }>();
     const orbitLines: THREE.Line[] = [];
 
-    // Helper map of texture generators
-    const textureMap: Record<string, () => THREE.CanvasTexture> = {
-      mercury: createMercuryTexture,
-      venus: createVenusTexture,
-      earth: createEarthTexture,
-      mars: createMarsTexture,
-      jupiter: createJupiterTexture,
-      saturn: createSaturnTexture,
-      uranus: createUranusTexture,
-      neptune: createNeptuneTexture
-    };
-
     let moonMeshRef: THREE.Mesh | undefined;
     let earthMeshRef: THREE.Mesh | undefined;
 
@@ -339,14 +321,19 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
 
       // Sphere geometry
       const sphereGeom = new THREE.SphereGeometry(body.presentationRadius, 32, 32);
-      const textureFn = textureMap[body.id] || createMercuryTexture;
-      const texture = textureFn();
 
       const planetMat = new THREE.MeshStandardMaterial({
-        map: texture,
         roughness: 0.75,
         metalness: 0.1
       });
+
+      // Load authentic NASA/JPL planetary cylindrical map with instant procedural fallback
+      const initialTexture = loadPlanetTexture(body.id, (loadedTex) => {
+        planetMat.map = loadedTex;
+        planetMat.needsUpdate = true;
+      });
+      planetMat.map = initialTexture;
+
       const mesh = new THREE.Mesh(sphereGeom, planetMat);
       mesh.rotation.z = (body.axialTiltDeg * Math.PI) / 180;
       mesh.userData = { id: body.id, name: body.name };
@@ -1019,6 +1006,38 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
                 </div>
               </div>
             </div>
+
+            {/* Authentic NASA/JPL Planetary Surface Map Provenance */}
+            {NASA_JPL_TEXTURE_MAPS[activeObjectData.id] && (
+              <div className="p-3 rounded-xl bg-[#0B1630]/90 border border-sky-500/30 text-[11px] text-[#94A3B8] space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-sky-400 font-semibold">
+                    Surface Map • NASA/JPL
+                  </span>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                    {NASA_JPL_TEXTURE_MAPS[activeObjectData.id].mission}
+                  </span>
+                </div>
+                <p className="text-white text-xs font-medium">
+                  {NASA_JPL_TEXTURE_MAPS[activeObjectData.id].credit}
+                </p>
+                <p className="text-[10px] text-[#CBD5E1] leading-relaxed">
+                  {NASA_JPL_TEXTURE_MAPS[activeObjectData.id].description}
+                </p>
+                <div className="pt-1 border-t border-[#1E293B] flex items-center justify-between text-[10px] text-[#64748B]">
+                  <span>{NASA_JPL_TEXTURE_MAPS[activeObjectData.id].projection}</span>
+                  <a
+                    href={NASA_JPL_TEXTURE_MAPS[activeObjectData.id].sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sky-400 hover:text-sky-300 inline-flex items-center gap-1 font-medium"
+                  >
+                    <span>JPL Simulator Map</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+              </div>
+            )}
 
             {/* Scientific Context */}
             {activeObjectData.scientificContext && (

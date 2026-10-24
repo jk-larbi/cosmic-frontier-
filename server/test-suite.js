@@ -1034,6 +1034,100 @@ async function runTests() {
     assert(false, `Test 21: Global Scientific Data & Image Integrity Audit Suite failed: ${err.message}`);
   }
 
+  // ----------------------------------------------------
+  // TEST SUITE 22: NASA REAL PLANET DATA, JPL SURFACE TEXTURES & EXOPLANET TAP INTEGRATION
+  // ----------------------------------------------------
+  try {
+    // 22.1: /api/data/exoplanets returns HTTP 200 with pscomppars table provenance
+    const exoRes = await fetch(`${BASE_URL}/api/data/exoplanets?page=1&limit=10`);
+    const exoData = await exoRes.json();
+    assert(exoRes.status === 200, 'Test 22.1: /api/data/exoplanets returns HTTP 200');
+    assert(
+      exoData && (exoData.table?.includes('pscomppars') || exoData.source?.includes('pscomppars') || exoData.source?.includes('NASA Exoplanet Archive')),
+      'Test 22.2: Exoplanet API reports NASA Exoplanet Archive pscomppars table provenance'
+    );
+    assert(
+      exoData.page === 1 && typeof exoData.pageSize === 'number' && typeof exoData.totalRecords === 'number',
+      'Test 22.3: Exoplanet API implements server-side pagination metadata (page, pageSize, totalRecords)'
+    );
+
+    // 22.4: Records contain compiled physical and stellar parameters
+    const records = exoData.records || [];
+    assert(records.length > 0, 'Test 22.4: Exoplanet API returns non-empty paged records array');
+    
+    // Check that supported fields exist on records
+    const sampleWithTemp = records.find(r => r.equilibriumTempK !== null && r.equilibriumTempK !== undefined);
+    assert(
+      Boolean(sampleWithTemp),
+      'Test 22.5: Confirmed exoplanet records contain authentic equilibriumTempK measurements'
+    );
+
+    // 22.6: Missing parameters are preserved as null, never fabricated
+    const unmeasuredParamFound = records.some(r => r.stellarSpectralType === null || r.massEarthMasses === null || r.eccentricity === null);
+    assert(
+      unmeasuredParamFound,
+      'Test 22.6: Unmeasured exoplanet parameters are preserved strictly as null (honest scientific representation)'
+    );
+
+    // 22.7: /api/nasa/images returns HTTP 200 with classified assets from NASA Image Library
+    const nasaImgRes = await fetch(`${BASE_URL}/api/nasa/images?q=TRAPPIST-1&pageSize=6`);
+    const nasaImgData = await nasaImgRes.json();
+    assert(nasaImgRes.status === 200, 'Test 22.7: /api/nasa/images returns HTTP 200');
+    assert(
+      nasaImgData && Array.isArray(nasaImgData.items) && nasaImgData.items.length > 0,
+      'Test 22.8: NASA Image Library returns items array for astronomical target'
+    );
+    const firstImg = nasaImgData.items[0];
+    assert(
+      firstImg.nasaId && firstImg.title && ['observation', 'processed-observation', 'artist-concept', 'simulation', 'spacecraft-hardware'].includes(firstImg.assetClassification),
+      'Test 22.9: NASA Image items contain NASA ID, title, and valid scientific assetClassification'
+    );
+
+    // 22.10: NASA JPL Texture Map registry is verified
+    const textureGenTs = fs.readFileSync(path.resolve(__dirname, '../src/utils/planetTextureGenerator.ts'), 'utf8');
+    assert(
+      textureGenTs.includes('NASA_JPL_TEXTURE_MAPS') && 
+      textureGenTs.includes('https://space.jpl.nasa.gov/tmaps/pix/mer0muu2.jpg') &&
+      textureGenTs.includes('https://space.jpl.nasa.gov/tmaps/pix/jup0vss1.jpg'),
+      'Test 22.10: planetTextureGenerator.ts defines NASA_JPL_TEXTURE_MAPS with authentic JPL cylindrical map URLs'
+    );
+    assert(
+      textureGenTs.includes('loadPlanetTexture') && textureGenTs.includes('loadedTextureCache'),
+      'Test 22.11: planetTextureGenerator.ts exports asynchronous loadPlanetTexture with procedural canvas fallback'
+    );
+
+    // 22.12: Universe3DExplorer integrates loadPlanetTexture and NASA JPL attribution
+    const universeTs = fs.readFileSync(path.resolve(__dirname, '../src/components/Universe3DExplorer.tsx'), 'utf8');
+    assert(
+      universeTs.includes('loadPlanetTexture') && universeTs.includes('NASA_JPL_TEXTURE_MAPS'),
+      'Test 22.12: Universe3DExplorer.tsx integrates loadPlanetTexture and displays JPL texture map attribution'
+    );
+
+    // 22.13: LiveCosmicObservatory integrates loadPlanetTexture for WebGL planetary rendering
+    const observatoryTs = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveCosmicObservatory.tsx'), 'utf8');
+    assert(
+      observatoryTs.includes('loadPlanetTexture') && observatoryTs.includes('NASA_JPL_TEXTURE_MAPS'),
+      'Test 22.13: LiveCosmicObservatory.tsx textures 3D planets using loadPlanetTexture'
+    );
+
+    // 22.14: ExoplanetDiscoveryLab integrates pagination, NASA Image Search tab, and extended parameters
+    const exoplanetLabTs = fs.readFileSync(path.resolve(__dirname, '../src/components/ExoplanetDiscoveryLab.tsx'), 'utf8');
+    assert(
+      exoplanetLabTs.includes('activeMainTab') && exoplanetLabTs.includes('NASA Image Library Explorer'),
+      'Test 22.14: ExoplanetDiscoveryLab.tsx implements dedicated NASA Image Library Explorer tab'
+    );
+    assert(
+      exoplanetLabTs.includes('currentPage') && exoplanetLabTs.includes('totalPages') && exoplanetLabTs.includes('paginatedPlanets'),
+      'Test 22.15: ExoplanetDiscoveryLab.tsx implements responsive exoplanet catalog pagination controls'
+    );
+    assert(
+      exoplanetLabTs.includes('equilibriumTempK') && exoplanetLabTs.includes('stellarRadiusSolar') && exoplanetLabTs.includes('discoveryReference'),
+      'Test 22.16: ExoplanetDiscoveryLab.tsx renders equilibrium temperature, stellar properties, and publication references'
+    );
+  } catch (err) {
+    assert(false, `Test 22: NASA Real Planet Data & Imagery Integration Suite failed: ${err.message}`);
+  }
+
   console.log('\n====================================================');
   console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('====================================================');

@@ -10,6 +10,11 @@ import { fetchObservatoryObjects } from '../services/astronomyDataService';
 import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { useReducedMotion, useDocumentVisibility } from '../utils/motion';
 import {
+  loadPlanetTexture,
+  createSunTexture,
+  NASA_JPL_TEXTURE_MAPS
+} from '../utils/planetTextureGenerator';
+import {
   Play,
   Pause,
   RotateCcw,
@@ -446,9 +451,21 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         let mat: THREE.Material;
 
         if (obj.id === 'sun') {
-          mat = new THREE.MeshBasicMaterial({ color: 0xF5C451 });
+          const sunTex = createSunTexture();
+          mat = new THREE.MeshBasicMaterial({ map: sunTex });
         } else if (obj.motionType === 'observation-footprint') {
           mat = new THREE.MeshBasicMaterial({ color: obj.color, wireframe: true });
+        } else if (obj.category === 'solar-system' && NASA_JPL_TEXTURE_MAPS[obj.id]) {
+          const stdMat = new THREE.MeshStandardMaterial({
+            roughness: 0.7,
+            metalness: 0.1
+          });
+          const initialTex = loadPlanetTexture(obj.id, (loadedTex) => {
+            stdMat.map = loadedTex;
+            stdMat.needsUpdate = true;
+          });
+          stdMat.map = initialTex;
+          mat = stdMat;
         } else {
           mat = new THREE.MeshStandardMaterial({
             color: new THREE.Color(obj.color || '#38BDF8'),
@@ -1318,6 +1335,32 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               <p className="text-xs text-[#A7B4CC] leading-relaxed p-3 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                 {selectedObject.description}
               </p>
+
+              {/* Authentic NASA/JPL Surface Texture Map Provenance */}
+              {NASA_JPL_TEXTURE_MAPS[selectedObject.id] && (
+                <div className="p-3 rounded-lg bg-[#050B1A] border border-sky-500/30 text-[11px] text-[#94A3B8] space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono uppercase text-[10px] text-sky-400 font-bold">
+                      Surface Map • NASA/JPL
+                    </span>
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300">
+                      {NASA_JPL_TEXTURE_MAPS[selectedObject.id].mission}
+                    </span>
+                  </div>
+                  <p className="text-white text-xs">{NASA_JPL_TEXTURE_MAPS[selectedObject.id].credit}</p>
+                  <div className="flex items-center justify-between text-[10px] text-[#64748B] pt-1">
+                    <span>{NASA_JPL_TEXTURE_MAPS[selectedObject.id].projection}</span>
+                    <a
+                      href={NASA_JPL_TEXTURE_MAPS[selectedObject.id].sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sky-400 hover:underline"
+                    >
+                      JPL Map Source
+                    </a>
+                  </div>
+                </div>
+              )}
 
               {/* Mandatory Scientific Transparency Disclaimer */}
               <div className="p-3 rounded-lg bg-linear-to-r from-[#050B1A] to-[#0E1B38] border border-[#38BDF8]/30 space-y-1.5">
