@@ -957,7 +957,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
               Candidate Investigation: How Astronomers Find Moving Objects
             </h2>
             <p className="text-xs sm:text-sm text-[#A7B4CC] max-w-2xl">
-              Distant Solar System objects are discovered by taking photographs of the sky separated by weeks or months. Stars remain stationary, while orbiting bodies shift noticeably against the celestial background.
+              Distant Solar System objects are discovered by taking photographs of the sky separated by weeks or months. Stars remain stationary, while orbiting bodies shift noticeably against the celestial background. This interactive blink comparator is an educational simulation illustrating Clyde Tombaugh’s discovery method, not live telescope data.
             </p>
           </div>
 
@@ -1027,7 +1027,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
         {/* Interactive Blink Comparator Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[#A7B4CC]">Blink Comparator (Tombaugh Technique):</span>
+            <span className="font-mono text-[#A7B4CC]">Blink Comparator (Educational Simulation • Tombaugh Technique):</span>
             <button
               onClick={() => setIsBlinkingAuto(!isBlinkingAuto)}
               className={`px-3 py-1 rounded-lg font-mono text-xs transition-all flex items-center gap-1.5 ${

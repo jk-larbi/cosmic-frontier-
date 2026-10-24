@@ -186,6 +186,11 @@ export interface CelestialTarget {
       bandImage?: string;
     };
   };
+  spectralProfile?: {
+    spectrumType: 'Archival Reference Spectroscopy' | 'Theoretical Radiative Model' | 'Synthetic Instrument Simulation';
+    provenance: string;
+    points: { wavelength: number; relativeFlux: number }[];
+  };
 }
 
 export interface SolarSystemObject {

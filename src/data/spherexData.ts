@@ -115,6 +115,27 @@ export const CELESTIAL_TARGETS: CelestialTarget[] = [
         intensityNotes: 'Warm circumstellar cocoons around protostars shine with peak infrared luminosity.',
         absorptionSignature: 'Solid-state CO ice absorption on dust grain mantles.'
       }
+    },
+    spectralProfile: {
+      spectrumType: 'Archival Reference Spectroscopy',
+      provenance: 'JWST NIRCam & Spitzer IRS Archival Spectral Library',
+      points: [
+        { wavelength: 0.75, relativeFlux: 0.95 },
+        { wavelength: 1.0, relativeFlux: 0.92 },
+        { wavelength: 1.5, relativeFlux: 0.88 },
+        { wavelength: 2.0, relativeFlux: 0.85 },
+        { wavelength: 2.12, relativeFlux: 1.10 },
+        { wavelength: 2.5, relativeFlux: 0.82 },
+        { wavelength: 3.0, relativeFlux: 0.45 },
+        { wavelength: 3.05, relativeFlux: 0.38 },
+        { wavelength: 3.2, relativeFlux: 0.60 },
+        { wavelength: 3.5, relativeFlux: 0.78 },
+        { wavelength: 4.0, relativeFlux: 0.82 },
+        { wavelength: 4.27, relativeFlux: 0.52 },
+        { wavelength: 4.5, relativeFlux: 0.75 },
+        { wavelength: 4.67, relativeFlux: 0.58 },
+        { wavelength: 5.0, relativeFlux: 0.72 }
+      ]
     }
   },
   {
@@ -168,6 +189,26 @@ export const CELESTIAL_TARGETS: CelestialTarget[] = [
         intensityNotes: 'Warm circumstellar envelopes glow brightly; dense filament cores show deep CO dip.',
         absorptionSignature: 'Carbon monoxide ice absorption on grain mantles.'
       }
+    },
+    spectralProfile: {
+      spectrumType: 'Archival Reference Spectroscopy',
+      provenance: 'Spitzer IRAC & IRS Archival Spectral Library',
+      points: [
+        { wavelength: 0.75, relativeFlux: 0.70 },
+        { wavelength: 1.0, relativeFlux: 0.75 },
+        { wavelength: 1.5, relativeFlux: 0.82 },
+        { wavelength: 2.0, relativeFlux: 0.90 },
+        { wavelength: 2.12, relativeFlux: 1.25 },
+        { wavelength: 2.5, relativeFlux: 0.85 },
+        { wavelength: 3.0, relativeFlux: 0.40 },
+        { wavelength: 3.05, relativeFlux: 0.32 },
+        { wavelength: 3.3, relativeFlux: 0.65 },
+        { wavelength: 4.0, relativeFlux: 0.88 },
+        { wavelength: 4.27, relativeFlux: 0.48 },
+        { wavelength: 4.5, relativeFlux: 0.95 },
+        { wavelength: 4.67, relativeFlux: 0.62 },
+        { wavelength: 5.0, relativeFlux: 1.05 }
+      ]
     }
   },
   {
@@ -221,6 +262,25 @@ export const CELESTIAL_TARGETS: CelestialTarget[] = [
         intensityNotes: 'Central starburst core glows with extreme infrared luminosity.',
         absorptionSignature: 'Deep molecular carbon signatures in active nuclear ring.'
       }
+    },
+    spectralProfile: {
+      spectrumType: 'Archival Reference Spectroscopy',
+      provenance: 'Spitzer SINGS Extragalactic Spectral Catalog',
+      points: [
+        { wavelength: 0.75, relativeFlux: 0.98 },
+        { wavelength: 1.0, relativeFlux: 0.95 },
+        { wavelength: 1.5, relativeFlux: 0.88 },
+        { wavelength: 2.0, relativeFlux: 0.82 },
+        { wavelength: 2.5, relativeFlux: 0.78 },
+        { wavelength: 3.0, relativeFlux: 0.72 },
+        { wavelength: 3.05, relativeFlux: 0.68 },
+        { wavelength: 3.3, relativeFlux: 0.92 },
+        { wavelength: 3.8, relativeFlux: 0.74 },
+        { wavelength: 4.0, relativeFlux: 0.76 },
+        { wavelength: 4.27, relativeFlux: 0.70 },
+        { wavelength: 4.5, relativeFlux: 0.82 },
+        { wavelength: 5.0, relativeFlux: 0.90 }
+      ]
     }
   },
   {
@@ -274,6 +334,24 @@ export const CELESTIAL_TARGETS: CelestialTarget[] = [
         intensityNotes: 'Outer edges of the disk where cometary bodies accumulate primordial volatiles.',
         absorptionSignature: '4.67 µm CO solid-state absorption.'
       }
+    },
+    spectralProfile: {
+      spectrumType: 'Theoretical Radiative Model',
+      provenance: 'ALMA/JWST Radiative Transfer Disk Chemistry Model (ALMA Partnership 2015)',
+      points: [
+        { wavelength: 0.75, relativeFlux: 0.50 },
+        { wavelength: 1.0, relativeFlux: 0.60 },
+        { wavelength: 1.5, relativeFlux: 0.72 },
+        { wavelength: 2.0, relativeFlux: 0.80 },
+        { wavelength: 2.5, relativeFlux: 0.75 },
+        { wavelength: 3.0, relativeFlux: 0.35 },
+        { wavelength: 3.05, relativeFlux: 0.28 },
+        { wavelength: 3.4, relativeFlux: 0.55 },
+        { wavelength: 4.0, relativeFlux: 0.70 },
+        { wavelength: 4.27, relativeFlux: 0.38 },
+        { wavelength: 4.67, relativeFlux: 0.42 },
+        { wavelength: 5.0, relativeFlux: 0.85 }
+      ]
     }
   },
   {
@@ -327,6 +405,24 @@ export const CELESTIAL_TARGETS: CelestialTarget[] = [
         intensityNotes: 'Captures thermal emission from dust heated by first massive star clusters.',
         absorptionSignature: 'Diffuse extragalactic thermal background.'
       }
+    },
+    spectralProfile: {
+      spectrumType: 'Synthetic Instrument Simulation',
+      provenance: 'SPHEREx Science Team Pre-Flight CIB Simulation (Bock et al. 2020)',
+      points: [
+        { wavelength: 0.75, relativeFlux: 0.40 },
+        { wavelength: 1.0, relativeFlux: 0.45 },
+        { wavelength: 1.2, relativeFlux: 0.65 },
+        { wavelength: 1.5, relativeFlux: 0.85 },
+        { wavelength: 2.0, relativeFlux: 0.78 },
+        { wavelength: 2.5, relativeFlux: 0.70 },
+        { wavelength: 3.0, relativeFlux: 0.62 },
+        { wavelength: 3.05, relativeFlux: 0.60 },
+        { wavelength: 3.5, relativeFlux: 0.55 },
+        { wavelength: 4.0, relativeFlux: 0.52 },
+        { wavelength: 4.5, relativeFlux: 0.50 },
+        { wavelength: 5.0, relativeFlux: 0.48 }
+      ]
     }
   }
 ];

@@ -297,13 +297,15 @@ export const SOLAR_SYSTEM_OBJECTS: SolarSystemObject[] = [
     longitudeOfAscendingNodeDeg: 301.0
   },
   // Hypothetical Planet X (Planet Nine)
+  // Mathematical dynamical reference: Batygin & Brown (2021) The Astronomical Journal, 162:219
+  // Orbital parameters: a = 420 AU, e = 0.43 -> q = a(1-e) = 240 AU, Q = a(1+e) = 600 AU
   {
     id: 'planet-x',
     name: 'Planet X (Hypothetical Planet Nine)',
     type: 'Hypothetical Planet',
     semiMajorAxisAU: 420.0,
     orbitalPeriodYears: 8600,
-    eccentricity: 0.60,
+    eccentricity: 0.43,
     inclinationDeg: 18.0,
     perihelionAU: 240.0,
     aphelionAU: 600.0,

@@ -1039,6 +1039,114 @@ export const SPHERExExplorer: FC = () => {
             </div>
           )}
 
+          {/* Interactive Infrared Spectral Curve & Molecular Features Plot */}
+          {selectedTarget.spectralProfile && (
+            <div className="p-6 rounded-2xl bg-[#0B1630] border border-[#38BDF8]/40 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-[#1E293B] pb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#38BDF8] font-mono flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  <span>Spectral Profile (0.75 – 5.0 μm)</span>
+                </span>
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                  selectedTarget.spectralProfile.spectrumType === 'Archival Reference Spectroscopy'
+                    ? 'bg-[#38BDF8]/10 text-[#38BDF8] border-[#38BDF8]/30'
+                    : selectedTarget.spectralProfile.spectrumType === 'Theoretical Radiative Model'
+                    ? 'bg-[#F5C451]/10 text-[#F5C451] border-[#F5C451]/30'
+                    : 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/30'
+                }`}>
+                  {selectedTarget.spectralProfile.spectrumType}
+                </span>
+              </div>
+
+              {/* Responsive SVG Spectral Chart */}
+              <div className="bg-[#050B1A] p-3 rounded-xl border border-[#1E293B] space-y-2">
+                <div className="h-36 w-full relative">
+                  <svg viewBox="0 0 320 120" className="w-full h-full overflow-visible">
+                    {/* Grid lines */}
+                    <line x1="30" y1="20" x2="310" y2="20" stroke="#1E293B" strokeDasharray="3 3" />
+                    <line x1="30" y1="60" x2="310" y2="60" stroke="#1E293B" strokeDasharray="3 3" />
+                    <line x1="30" y1="100" x2="310" y2="100" stroke="#1E293B" />
+                    <line x1="30" y1="10" x2="30" y2="100" stroke="#1E293B" />
+
+                    {/* Y-axis labels */}
+                    <text x="5" y="24" fill="#A7B4CC" fontSize="8" fontFamily="monospace">1.2</text>
+                    <text x="5" y="64" fill="#A7B4CC" fontSize="8" fontFamily="monospace">0.8</text>
+                    <text x="5" y="104" fill="#A7B4CC" fontSize="8" fontFamily="monospace">0.4</text>
+
+                    {/* Spectral Curve Path */}
+                    {(() => {
+                      const pts = selectedTarget.spectralProfile.points;
+                      const minW = 0.75;
+                      const maxW = 5.0;
+                      const minF = 0.2;
+                      const maxF = 1.3;
+                      const getX = (w: number) => 30 + ((w - minW) / (maxW - minW)) * 280;
+                      const getY = (f: number) => 100 - ((f - minF) / (maxF - minF)) * 90;
+
+                      const pathD = pts.reduce((acc, p, idx) => {
+                        return `${acc} ${idx === 0 ? 'M' : 'L'} ${getX(p.wavelength).toFixed(1)} ${getY(p.relativeFlux).toFixed(1)}`;
+                      }, '');
+
+                      // Active band marker X
+                      const activeX = getX(selectedBand.wavelength);
+                      // 3.05 water ice line X
+                      const iceX = getX(3.05);
+
+                      return (
+                        <>
+                          {/* 3.05 µm water ice absorption region highlight */}
+                          <rect x={getX(2.95)} y="10" width={getX(3.15) - getX(2.95)} height="90" fill="rgba(192, 132, 252, 0.12)" />
+                          <line x1={iceX} y1="10" x2={iceX} y2="100" stroke="#C084FC" strokeWidth="1" strokeDasharray="2 2" opacity="0.6" />
+
+                          {/* Spectral line */}
+                          <path d={pathD} fill="none" stroke="#38BDF8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+
+                          {/* Data points */}
+                          {pts.map((p, idx) => (
+                            <circle
+                              key={idx}
+                              cx={getX(p.wavelength)}
+                              cy={getY(p.relativeFlux)}
+                              r="2.5"
+                              fill="#38BDF8"
+                            />
+                          ))}
+
+                          {/* Active band vertical indicator */}
+                          <line x1={activeX} y1="10" x2={activeX} y2="100" stroke="#F5C451" strokeWidth="2" />
+                          <circle cx={activeX} cy="10" r="3.5" fill="#F5C451" />
+                        </>
+                      );
+                    })()}
+                  </svg>
+                </div>
+
+                {/* X-axis labels */}
+                <div className="flex justify-between text-[10px] font-mono text-[#A7B4CC] px-2 pt-1">
+                  <span>0.75 μm</span>
+                  <span className="text-[#C084FC] font-semibold">3.05 μm (H₂O Ice)</span>
+                  <span className="text-[#FB7185]">4.27 μm (CO₂)</span>
+                  <span>5.0 μm</span>
+                </div>
+              </div>
+
+              {/* Spectral provenance and context note */}
+              <div className="text-[11px] font-mono text-[#A7B4CC] space-y-1">
+                <div className="flex justify-between">
+                  <span>Reference Source:</span>
+                  <span className="text-[#F8FAFC] truncate max-w-44">{selectedTarget.spectralProfile.provenance}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Active Probe Channel:</span>
+                  <span className="text-[#F5C451] font-bold">{selectedBand.wavelength.toFixed(1)} μm ({selectedBand.name.split('—')[1]?.trim() || selectedBand.name})</span>
+                </div>
+                <p className="text-[10px] text-[#A7B4CC]/80 pt-1 leading-snug">
+                  Notice: Plotted curve uses documented infrared reference spectroscopy & physical models matched to SPHEREx's 102 LVF channels. Calibrated in-flight all-sky survey data cubes will be released via IRSA post-commissioning.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Active Band Chemical Diagnostics */}
           <div className="p-6 rounded-2xl bg-[#0B1630] border border-[#8B5CF6]/30 space-y-3 shadow-xl">
             <div className="flex items-center gap-2 text-[#8B5CF6]">
