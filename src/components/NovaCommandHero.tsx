@@ -23,10 +23,10 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
       {/* Background Starfield & Subtle Nebular Gradients */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Soft radial glow under planet */}
-        <div className="absolute -right-20 top-1/4 w-[650px] h-[650px] bg-[#38BDF8]/10 rounded-full blur-[140px]" />
-        <div className="absolute left-10 bottom-1/3 w-[500px] h-[500px] bg-[#8B5CF6]/10 rounded-full blur-[140px]" />
+        <div className="absolute -right-20 top-1/4 w-162.5 h-162.5 bg-[#38BDF8]/10 rounded-full blur-[140px]" />
+        <div className="absolute left-10 bottom-1/3 w-125 h-125 bg-[#8B5CF6]/10 rounded-full blur-[140px]" />
         {/* Fine coordinate grid */}
-        <div className="absolute inset-0 bg-[radial-gradient(#38BDF8_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.03]" />
+        <div className="absolute inset-0 bg-[radial-gradient(#38BDF8_1px,transparent_1px)] bg-size-[32px_32px] opacity-[0.03]" />
       </div>
 
       {/* TOP COMMAND BAR */}
@@ -125,11 +125,11 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
             <h1 className="text-4xl sm:text-6xl xl:text-7xl font-black tracking-tight text-[#F8FAFC] leading-[1.02]">
               EXPLORE.
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFFFFF] via-[#E2E8F0] to-[#94A3B8]">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-[#FFFFFF] via-[#E2E8F0] to-[#94A3B8]">
                 DISCOVER.
               </span>
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#38BDF8] via-[#8B5CF6] to-[#F5C451]">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-[#38BDF8] via-[#8B5CF6] to-[#F5C451]">
                 ENDURE.
               </span>
             </h1>
@@ -161,7 +161,7 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
 
         {/* CENTER/RIGHT COLUMN (5 Cols): Massive Glowing Exoplanet/World Artwork */}
         <div className="lg:col-span-5 relative flex items-center justify-center">
-          <div className="relative w-full max-w-[420px] aspect-square flex items-center justify-center">
+          <div className="relative w-full max-w-105 aspect-square flex items-center justify-center">
             {/* Target World Floating Badge (Exactly like NOVA 'TARGET: KEPLER-186F') */}
             <div className="absolute top-4 right-2 sm:right-6 z-20 p-3 rounded-2xl bg-[#070D1E]/80 border border-[#38BDF8]/40 backdrop-blur-xl shadow-2xl space-y-0.5">
               <span className="text-[9px] font-mono uppercase text-[#A7B4CC] tracking-wider block">
@@ -383,7 +383,7 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
                 <span>ALL SYSTEMS READY</span>
               </div>
               <div className="w-full bg-[#1E293B] h-1.5 rounded-full overflow-hidden mt-2">
-                <div className="bg-[#10B981] h-full w-[100%]" />
+                <div className="bg-[#10B981] h-full w-full" />
               </div>
             </div>
           </div>
@@ -443,7 +443,7 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
                 <div className="absolute inset-4 rounded-full border border-[#10B981]/30" />
                 {/* Rotating scanner needle */}
                 <div className="absolute inset-0 animate-spin [animation-duration:4s] pointer-events-none">
-                  <div className="w-1/2 h-1/2 ml-auto origin-bottom-left bg-gradient-to-tr from-[#10B981]/40 via-[#10B981]/10 to-transparent" />
+                  <div className="w-1/2 h-1/2 ml-auto origin-bottom-left bg-linear-to-tr from-[#10B981]/40 via-[#10B981]/10 to-transparent" />
                 </div>
                 {/* Central dot */}
                 <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
@@ -510,7 +510,7 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
 
             {/* Planet Hemisphere Curve Peek */}
             <div className="relative w-28 h-14 overflow-hidden flex items-end justify-center">
-              <div className="w-28 h-28 rounded-full border-2 border-[#38BDF8] bg-gradient-to-t from-[#0284C7] to-[#0B1329] shadow-inner" />
+              <div className="w-28 h-28 rounded-full border-2 border-[#38BDF8] bg-linear-to-t from-[#0284C7] to-[#0B1329] shadow-inner" />
             </div>
 
             <div className="space-y-0.5">

@@ -10,12 +10,12 @@ import {
   Orbit, 
   Sparkles, 
   ChevronRight, 
-  Waves, 
   ShieldAlert, 
   ArrowRight,
   Database,
   Globe,
-  Compass
+  Compass,
+  Disc
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -26,7 +26,7 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
   return (
     <div className="space-y-20 pb-16">
       {/* 1. NOVA-STYLE SCI-FI COMMAND CENTER HERO */}
-      <div className="max-w-[1440px] mx-auto px-2 sm:px-4 lg:px-6 pt-4">
+      <div className="max-w-360 mx-auto px-2 sm:px-4 lg:px-6 pt-4">
         <NovaCommandHero onNavigate={onNavigate} />
       </div>
 
@@ -153,29 +153,29 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Card 3: Interstellar Ices */}
+          {/* Card: Galaxy Explorer */}
           <div 
-            onClick={() => onNavigate('spherex')}
-            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#F5C451] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#F5C451]/15 transition-all cursor-pointer flex flex-col justify-between"
+            onClick={() => onNavigate('galaxies')}
+            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#8B5CF6] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#8B5CF6]/15 transition-all cursor-pointer flex flex-col justify-between"
           >
             <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#F5C451]/10 border border-[#F5C451]/30 flex items-center justify-center text-[#F5C451] group-hover:scale-110 transition-transform">
-                <Waves className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#8B5CF6] group-hover:scale-110 transition-transform">
+                <Disc className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-[10px] font-mono text-[#F5C451] font-bold uppercase tracking-wider">
-                  Prebiotic Building Blocks
+                <span className="text-[10px] font-mono text-[#8B5CF6] font-bold uppercase tracking-wider">
+                  NASA/IPAC Extragalactic
                 </span>
-                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#F5C451] transition-colors mt-0.5">
-                  Interstellar Ices
+                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#8B5CF6] transition-colors mt-0.5">
+                  Galaxy Explorer
                 </h3>
               </div>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Discover how water (H₂O), carbon dioxide (CO₂), and organic molecules freeze onto dust grains to form the seeds of new planets.
+                Discover 24+ deep-sky galaxies, active galactic nuclei (AGN), and galaxy clusters from NASA/IPAC NED and CDS SIMBAD.
               </p>
             </div>
-            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#F5C451]">
-              <span>3.05 µm Absorption</span>
+            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#8B5CF6]">
+              <span>24+ Catalogs & Live NED</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
             </div>
           </div>
@@ -307,7 +307,7 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* 7. SCIENTIFIC DATA NOTICE BANNER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl bg-gradient-to-r from-[#0B1630] to-[#121B35] border border-[#F5C451]/30 p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
+        <div className="rounded-2xl bg-linear-to-r from-[#0B1630] to-[#121B35] border border-[#F5C451]/30 p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-[#F5C451]/10 border border-[#F5C451]/40 flex items-center justify-center shrink-0">
               <ShieldAlert className="w-6 h-6 text-[#F5C451]" />
@@ -336,7 +336,7 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* 8. AI ASSISTANT CALL TO ACTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-gradient-to-b from-[#0B1630] to-[#050B1A] border border-[#1E293B] p-8 sm:p-12 text-center space-y-6 shadow-2xl">
+        <div className="rounded-3xl bg-linear-to-b from-[#0B1630] to-[#050B1A] border border-[#1E293B] p-8 sm:p-12 text-center space-y-6 shadow-2xl">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 text-[#8B5CF6]">
             <Sparkles className="w-7 h-7" />
           </div>
@@ -351,7 +351,7 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
           <div className="pt-2">
             <button
               onClick={() => onNavigate('ai-guide')}
-              className="px-8 py-4 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] hover:from-[#7C3AED] hover:to-[#6D28D9] text-[#FFFFFF] font-bold text-sm shadow-xl hover:shadow-[#8B5CF6]/30 transition-all inline-flex items-center gap-2 cursor-pointer"
+              className="px-8 py-4 rounded-xl bg-linear-to-r from-[#8B5CF6] to-[#7C3AED] hover:from-[#7C3AED] hover:to-[#6D28D9] text-[#FFFFFF] font-bold text-sm shadow-xl hover:shadow-[#8B5CF6]/30 transition-all inline-flex items-center gap-2 cursor-pointer"
             >
               <Sparkles className="w-4 h-4" />
               <span>Talk to COSMIC AI GUIDE</span>

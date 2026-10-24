@@ -1,4 +1,47 @@
-export type AppPage = 'home' | 'universe' | 'exoplanets' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
+export type AppPage = 'home' | 'universe' | 'exoplanets' | 'galaxies' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
+
+export type GalaxyCategory = 'spiral' | 'elliptical' | 'irregular' | 'active-agn' | 'cluster';
+
+export interface GalaxyImage {
+  url: string;
+  thumbnailUrl?: string;
+  title: string;
+  nasaId?: string;
+  credit: string;
+  caption: string;
+  mission?: string;
+  isIllustration?: boolean;
+  sourcePage?: string;
+}
+
+export interface GalaxyObject {
+  id: string;
+  name: string;
+  catalogIdentifier: string;
+  alternateNames?: string[];
+  category: GalaxyCategory;
+  morphologicalType: string;
+  constellation: string;
+  rightAscension: string;
+  declination: string;
+  redshift: number;
+  redshiftUncertainty?: number;
+  radialVelocityKmS: number;
+  distanceMly: number | null;
+  distanceMpc: number | null;
+  distanceMethod: string;
+  apparentMagnitude: number | null;
+  angularSize: string;
+  estimatedDiameterKpc: number | null;
+  estimatedDiameterLy?: number | null;
+  description: string;
+  scientificSignificance: string;
+  sourceUrl: string;
+  bibcode?: string;
+  dataStatus: DataStatusType;
+  image?: GalaxyImage;
+  isLiveLookup?: boolean;
+}
 
 export interface InfraredBand {
   id: string;

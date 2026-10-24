@@ -337,7 +337,7 @@ You can explore any of our core educational questions or inspect our interactive
 
       {/* Main Chat Interface */}
       <div 
-        className="rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-2xl overflow-hidden flex flex-col h-[600px]"
+        className="rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-2xl overflow-hidden flex flex-col h-150"
         role="region"
         aria-label="Chat conversation area"
       >
@@ -389,7 +389,7 @@ You can explore any of our core educational questions or inspect our interactive
                   <div
                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-md ${
                       isAssistant
-                        ? 'bg-gradient-to-br from-[#0F172A] to-[#1E293B] border border-[#38BDF8]/30 text-[#38BDF8]'
+                        ? 'bg-linear-to-br from-[#0F172A] to-[#1E293B] border border-[#38BDF8]/30 text-[#38BDF8]'
                         : 'bg-[#38BDF8] text-[#050B1A]'
                     }`}
                     aria-hidden="true"

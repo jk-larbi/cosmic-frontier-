@@ -51,13 +51,30 @@ function getExplorerLinks(text) {
   const lower = text.toLowerCase();
   const links = [];
 
+  const mentionsGalaxies = lower.includes('galax') ||
+    lower.includes('andromeda') ||
+    lower.includes('whirlpool') ||
+    lower.includes('sombrero') ||
+    lower.includes('redshift') ||
+    lower.includes('quasar') ||
+    lower.includes('hubble flow') ||
+    lower.includes('elliptical') ||
+    lower.includes('extragalactic');
+
+  if (mentionsGalaxies) {
+    links.push({
+      label: 'Explore in Galaxy Explorer',
+      page: 'galaxies',
+      reason: 'Discover, filter, and compare deep-sky galaxies, active galactic nuclei, and clusters from NASA/IPAC NED.'
+    });
+  }
+
   const mentionsSpherex = lower.includes('spherex') || 
     lower.includes('infrared') || 
     lower.includes('spectral') || 
     lower.includes('ice') || 
     lower.includes('wavelength') || 
     lower.includes('palette') || 
-    lower.includes('galaxy') || 
     lower.includes('nebula') ||
     lower.includes('reionization');
 
@@ -548,13 +565,163 @@ app.get('/api/data/small-bodies', async (req, res) => {
   });
 });
 
+// In-memory cache for live NED queries
+const nedLiveCache = new Map();
+const NED_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
 // 5. GET /api/data/galaxies
-app.get('/api/data/galaxies', (req, res) => {
-  const data = readLocalData('data/galaxies/deep-sky-galaxies.json');
-  if (data) {
-    return res.json({ success: true, source: 'NASA/IPAC Extragalactic Database (NED)', ...data });
+app.get('/api/data/galaxies', async (req, res) => {
+  const localData = readLocalData('data/galaxies/deep-sky-galaxies.json');
+  if (!localData || !localData.records) {
+    return res.status(500).json({ error: 'Galaxies catalog data not found' });
   }
-  return res.status(500).json({ error: 'Galaxies data not found' });
+
+  const { search, q, category, sortBy, order, lookup } = req.query;
+  const searchTerm = (search || q || '').trim().toLowerCase();
+
+  // If a live lookup is specifically requested
+  if (lookup && lookup.trim()) {
+    const targetName = lookup.trim();
+    const cacheKey = targetName.toLowerCase();
+    const cached = nedLiveCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < NED_CACHE_TTL) {
+      return res.json({
+        success: true,
+        source: 'NASA/IPAC Extragalactic Database (NED Live SRS - Cached)',
+        isLive: true,
+        record: cached.record,
+        records: [cached.record, ...localData.records]
+      });
+    }
+
+    try {
+      const nedUrl = `https://ned.ipac.caltech.edu/srs/ObjectLookup?name=${encodeURIComponent(targetName)}`;
+      const nedRes = await fetch(nedUrl, {
+        headers: { 'User-Agent': 'CosmicFrontier/1.0', 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (nedRes.ok) {
+        const nedJson = await nedRes.json();
+        if (nedJson.Preferred && nedJson.Preferred.Name) {
+          const pref = nedJson.Preferred;
+          const z = pref.Redshift?.Value ?? 0;
+          const raDeg = pref.Position?.RA ?? 0;
+          const decDeg = pref.Position?.Dec ?? 0;
+          
+          // Format coordinates
+          const raHours = Math.floor(raDeg / 15);
+          const raMin = Math.floor((raDeg / 15 - raHours) * 60);
+          const raSec = (((raDeg / 15 - raHours) * 60 - raMin) * 60).toFixed(1);
+          const decSign = decDeg >= 0 ? '+' : '-';
+          const decAbs = Math.abs(decDeg);
+          const decDegVal = Math.floor(decAbs);
+          const decMin = Math.floor((decAbs - decDegVal) * 60);
+          const decSec = (((decAbs - decDegVal) * 60 - decMin) * 60).toFixed(0);
+
+          // Estimate Hubble flow distance if z > 0.003
+          const c = 299792.458;
+          const v = z * c;
+          let distMpc = null;
+          let distMly = null;
+          if (z > 0.003) {
+            distMpc = +(v / 70.0).toFixed(1);
+            distMly = +(distMpc * 3.26156).toFixed(1);
+          }
+
+          const liveRecord = {
+            id: `ned-${encodeURIComponent(pref.Name).toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+            name: pref.Name,
+            catalogIdentifier: `${pref.Name} / NED J${raDeg.toFixed(2)}${decDeg >= 0 ? '+' : ''}${decDeg.toFixed(2)}`,
+            alternateNames: [targetName, pref.Name],
+            category: pref.ObjType?.Value === 'QSO' ? 'active-agn' : (pref.ObjType?.Value === 'GClstr' ? 'cluster' : 'spiral'),
+            morphologicalType: `NED Classification (${pref.ObjType?.Value || 'Extragalactic'})`,
+            constellation: 'Cataloged Field',
+            rightAscension: `${raHours.toString().padStart(2, '0')}h ${raMin.toString().padStart(2, '0')}m ${raSec}s`,
+            declination: `${decSign}${decDegVal.toString().padStart(2, '0')}° ${decMin.toString().padStart(2, '0')}′ ${decSec}″`,
+            redshift: +z.toFixed(6),
+            redshiftUncertainty: pref.Redshift?.Uncertainty ? +pref.Redshift.Uncertainty.toFixed(6) : undefined,
+            radialVelocityKmS: Math.round(v),
+            distanceMly: distMly,
+            distanceMpc: distMpc,
+            distanceMethod: z > 0.003 ? 'Hubble Flow Estimate (H0 = 70 km/s/Mpc)' : 'Uncertain (Local Peculiar Velocity Dominates)',
+            apparentMagnitude: null,
+            angularSize: 'Cataloged Extent in NED',
+            estimatedDiameterKpc: null,
+            description: `Live spectroscopic data retrieved from NASA/IPAC Extragalactic Database for ${pref.Name}.`,
+            scientificSignificance: `Referenced in astrophysics literature under bibcode ${pref.Redshift?.RefCode || 'NASA/IPAC NED'}.`,
+            sourceUrl: `https://ned.ipac.caltech.edu/byname?objname=${encodeURIComponent(pref.Name)}`,
+            bibcode: pref.Redshift?.RefCode,
+            dataStatus: 'Real Archival Data',
+            isLiveLookup: true
+          };
+
+          nedLiveCache.set(cacheKey, { timestamp: Date.now(), record: liveRecord });
+
+          return res.json({
+            success: true,
+            source: 'NASA/IPAC Extragalactic Database (NED Live SRS)',
+            isLive: true,
+            record: liveRecord,
+            records: [liveRecord, ...localData.records]
+          });
+        }
+      }
+    } catch (nedErr) {
+      console.warn('[Data Layer] NED Live lookup failed, falling back to local records:', nedErr.message);
+    }
+  }
+
+  // Filter local records
+  let filtered = [...localData.records];
+
+  if (category && category !== 'all') {
+    filtered = filtered.filter(g => g.category === category);
+  }
+
+  if (searchTerm) {
+    filtered = filtered.filter(g => 
+      g.name.toLowerCase().includes(searchTerm) ||
+      g.catalogIdentifier.toLowerCase().includes(searchTerm) ||
+      (g.constellation && g.constellation.toLowerCase().includes(searchTerm)) ||
+      (g.morphologicalType && g.morphologicalType.toLowerCase().includes(searchTerm)) ||
+      (g.alternateNames && g.alternateNames.some(a => a.toLowerCase().includes(searchTerm)))
+    );
+  }
+
+  // Sorting
+  if (sortBy) {
+    const isDesc = order === 'desc';
+    filtered.sort((a, b) => {
+      let valA, valB;
+      if (sortBy === 'name') {
+        valA = a.name.toLowerCase();
+        valB = b.name.toLowerCase();
+        return isDesc ? valB.localeCompare(valA) : valA.localeCompare(valB);
+      } else if (sortBy === 'redshift') {
+        valA = a.redshift ?? 0;
+        valB = b.redshift ?? 0;
+      } else if (sortBy === 'distance') {
+        valA = a.distanceMly ?? 0;
+        valB = b.distanceMly ?? 0;
+      } else if (sortBy === 'magnitude') {
+        valA = a.apparentMagnitude ?? 999;
+        valB = b.apparentMagnitude ?? 999;
+      } else if (sortBy === 'diameter') {
+        valA = a.estimatedDiameterKpc ?? 0;
+        valB = b.estimatedDiameterKpc ?? 0;
+      }
+      return isDesc ? (valB - valA) : (valA - valB);
+    });
+  }
+
+  return res.json({
+    success: true,
+    source: 'NASA/IPAC Extragalactic Database (NED) & CDS SIMBAD',
+    isLive: false,
+    total: filtered.length,
+    metadata: localData.metadata,
+    records: filtered
+  });
 });
 
 // 6. GET /api/data/stars

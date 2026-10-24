@@ -225,6 +225,11 @@ Studying distant galaxies helps scientists:
     ],
     links: [
       {
+        label: 'Discover Galaxies in Galaxy Explorer',
+        page: 'galaxies',
+        reason: 'Search, filter, and inspect verified galaxies and clusters from NASA/IPAC NED.'
+      },
+      {
         label: 'Inspect Galaxy Targets in SPHEREx Explorer',
         page: 'spherex',
         reason: 'Examine distant galaxy spectra and infrared signatures.'

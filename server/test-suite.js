@@ -189,7 +189,7 @@ async function runTests() {
   }
 
   // 8. Navigation Routes & SPA Fallback
-  const appRoutes = ['/', '/universe', '/exoplanets', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
+  const appRoutes = ['/', '/universe', '/exoplanets', '/galaxies', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
   for (const route of appRoutes) {
     try {
       const resRoute = await fetch(`${BASE_URL}${route}`);
@@ -254,7 +254,7 @@ async function runTests() {
     const resGalaxies = await fetch(`${BASE_URL}/api/data/galaxies`);
     assert(resGalaxies.status === 200, 'Test 10.13: /api/data/galaxies returns HTTP 200');
     const galJson = await resGalaxies.json();
-    assert(Array.isArray(galJson.records) && galJson.records.length === 6, 'Test 10.14: Galaxies catalog contains 6 deep-sky targets');
+    assert(Array.isArray(galJson.records) && galJson.records.length >= 6, 'Test 10.14: Galaxies catalog contains 6+ deep-sky targets');
 
     // 10.6 Stars
     const resStars = await fetch(`${BASE_URL}/api/data/stars`);
@@ -361,6 +361,53 @@ async function runTests() {
     assert(chatSpherexData.links && chatSpherexData.links.some(l => l.page === 'spherex'), 'Test 13.11: AI Guide provides contextual link to SPHEREx Image Lab');
   } catch (err) {
     assert(false, `Test 13: Cosmic Image Lab test failed: ${err.message}`);
+  }
+
+  // 14. Galaxy Explorer Architecture, Extragalactic Catalogs & Science Tests
+  try {
+    const resAllGalaxies = await fetch(`${BASE_URL}/api/data/galaxies`);
+    assert(resAllGalaxies.status === 200, 'Test 14.1: /api/data/galaxies returns HTTP 200');
+    const allGalJson = await resAllGalaxies.json();
+    assert(Array.isArray(allGalJson.records) && allGalJson.records.length >= 20, 'Test 14.2: Galaxy catalog aggregates 20+ verified extragalactic objects');
+
+    const resSpiral = await fetch(`${BASE_URL}/api/data/galaxies?category=spiral`);
+    const spiralJson = await resSpiral.json();
+    assert(spiralJson.records.every(g => g.category === 'spiral'), 'Test 14.3: Correctly filters spiral galaxies');
+
+    const resElliptical = await fetch(`${BASE_URL}/api/data/galaxies?category=elliptical`);
+    const ellipJson = await resElliptical.json();
+    assert(ellipJson.records.every(g => g.category === 'elliptical'), 'Test 14.4: Correctly filters elliptical galaxies');
+
+    const resAgn = await fetch(`${BASE_URL}/api/data/galaxies?category=active-agn`);
+    const agnJson = await resAgn.json();
+    assert(agnJson.records.some(g => g.id.includes('3c273') || g.id.includes('1068')), 'Test 14.5: Correctly filters active galaxies and quasars');
+
+    const resClusters = await fetch(`${BASE_URL}/api/data/galaxies?category=cluster`);
+    const clusterJson = await resClusters.json();
+    assert(clusterJson.records.some(g => g.id.includes('virgo') || g.id.includes('coma')), 'Test 14.6: Correctly filters galaxy clusters');
+
+    const resSearchAndromeda = await fetch(`${BASE_URL}/api/data/galaxies?search=Andromeda`);
+    const andromedaJson = await resSearchAndromeda.json();
+    assert(andromedaJson.records.some(g => g.name.includes('Andromeda')), 'Test 14.7: Search query filters Andromeda');
+
+    const resLiveLookup = await fetch(`${BASE_URL}/api/data/galaxies?lookup=M87`);
+    const liveJson = await resLiveLookup.json();
+    assert(liveJson.success && (liveJson.isLive || liveJson.record), 'Test 14.8: Live NED lookup endpoint handles live extragalactic query');
+
+    const galFile = fs.readFileSync(path.resolve(__dirname, '../src/components/GalaxyExplorer.tsx'), 'utf8');
+    assert(galFile.includes('compareList') && galFile.includes('toggleCompare'), 'Test 14.9: Implements comparison workspace for up to 3 galaxies');
+    assert(galFile.includes('distanceMethod') && galFile.includes('Cepheid') && galFile.includes('TRGB'), 'Test 14.10: Details panel includes verified multi-rung distance measurement methods');
+    assert(galFile.includes('Understanding Extragalactic Astronomy') && galFile.includes('Hubble Sequence'), 'Test 14.11: Features educational section on galaxy morphology, redshift, and uncertainty');
+
+    const resChatGalaxies = await fetch(`${BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'What is the Andromeda galaxy and how do astronomers measure its distance?' })
+    });
+    const chatGalaxiesData = await resChatGalaxies.json();
+    assert(chatGalaxiesData.links && chatGalaxiesData.links.some(l => l.page === 'galaxies'), 'Test 14.12: AI Guide provides contextual link to Galaxy Explorer');
+  } catch (err) {
+    assert(false, `Test 14: Galaxy Explorer test failed: ${err.message}`);
   }
 
   console.log('\n====================================================');

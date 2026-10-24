@@ -124,7 +124,7 @@ export const AboutPage: FC = () => {
       </section>
 
       {/* 4. SCIENTIFIC INTEGRITY MANIFESTO */}
-      <section className="rounded-3xl bg-gradient-to-r from-[#0B1630] to-[#0E1B38] border border-[#F5C451]/30 p-8 sm:p-10 space-y-6 shadow-xl">
+      <section className="rounded-3xl bg-linear-to-r from-[#0B1630] to-[#0E1B38] border border-[#F5C451]/30 p-8 sm:p-10 space-y-6 shadow-xl">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-[#F5C451]/10 text-[#F5C451] flex items-center justify-center shrink-0">
             <ShieldCheck className="w-6 h-6" />

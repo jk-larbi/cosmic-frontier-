@@ -421,7 +421,7 @@ export const SPHERExExplorer: FC = () => {
             <div className="bg-[#050B1A]/85 backdrop-blur-md px-4 py-3 border-b border-[#1E293B] flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2 font-mono">
                 <span className="w-2 h-2 rounded-full bg-[#38BDF8]" />
-                <span className="font-bold text-[#F8FAFC] truncate max-w-[180px] sm:max-w-none">
+                <span className="font-bold text-[#F8FAFC] truncate max-w-45 sm:max-w-none">
                   {selectedTarget.name}
                 </span>
                 <span className="text-[#1E293B]">|</span>
@@ -498,7 +498,7 @@ export const SPHERExExplorer: FC = () => {
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              className={`relative h-[380px] sm:h-[480px] bg-[#050B1A] overflow-hidden select-none focus:outline-none focus:ring-1 focus:ring-[#38BDF8]/40 ${
+              className={`relative h-95 sm:h-120 bg-[#050B1A] overflow-hidden select-none focus:outline-none focus:ring-1 focus:ring-[#38BDF8]/40 ${
                 isDraggingPan ? 'cursor-grabbing' : 'cursor-grab'
               }`}
             >
@@ -547,7 +547,7 @@ export const SPHERExExplorer: FC = () => {
                 >
                   <canvas
                     ref={processedCanvasRef}
-                    className="max-w-none w-[700px] sm:w-[800px] h-auto rounded-lg shadow-xl"
+                    className="max-w-none w-175 sm:w-200 h-auto rounded-lg shadow-xl"
                   />
                 </div>
               )}
@@ -565,7 +565,7 @@ export const SPHERExExplorer: FC = () => {
                   <img
                     src={selectedTarget.opticalImage}
                     alt={`${selectedTarget.name} Optical`}
-                    className="max-w-none w-[700px] sm:w-[800px] h-auto pointer-events-none absolute"
+                    className="max-w-none w-175 sm:w-200 h-auto pointer-events-none absolute"
                   />
 
                   {/* Overneath Layer: Processed Scientific Infrared Canvas (Clipped by sliderPosition) */}
@@ -577,7 +577,7 @@ export const SPHERExExplorer: FC = () => {
                   >
                     <canvas
                       ref={processedCanvasRef}
-                      className="max-w-none w-[700px] sm:w-[800px] h-auto"
+                      className="max-w-none w-175 sm:w-200 h-auto"
                     />
                   </div>
 
@@ -914,19 +914,19 @@ export const SPHERExExplorer: FC = () => {
             <div className="space-y-2.5 text-xs font-mono">
               <div className="flex justify-between">
                 <span className="text-[#A7B4CC]">Product / Target:</span>
-                <span className="font-semibold text-[#F8FAFC] text-right truncate max-w-[180px]">
+                <span className="font-semibold text-[#F8FAFC] text-right truncate max-w-45">
                   {selectedTarget.name}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#A7B4CC]">Telescope / Mission:</span>
-                <span className="text-[#F8FAFC] text-right truncate max-w-[180px]">
+                <span className="text-[#F8FAFC] text-right truncate max-w-45">
                   {selectedTarget.telescope}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#A7B4CC]">Calibration Status:</span>
-                <span className="text-[#38BDF8] text-right truncate max-w-[190px]">
+                <span className="text-[#38BDF8] text-right truncate max-w-47.5">
                   {selectedTarget.calibrationStatus || 'Calibrated Scientific Data'}
                 </span>
               </div>
@@ -960,7 +960,7 @@ export const SPHERExExplorer: FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-[#A7B4CC]">Instrument Details:</span>
-                <span className="text-[#F8FAFC] text-right truncate max-w-[180px]">
+                <span className="text-[#F8FAFC] text-right truncate max-w-45">
                   {selectedTarget.instrumentDetails}
                 </span>
               </div>

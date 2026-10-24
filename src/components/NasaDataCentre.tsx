@@ -88,7 +88,7 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-[#050B1A] text-[#F8FAFC] pb-24">
       {/* Header Banner */}
-      <section className="relative overflow-hidden border-b border-[#1E293B] bg-gradient-to-b from-[#0B1630] to-[#050B1A] py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden border-b border-[#1E293B] bg-linear-to-b from-[#0B1630] to-[#050B1A] py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 pointer-events-none opacity-20">
           <div className="absolute top-1/4 left-1/3 w-96 h-96 rounded-full bg-[#38BDF8]/20 blur-3xl" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#818CF8]/20 blur-3xl" />

@@ -162,7 +162,7 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
   return (
     <div className="min-h-screen bg-[#050B1A] text-[#F8FAFC] pb-24">
       {/* 1. HERO BANNER */}
-      <section className="relative overflow-hidden border-b border-[#1E293B] bg-gradient-to-b from-[#0B1630] to-[#050B1A] py-14 sm:py-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden border-b border-[#1E293B] bg-linear-to-b from-[#0B1630] to-[#050B1A] py-14 sm:py-20 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 pointer-events-none opacity-20">
           <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full bg-[#8B5CF6]/20 blur-3xl" />
           <div className="absolute bottom-1/4 right-1/3 w-96 h-96 rounded-full bg-[#38BDF8]/20 blur-3xl" />
@@ -325,7 +325,7 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
 
         {/* COMPARISON WORKSPACE BANNER (Appears when 1+ planets selected for comparison) */}
         {compareList.length > 0 && (
-          <section className="bg-gradient-to-r from-[#0E1B38] to-[#12234B] border-2 border-[#38BDF8]/40 rounded-2xl p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
+          <section className="bg-linear-to-r from-[#0E1B38] to-[#12234B] border-2 border-[#38BDF8]/40 rounded-2xl p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/40 mb-1">
@@ -351,7 +351,7 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
                   <tr className="border-b border-[#1E293B] text-[#94A3B8] bg-[#050B1A]/60">
                     <th className="py-3 px-4 font-semibold">Measurement</th>
                     {compareList.map(planet => (
-                      <th key={planet.planetName} className="py-3 px-4 font-bold text-white min-w-[160px]">
+                      <th key={planet.planetName} className="py-3 px-4 font-bold text-white min-w-40">
                         <div className="flex items-center justify-between">
                           <span>{planet.planetName}</span>
                           <button

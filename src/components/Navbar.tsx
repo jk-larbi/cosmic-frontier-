@@ -10,7 +10,8 @@ import {
   X,
   Compass,
   Database,
-  Globe
+  Globe,
+  Disc
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -25,6 +26,7 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
     { page: 'home', label: 'Home', icon: <Home className="w-4 h-4" /> },
     { page: 'universe', label: '3D Universe', icon: <Globe className="w-4 h-4" /> },
     { page: 'exoplanets', label: 'Exoplanet Lab', icon: <Compass className="w-4 h-4" /> },
+    { page: 'galaxies', label: 'Galaxy Explorer', icon: <Disc className="w-4 h-4" /> },
     { page: 'spherex', label: 'Cosmic Image Lab', icon: <Telescope className="w-4 h-4" /> },
     { page: 'planet-x', label: 'Planet X Explorer', icon: <Orbit className="w-4 h-4" /> },
     { page: 'data-centre', label: 'NASA Data Centre', icon: <Database className="w-4 h-4" /> },
@@ -48,7 +50,7 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
             className="flex items-center gap-3 text-left group focus:outline-none focus:ring-2 focus:ring-[#38BDF8]/50 rounded-lg p-1"
             aria-label="Cosmic Frontier Home"
           >
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-[#0B1630] to-[#1E293B] border border-[#38BDF8]/30 flex items-center justify-center shadow-lg group-hover:border-[#38BDF8] transition-all">
+            <div className="relative w-10 h-10 rounded-xl bg-linear-to-br from-[#0B1630] to-[#1E293B] border border-[#38BDF8]/30 flex items-center justify-center shadow-lg group-hover:border-[#38BDF8] transition-all">
               <Compass className="w-5 h-5 text-[#38BDF8] group-hover:rotate-45 transition-transform duration-500" />
               <div className="absolute inset-0 rounded-xl bg-[#38BDF8]/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>

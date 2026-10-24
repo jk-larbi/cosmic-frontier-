@@ -5,6 +5,7 @@ import { Footer } from './components/Footer';
 import { HomePage } from './components/HomePage';
 import { Universe3DExplorer } from './components/Universe3DExplorer';
 import { ExoplanetDiscoveryLab } from './components/ExoplanetDiscoveryLab';
+import { GalaxyExplorer } from './components/GalaxyExplorer';
 import { SPHERExExplorer } from './components/SPHERExExplorer';
 import { PlanetXExplorer } from './components/PlanetXExplorer';
 import { NasaDataCentre } from './components/NasaDataCentre';
@@ -34,7 +35,7 @@ export function App() {
         setCurrentPage('ai-guide');
       } else if (candidate === 'spherex' || candidate === 'image-lab') {
         setCurrentPage('spherex');
-      } else if (['home', 'universe', 'exoplanets', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
+      } else if (['home', 'universe', 'exoplanets', 'galaxies', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
         setCurrentPage(candidate as AppPage);
       } else if (!candidate) {
         setCurrentPage('home');
@@ -60,6 +61,7 @@ export function App() {
         {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
         {currentPage === 'universe' && <Universe3DExplorer onNavigate={handleNavigate} />}
         {currentPage === 'exoplanets' && <ExoplanetDiscoveryLab onNavigate={handleNavigate} />}
+        {currentPage === 'galaxies' && <GalaxyExplorer onNavigate={handleNavigate} />}
         {currentPage === 'spherex' && <SPHERExExplorer />}
         {currentPage === 'planet-x' && <PlanetXExplorer />}
         {currentPage === 'data-centre' && <NasaDataCentre onNavigate={handleNavigate} />}
