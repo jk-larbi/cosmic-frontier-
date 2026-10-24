@@ -293,7 +293,7 @@ You can explore any of our core educational questions or inspect our interactive
               title="NASA Open Data API authenticated via api.nasa.gov"
             >
               <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+                <span className="beacon-pulse absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
               </span>
               <span>NASA API: Active</span>
@@ -383,7 +383,7 @@ You can explore any of our core educational questions or inspect our interactive
               return (
                 <div
                   key={msg.id}
-                  className={`flex gap-3 sm:gap-4 ${isAssistant ? 'items-start' : 'items-start flex-row-reverse'}`}
+                  className={`flex gap-3 sm:gap-4 ${isAssistant ? 'items-start' : 'items-start flex-row-reverse'} animate-message-enter`}
                 >
                   {/* Clean SVG/Lucide Avatar (No emoji avatars) */}
                   <div

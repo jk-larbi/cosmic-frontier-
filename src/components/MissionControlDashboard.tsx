@@ -10,6 +10,7 @@ import type {
 } from '../types';
 import { fetchLiveEphemeris, fetchLiveCloseApproaches } from '../services/liveSpaceService';
 import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
+import { useReducedMotion, useDocumentVisibility } from '../utils/motion';
 import { 
   Globe, 
   Orbit, 
@@ -38,6 +39,9 @@ interface MissionControlDashboardProps {
 }
 
 export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNavigate }) => {
+  const isReducedMotion = useReducedMotion();
+  const isDocumentVisible = useDocumentVisibility();
+
   // Telemetry & Clocks
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [timeZoneMode, setTimeZoneMode] = useState<'UTC' | 'LOCAL'>('UTC');
@@ -299,7 +303,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
         }
       });
 
-      if (isSimulating) {
+      if (isSimulating && !isReducedMotion) {
         simOffsetRef.current += 0.02;
       }
 
@@ -312,7 +316,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
       isRunning = false;
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [ephemData, selectedObjectId, scaleMode, showOrbits, showLabels, isSimulating, pan, zoom]);
+  }, [ephemData, selectedObjectId, scaleMode, showOrbits, showLabels, isSimulating, pan, zoom, isDocumentVisible, isReducedMotion]);
 
   // 2D Canvas Mouse Event Handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {

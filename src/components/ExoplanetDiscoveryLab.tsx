@@ -139,6 +139,16 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
     });
   };
 
+  // Keyboard dismissal on Escape
+  useEffect(() => {
+    if (!activePlanetModal) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActivePlanetModal(null);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [activePlanetModal]);
+
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedMethod('all');
@@ -531,7 +541,7 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
               return (
                 <div
                   key={planet.planetName}
-                  className="group flex flex-col justify-between bg-[#0B1630] hover:bg-[#0E1B38] border border-[#1E293B] hover:border-[#8B5CF6]/40 rounded-2xl p-5 shadow-lg transition-all"
+                  className="card-interactive group flex flex-col justify-between bg-[#0B1630] hover:bg-[#0E1B38] border border-[#1E293B] hover:border-[#8B5CF6]/40 rounded-2xl p-5 shadow-lg transition-all"
                 >
                   <div>
                     {/* Top Badges */}
@@ -830,7 +840,7 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
       {/* 6. DETAILED PLANET MODAL */}
       {activePlanetModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl bg-[#0B1630] border border-[#1E293B] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-2xl bg-[#0B1630] border border-[#1E293B] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-enter">
             {/* Header */}
             <div className="px-6 py-5 border-b border-[#1E293B] flex items-start justify-between gap-4">
               <div>

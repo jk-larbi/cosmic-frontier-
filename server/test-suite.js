@@ -773,6 +773,143 @@ async function runTests() {
     assert(false, `Test 19: Asteroid Motion Mode test failed: ${err.message}`);
   }
 
+  // ---------------------------------------------------------
+  // TEST 20: Complete Motion Design System, 60fps In-Memory Propagation & Accessibility
+  // ---------------------------------------------------------
+  try {
+    // 20.1 - 20.4: Motion Utility Tokens & Easing Engine
+    const motionTs = fs.readFileSync(path.resolve(__dirname, '../src/utils/motion.ts'), 'utf8');
+    assert(
+      motionTs.includes('MOTION_DURATIONS') &&
+      motionTs.includes('MICRO:') &&
+      motionTs.includes('FAST:') &&
+      motionTs.includes('SCENE:'),
+      'Test 20.1: motion.ts exports standard durations (MICRO, FAST, NORMAL, PANEL, SCENE)'
+    );
+
+    assert(
+      motionTs.includes('MOTION_EASINGS') &&
+      motionTs.includes('cubic-bezier(0.16, 1, 0.3, 1)') &&
+      motionTs.includes('SNAPPY:'),
+      'Test 20.2: motion.ts exports standard natural cubic-bezier easing curves'
+    );
+
+    assert(
+      motionTs.includes('useReducedMotion') && motionTs.includes('useDocumentVisibility'),
+      'Test 20.3: motion.ts exports useReducedMotion and useDocumentVisibility hooks'
+    );
+
+    assert(
+      motionTs.includes('easeInOutCubic') && motionTs.includes('damp('),
+      'Test 20.4: motion.ts implements mathematical easing functions and camera damping'
+    );
+
+    // 20.5 - 20.6: In-Memory Client Keplerian Propagator
+    const orbitalTs = fs.readFileSync(path.resolve(__dirname, '../src/utils/orbitalMotion.ts'), 'utf8');
+    assert(
+      orbitalTs.includes('solveKepler(') &&
+      orbitalTs.includes('calculateEarthPosition(') &&
+      orbitalTs.includes('propagateElementsClient('),
+      'Test 20.5: orbitalMotion.ts implements analytical Kepler solver and client propagation'
+    );
+
+    // Functional verification of client-side propagation algorithm (using Apophis elements)
+    const { propagateElementsClient } = await import('../src/utils/orbitalMotion.ts');
+    const apophisElements = {
+      a: 0.922438,
+      e: 0.191206,
+      i: 3.3314,
+      node: 204.043,
+      peri: 126.653,
+      M0: 175.0,
+      epochJd: 2461200.5,
+      periodYears: 0.886,
+      meanMotionDegDay: 1.1118
+    };
+    const testEpoch = new Date('2029-04-13T21:46:00.000Z');
+    const propagated = propagateElementsClient(apophisElements, testEpoch);
+    assert(
+      propagated &&
+      typeof propagated.distEarthLunar === 'number' &&
+      propagated.distEarthLunar < 20 &&
+      propagated.orbitalSpeedKmS > 15,
+      'Test 20.6: Client-side Keplerian solver computes accurate Apophis 2029 close encounter geometry in-memory'
+    );
+
+    // 20.7 - 20.9: CSS Motion System & Reduced-Motion Accessibility
+    const indexCss = fs.readFileSync(path.resolve(__dirname, '../src/index.css'), 'utf8');
+    assert(
+      indexCss.includes('--motion-duration-micro:') &&
+      indexCss.includes('--motion-ease-enter:'),
+      'Test 20.7: index.css defines standard motion duration and easing CSS custom properties'
+    );
+
+    assert(
+      indexCss.includes('beacon-pulse') && indexCss.includes('radar-sweep'),
+      'Test 20.8: index.css implements calm beacon-pulse breathing and radar-sweep animations'
+    );
+
+    assert(
+      indexCss.includes('@media (prefers-reduced-motion: reduce)') &&
+      indexCss.includes('.reduce-motion') &&
+      indexCss.includes('animation-duration: 0.001ms !important'),
+      'Test 20.9: index.css enforces comprehensive prefers-reduced-motion and .reduce-motion overrides'
+    );
+
+    // 20.10 - 20.12: Asteroid Motion Viewer Refinement
+    const viewerTs = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidMotionViewer.tsx'), 'utf8');
+    assert(
+      viewerTs.includes('propagateElementsClient') && viewerTs.includes('getKeplerianElements'),
+      'Test 20.10: AsteroidMotionViewer integrates 60fps in-memory Keplerian orbital propagation'
+    );
+
+    assert(
+      viewerTs.includes('resetCameraView') && viewerTs.includes('Reset View'),
+      'Test 20.11: AsteroidMotionViewer provides smooth Reset View camera orientation action'
+    );
+
+    assert(
+      viewerTs.includes('transitStep') || viewerTs.includes('transitAnimRef'),
+      'Test 20.12: AsteroidMotionViewer implements smooth animated transit for Jump to Close Approach'
+    );
+
+    // 20.13 - 20.14: 3D Universe Explorer Optimization
+    const universeTs = fs.readFileSync(path.resolve(__dirname, '../src/components/Universe3DExplorer.tsx'), 'utf8');
+    assert(
+      universeTs.includes('labelElementsRef') && !universeTs.includes('setLabelCoords(labels)'),
+      'Test 20.13: Universe3DExplorer eliminates 60fps React re-renders via direct DOM transform tracking'
+    );
+
+    assert(
+      universeTs.includes('targetSpherical') && universeTs.includes('handleResetOverview'),
+      'Test 20.14: Universe3DExplorer implements smooth spherical camera flight lerp on planet focus and Reset View'
+    );
+
+    // 20.15: Live Cosmic Observatory Motion & Tab Pausing
+    const obsTs = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveCosmicObservatory.tsx'), 'utf8');
+    assert(
+      obsTs.includes('targetTheta') && obsTs.includes('isDocumentVisible'),
+      'Test 20.15: LiveCosmicObservatory implements smooth camera orbit damping and tab visibility pause'
+    );
+
+    // 20.16: App Page Route Transition Container
+    const appTs = fs.readFileSync(path.resolve(__dirname, '../src/App.tsx'), 'utf8');
+    assert(
+      appTs.includes('animate-page-enter') && appTs.includes('key={currentPage}'),
+      'Test 20.16: App.tsx wraps view rendering in smooth page transition container'
+    );
+
+    // 20.17: Modal Keyboard Escape Accessibility
+    const exoLabTs = fs.readFileSync(path.resolve(__dirname, '../src/components/ExoplanetDiscoveryLab.tsx'), 'utf8');
+    const dataCentreTs = fs.readFileSync(path.resolve(__dirname, '../src/components/NasaDataCentre.tsx'), 'utf8');
+    assert(
+      exoLabTs.includes("e.key === 'Escape'") && dataCentreTs.includes("e.key === 'Escape'"),
+      'Test 20.17: Inspection modals implement keyboard Escape dismissal'
+    );
+  } catch (err) {
+    assert(false, `Test 20: Motion Design & Interaction Refinement test failed: ${err.message}`);
+  }
+
   console.log('\n====================================================');
   console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('====================================================');

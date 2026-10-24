@@ -87,6 +87,16 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
     );
   }, [items, searchQuery]);
 
+  // Keyboard dismissal on Escape
+  useEffect(() => {
+    if (!activeModalItem) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveModalItem(null);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [activeModalItem]);
+
   return (
     <div className="min-h-screen bg-[#050B1A] text-[#F8FAFC] pb-24">
       {/* Header Banner */}
@@ -277,7 +287,7 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
               return (
                 <div
                   key={item.id}
-                  className="group flex flex-col justify-between bg-[#0B1630] hover:bg-[#0E1B38] border border-[#1E293B] hover:border-[#38BDF8]/40 rounded-2xl p-6 transition-all shadow-lg hover:shadow-2xl"
+                  className="card-interactive group flex flex-col justify-between bg-[#0B1630] hover:bg-[#0E1B38] border border-[#1E293B] hover:border-[#38BDF8]/40 rounded-2xl p-6 transition-all shadow-lg hover:shadow-2xl"
                 >
                   <div>
                     {/* Category & Status Badges */}
@@ -367,7 +377,7 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
       {/* Detail Inspection Modal */}
       {activeModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl bg-[#0B1630] border border-[#1E293B] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-2xl bg-[#0B1630] border border-[#1E293B] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-enter">
             {/* Modal Header */}
             <div className="px-6 py-5 border-b border-[#1E293B] flex items-start justify-between gap-4">
               <div>

@@ -27,7 +27,7 @@ export const CosmicOrbitalDiagram: FC<CosmicOrbitalDiagramProps> = ({ onNavigate
       <div className="relative z-10 px-6 py-5 border-b border-[#1E293B] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#050B1A]/70 backdrop-blur-md">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#38BDF8] animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-[#38BDF8] beacon-pulse" />
             <span className="text-[11px] font-mono uppercase tracking-widest text-[#38BDF8] font-bold">
               Solar System Telemetry & Orbital Architecture
             </span>
@@ -216,7 +216,7 @@ export const CosmicOrbitalDiagram: FC<CosmicOrbitalDiagramProps> = ({ onNavigate
                 />
                 {/* Planet X Node */}
                 <g transform="translate(190, 215)" onMouseEnter={() => setHoveredId('planet-x')} className="cursor-pointer">
-                  <circle cx="0" cy="0" r="10" fill="#8B5CF6" opacity="0.3" className="animate-ping" />
+                  <circle cx="0" cy="0" r="10" fill="#8B5CF6" opacity="0.3" className="beacon-pulse" />
                   <circle cx="0" cy="0" r="7" fill="#8B5CF6" />
                   <circle cx="0" cy="0" r="9" fill="none" stroke="#C084FC" strokeWidth="1.5" />
                   <line x1="0" y1="0" x2="-35" y2="-30" stroke="#8B5CF6" strokeWidth="1" strokeDasharray="2 2" />

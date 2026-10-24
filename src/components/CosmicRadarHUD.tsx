@@ -53,7 +53,7 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
               </div>
 
               {/* Radar Rotating Sweep Line */}
-              <div className="absolute inset-0 animate-spin [animation-duration:6s] pointer-events-none">
+              <div className="absolute inset-0 radar-sweep pointer-events-none">
                 <div className="w-1/2 h-1/2 ml-auto origin-bottom-left bg-linear-to-tr from-[#38BDF8]/30 via-[#38BDF8]/10 to-transparent" />
               </div>
 
@@ -62,7 +62,7 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
 
               {/* Signal Blip 1: Sedna */}
               <div className="absolute top-16 right-20 group cursor-pointer">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#E11D48] block animate-ping" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#E11D48] block beacon-pulse" />
                 <span className="w-2 h-2 rounded-full bg-[#E11D48] absolute top-0.5 left-0.5 block" />
                 <span className="hidden group-hover:block absolute left-4 -top-2 bg-[#050B1A] border border-[#E11D48] text-[9px] font-mono text-[#FDA4AF] px-1.5 py-0.5 rounded whitespace-nowrap z-20">
                   90377 Sedna (76 AU)
@@ -87,7 +87,7 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
 
               {/* Signal Blip 4: Hypothetical Planet X Target Zone */}
               <div className="absolute bottom-20 left-16 group cursor-pointer">
-                <span className="w-4 h-4 rounded-full bg-[#8B5CF6]/40 block animate-pulse" />
+                <span className="w-4 h-4 rounded-full bg-[#8B5CF6]/40 block beacon-pulse" />
                 <span className="w-2.5 h-2.5 rounded-full bg-[#8B5CF6] absolute top-1 left-1 block shadow-lg shadow-[#8B5CF6]/80" />
                 <span className="hidden group-hover:block absolute right-5 -top-2 bg-[#050B1A] border border-[#8B5CF6] text-[9px] font-mono text-[#C084FC] px-1.5 py-0.5 rounded whitespace-nowrap z-20">
                   Planet X Predicted Zone (~420 AU)

@@ -446,7 +446,7 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
                 {/* Central dot */}
                 <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
                 {/* Blips */}
-                <div className="absolute top-3 right-4 w-1.5 h-1.5 rounded-full bg-[#34D399] animate-ping" />
+                <div className="absolute top-3 right-4 w-1.5 h-1.5 rounded-full bg-[#34D399] beacon-pulse" />
                 <div className="absolute bottom-3 left-4 w-1.5 h-1.5 rounded-full bg-[#8B5CF6]" />
               </div>
             </div>
@@ -514,7 +514,7 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
             <div className="space-y-0.5">
               <div className="text-xs font-mono font-bold text-[#F8FAFC] flex items-center justify-center gap-1">
                 <span>SCROLL TO EXPLORE</span>
-                <ArrowDown className="w-3 h-3 text-[#38BDF8] animate-bounce" />
+                <ArrowDown className="w-3 h-3 text-[#38BDF8] group-hover:translate-y-1 transition-transform" />
               </div>
               <div className="text-[9px] font-mono text-[#A7B4CC]">13 Worlds Mapped</div>
             </div>

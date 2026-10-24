@@ -69,21 +69,23 @@ export function App() {
 
       {/* Main Content Area */}
       <main className="flex-1">
-        {(currentPage === 'mission-control' || currentPage === 'home') && (
-          <MissionControlDashboard onNavigate={handleNavigate} />
-        )}
-        {currentPage === 'observatory' && <LiveCosmicObservatory onNavigate={handleNavigate} />}
-        {currentPage === 'universe' && <Universe3DExplorer onNavigate={handleNavigate} />}
-        {currentPage === 'asteroid-watch' && <AsteroidWatch onNavigate={handleNavigate} />}
-        {currentPage === 'exoplanets' && <ExoplanetDiscoveryLab onNavigate={handleNavigate} />}
-        {currentPage === 'galaxies' && <GalaxyExplorer onNavigate={handleNavigate} />}
-        {currentPage === 'spherex' && <SPHERExExplorer />}
-        {currentPage === 'planet-x' && <PlanetXExplorer onNavigate={handleNavigate} />}
-        {currentPage === 'data-centre' && <NasaDataCentre onNavigate={handleNavigate} />}
-        {(currentPage === 'guide' || currentPage === 'ai-guide') && (
-          <AIGuide onNavigate={handleNavigate} />
-        )}
-        {currentPage === 'about' && <AboutPage />}
+        <div key={currentPage} className="animate-page-enter">
+          {(currentPage === 'mission-control' || currentPage === 'home') && (
+            <MissionControlDashboard onNavigate={handleNavigate} />
+          )}
+          {currentPage === 'observatory' && <LiveCosmicObservatory onNavigate={handleNavigate} />}
+          {currentPage === 'universe' && <Universe3DExplorer onNavigate={handleNavigate} />}
+          {currentPage === 'asteroid-watch' && <AsteroidWatch onNavigate={handleNavigate} />}
+          {currentPage === 'exoplanets' && <ExoplanetDiscoveryLab onNavigate={handleNavigate} />}
+          {currentPage === 'galaxies' && <GalaxyExplorer onNavigate={handleNavigate} />}
+          {currentPage === 'spherex' && <SPHERExExplorer />}
+          {currentPage === 'planet-x' && <PlanetXExplorer onNavigate={handleNavigate} />}
+          {currentPage === 'data-centre' && <NasaDataCentre onNavigate={handleNavigate} />}
+          {(currentPage === 'guide' || currentPage === 'ai-guide') && (
+            <AIGuide onNavigate={handleNavigate} />
+          )}
+          {currentPage === 'about' && <AboutPage />}
+        </div>
       </main>
 
       {/* Global Footer */}

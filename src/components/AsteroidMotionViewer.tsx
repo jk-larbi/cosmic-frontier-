@@ -2,10 +2,20 @@ import { useState, useEffect, useRef, useCallback, type FC } from 'react';
 import * as THREE from 'three';
 import type { 
   LiveCloseApproach, 
-  AsteroidMotionResponse 
+  AsteroidMotionResponse,
+  AsteroidMotionStateVector
 } from '../types';
 import { fetchAsteroidOrbit } from '../services/liveSpaceService';
 import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
+import {
+  propagateElementsClient,
+  type KeplerianElements
+} from '../utils/orbitalMotion';
+import {
+  useReducedMotion,
+  useDocumentVisibility,
+  Easing
+} from '../utils/motion';
 import {
   Play,
   Pause,
@@ -15,9 +25,7 @@ import {
   CheckCircle2,
   Orbit,
   ArrowRight,
-  Clock,
-  Compass,
-  Radio
+  Clock
 } from 'lucide-react';
 
 interface AsteroidMotionViewerProps {
@@ -56,7 +64,10 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
   onSelectApproach,
   onSwitchToListMode
 }) => {
-  // Target designation
+  const isReducedMotion = useReducedMotion();
+  const isDocumentVisible = useDocumentVisibility();
+
+  // Target designation & base data
   const [selectedDes, setSelectedDes] = useState<string>(initialDesignation);
   const [motionData, setMotionData] = useState<AsteroidMotionResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -79,6 +90,11 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
   const [speedFactor, setSpeedFactor] = useState<number>(24 * 3600); // 1 day/sec default
   const [baseEpoch, setBaseEpoch] = useState<Date>(new Date());
 
+  // Real-time telemetry state (updated at throttled intervals for React rendering)
+  const [realtimeDistLD, setRealtimeDistLD] = useState<number>(0);
+  const [realtimeDistAU, setRealtimeDistAU] = useState<number>(0);
+  const [realtimeSpeedKmS, setRealtimeSpeedKmS] = useState<number>(0);
+
   // Canvas Refs
   const webglCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const canvas2dRef = useRef<HTMLCanvasElement | null>(null);
@@ -87,6 +103,8 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
   // Simulated Time Ref for 60fps loop
   const simTimeRef = useRef<number>(Date.now());
   const lastTickRef = useRef<number>(performance.now());
+  const lastHudUpdateRef = useRef<number>(0);
+  const transitAnimRef = useRef<number | null>(null);
 
   // 3D Three.js State
   const threeRef = useRef<{
@@ -103,8 +121,12 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     velocityVector: THREE.ArrowHelper;
     isDragging: boolean;
     prevMouse: { x: number; y: number };
-    rotation: { x: number; y: number };
-    zoom: number;
+    currentRotation: { x: number; y: number };
+    targetRotation: { x: number; y: number };
+    currentZoom: number;
+    targetZoom: number;
+    cameraTarget: THREE.Vector3;
+    currentTarget: THREE.Vector3;
   } | null>(null);
 
   // Handle target selection
@@ -116,6 +138,23 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     }
   };
 
+  // Convert API orbital elements to Keplerian client solver format
+  const getKeplerianElements = useCallback((): KeplerianElements | null => {
+    if (!motionData?.asteroid?.orbitalElements) return null;
+    const el = motionData.asteroid.orbitalElements;
+    return {
+      a: el.semiMajorAxisAU,
+      e: el.eccentricity,
+      i: el.inclinationDeg,
+      node: el.longitudeOfAscendingNodeDeg,
+      peri: el.argumentOfPerihelionDeg,
+      M0: el.meanAnomalyDeg,
+      epochJd: el.epochJd,
+      periodYears: el.orbitalPeriodYears,
+      meanMotionDegDay: el.meanMotionDegDay
+    };
+  }, [motionData]);
+
   // Load Asteroid Orbit Data
   const loadOrbitData = useCallback(async (desToLoad: string, targetEpoch?: Date) => {
     try {
@@ -124,7 +163,10 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
       const epochIso = targetEpoch ? targetEpoch.toISOString() : undefined;
       const res = await fetchAsteroidOrbit({ des: desToLoad, date: epochIso });
       setMotionData(res);
-      
+      setRealtimeDistLD(res.stateVector.distEarthLunar);
+      setRealtimeDistAU(res.stateVector.distEarthAU);
+      setRealtimeSpeedKmS(res.stateVector.orbitalSpeedKmS);
+
       // If target epoch was not explicitly provided and the asteroid has a close-approach record, set base epoch to that date
       if (!targetEpoch && res.asteroid.closeApproach) {
         const caDate = new Date(res.asteroid.closeApproach.iso);
@@ -145,25 +187,185 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     loadOrbitData(selectedDes, simulatedDate);
   }, [selectedDes]);
 
-  // Keep simulated time ref in sync
+  // Keep simulated time ref in sync with React state
   useEffect(() => {
     simTimeRef.current = simulatedDate.getTime();
   }, [simulatedDate]);
 
-  // Handle Playback animation loop
+  // Synchronize 3D meshes for a given epoch (called at 60fps in Three loop)
+  const sync3DPositionForEpoch = useCallback((epochMs: number) => {
+    if (!threeRef.current || !motionData) return;
+    const { 
+      earthGroup, 
+      asteroidMesh, 
+      moonMesh, 
+      sunMesh, 
+      orbitLine, 
+      earthOrbitLine, 
+      distanceLine, 
+      velocityVector 
+    } = threeRef.current;
+
+    const keplerian = getKeplerianElements();
+    const currentDate = new Date(epochMs);
+    let state: AsteroidMotionStateVector | any;
+
+    if (keplerian) {
+      state = propagateElementsClient(keplerian, currentDate);
+    } else {
+      state = motionData.stateVector;
+    }
+
+    const isPha = motionData.asteroid.isPotentiallyHazardous;
+
+    if (viewPerspective === 'encounter') {
+      // Earth at center
+      earthGroup.position.set(0, 0, 0);
+      earthGroup.visible = true;
+      sunMesh.visible = false;
+      earthOrbitLine.visible = false;
+
+      const scaleLD = 18.0;
+      const missLD = state.distEarthLunar;
+      const relNorm = Math.hypot(state.earthRelativeAU.x, state.earthRelativeAU.y, state.earthRelativeAU.z) || 1;
+      const clampedVisualDist = Math.max(5.5, Math.min(75, missLD * scaleLD));
+      const astX = (state.earthRelativeAU.x / relNorm) * clampedVisualDist;
+      const astY = (state.earthRelativeAU.z / relNorm) * clampedVisualDist;
+      const astZ = (state.earthRelativeAU.y / relNorm) * clampedVisualDist;
+
+      asteroidMesh.position.set(astX, astY, astZ);
+      (asteroidMesh.material as THREE.MeshStandardMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
+
+      // Moon position at 1 LD
+      const moonAngle = (epochMs / (27.3 * 86400000)) * Math.PI * 2;
+      moonMesh.position.set(Math.cos(moonAngle) * 18, 0, Math.sin(moonAngle) * 18);
+      moonMesh.visible = showMoon;
+
+      // Trajectory flyby arc
+      const trajPoints: THREE.Vector3[] = [];
+      const flybyLen = 45;
+      const velAngle = Math.atan2(state.velocityVectorKmS.vy, state.velocityVectorKmS.vx);
+      for (let s = -flybyLen; s <= flybyLen; s += 2) {
+        trajPoints.push(new THREE.Vector3(
+          astX + Math.cos(velAngle) * s,
+          astY,
+          astZ + Math.sin(velAngle) * s
+        ));
+      }
+      orbitLine.geometry.dispose();
+      orbitLine.geometry = new THREE.BufferGeometry().setFromPoints(trajPoints);
+      orbitLine.visible = showOrbits;
+      (orbitLine.material as THREE.LineBasicMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
+
+      // Distance line from Earth to Asteroid
+      const distPts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(astX, astY, astZ)];
+      distanceLine.geometry.dispose();
+      distanceLine.geometry = new THREE.BufferGeometry().setFromPoints(distPts);
+      distanceLine.computeLineDistances();
+      distanceLine.visible = showVectors;
+
+      // Velocity Arrow
+      const dirVec = new THREE.Vector3(
+        state.velocityVectorKmS.vx,
+        state.velocityVectorKmS.vz,
+        state.velocityVectorKmS.vy
+      ).normalize();
+      velocityVector.position.set(astX, astY, astZ);
+      velocityVector.setDirection(dirVec);
+      velocityVector.setLength(7);
+      velocityVector.visible = showVectors;
+    } else {
+      // Heliocentric View: Sun at center
+      sunMesh.visible = true;
+      moonMesh.visible = false;
+      const scaleAU = 35.0;
+
+      const earthX = state.earthPositionAU.x * scaleAU;
+      const earthY = state.earthPositionAU.z * scaleAU;
+      const earthZ = state.earthPositionAU.y * scaleAU;
+      earthGroup.position.set(earthX, earthY, earthZ);
+      earthGroup.visible = true;
+
+      const astX = state.heliocentricAU.x * scaleAU;
+      const astY = state.heliocentricAU.z * scaleAU;
+      const astZ = state.heliocentricAU.y * scaleAU;
+      asteroidMesh.position.set(astX, astY, astZ);
+      (asteroidMesh.material as THREE.MeshStandardMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
+
+      if (motionData.trajectories.asteroidOrbitPath) {
+        const orbitPts = motionData.trajectories.asteroidOrbitPath.map(
+          pt => new THREE.Vector3(pt.x * scaleAU, pt.z * scaleAU, pt.y * scaleAU)
+        );
+        orbitLine.geometry.dispose();
+        orbitLine.geometry = new THREE.BufferGeometry().setFromPoints(orbitPts);
+        orbitLine.visible = showOrbits;
+        (orbitLine.material as THREE.LineBasicMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
+      }
+
+      if (motionData.trajectories.earthOrbitPath) {
+        const earthPts = motionData.trajectories.earthOrbitPath.map(
+          pt => new THREE.Vector3(pt.x * scaleAU, pt.z * scaleAU, pt.y * scaleAU)
+        );
+        earthOrbitLine.geometry.dispose();
+        earthOrbitLine.geometry = new THREE.BufferGeometry().setFromPoints(earthPts);
+        earthOrbitLine.visible = showOrbits;
+      }
+
+      const distPts = [new THREE.Vector3(earthX, earthY, earthZ), new THREE.Vector3(astX, astY, astZ)];
+      distanceLine.geometry.dispose();
+      distanceLine.geometry = new THREE.BufferGeometry().setFromPoints(distPts);
+      distanceLine.computeLineDistances();
+      distanceLine.visible = showVectors;
+
+      const dirVec = new THREE.Vector3(
+        state.velocityVectorKmS.vx,
+        state.velocityVectorKmS.vz,
+        state.velocityVectorKmS.vy
+      ).normalize();
+      velocityVector.position.set(astX, astY, astZ);
+      velocityVector.setDirection(dirVec);
+      velocityVector.setLength(8);
+      velocityVector.visible = showVectors;
+    }
+  }, [motionData, getKeplerianElements, viewPerspective, showMoon, showOrbits, showVectors]);
+
+  // Handle Playback animation loop (runs in-memory at 60fps)
   useEffect(() => {
     if (!isPlaying) return;
     let animId: number;
 
     const tick = (now: number) => {
+      if (!isDocumentVisible) {
+        animId = requestAnimationFrame(tick);
+        return;
+      }
+
       const deltaSec = (now - lastTickRef.current) / 1000;
       lastTickRef.current = now;
 
       // Advance simulated time
       const timeAdvanceMs = deltaSec * speedFactor * 1000;
       simTimeRef.current += timeAdvanceMs;
-      const newDate = new Date(simTimeRef.current);
-      setSimulatedDate(newDate);
+
+      // Synchronize 3D meshes immediately
+      if (renderEngine === '3d') {
+        sync3DPositionForEpoch(simTimeRef.current);
+      }
+
+      // Throttle React state updates to ~10fps so the UI numbers refresh without choking 60fps canvas
+      if (now - lastHudUpdateRef.current > 100) {
+        lastHudUpdateRef.current = now;
+        const newDate = new Date(simTimeRef.current);
+        setSimulatedDate(newDate);
+
+        const kepler = getKeplerianElements();
+        if (kepler) {
+          const st = propagateElementsClient(kepler, newDate);
+          setRealtimeDistLD(st.distEarthLunar);
+          setRealtimeDistAU(st.distEarthAU);
+          setRealtimeSpeedKmS(st.orbitalSpeedKmS);
+        }
+      }
 
       animId = requestAnimationFrame(tick);
     };
@@ -172,50 +374,95 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     animId = requestAnimationFrame(tick);
 
     return () => cancelAnimationFrame(animId);
-  }, [isPlaying, speedFactor]);
+  }, [isPlaying, speedFactor, isDocumentVisible, renderEngine, sync3DPositionForEpoch, getKeplerianElements]);
 
-  // Periodic orbital propagation when time changes substantially
-  useEffect(() => {
-    if (!motionData) return;
-    const timeout = setTimeout(() => {
-      loadOrbitData(selectedDes, simulatedDate);
-    }, 250);
-    return () => clearTimeout(timeout);
-  }, [simulatedDate]);
-
-  // Jump to Close Approach Event
+  // Smooth encounter transit to close approach epoch
   const jumpToCloseApproach = () => {
+    let targetIso: string | null = null;
     if (motionData?.asteroid.closeApproach) {
-      const caDate = new Date(motionData.asteroid.closeApproach.iso);
-      if (!isNaN(caDate.getTime())) {
-        setSimulatedDate(caDate);
-        setBaseEpoch(caDate);
-      }
+      targetIso = motionData.asteroid.closeApproach.iso;
     } else {
-      // Check CAD feed
       const matched = allApproaches.find(a => a.designation.toLowerCase().includes(selectedDes.toLowerCase()));
       if (matched) {
-        const caDate = new Date(matched.closeApproachIso);
-        if (!isNaN(caDate.getTime())) {
-          setSimulatedDate(caDate);
-          setBaseEpoch(caDate);
-        }
+        targetIso = matched.closeApproachIso;
       }
     }
+
+    if (!targetIso) return;
+    const targetDate = new Date(targetIso);
+    if (isNaN(targetDate.getTime())) return;
+
+    if (transitAnimRef.current) cancelAnimationFrame(transitAnimRef.current);
+
+    if (isReducedMotion) {
+      // Instant transit for reduced-motion users
+      simTimeRef.current = targetDate.getTime();
+      setSimulatedDate(targetDate);
+      setBaseEpoch(targetDate);
+      sync3DPositionForEpoch(targetDate.getTime());
+      return;
+    }
+
+    // Smooth ease transit over 650ms
+    const startEpoch = simTimeRef.current;
+    const endEpoch = targetDate.getTime();
+    const startTime = performance.now();
+    const duration = 650;
+
+    const transitStep = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1.0, elapsed / duration);
+      const eased = Easing.easeInOutCubic(progress);
+      const currentEpoch = startEpoch + (endEpoch - startEpoch) * eased;
+      simTimeRef.current = currentEpoch;
+
+      sync3DPositionForEpoch(currentEpoch);
+
+      if (progress < 1.0) {
+        transitAnimRef.current = requestAnimationFrame(transitStep);
+      } else {
+        setSimulatedDate(targetDate);
+        setBaseEpoch(targetDate);
+        transitAnimRef.current = null;
+      }
+    };
+
+    transitAnimRef.current = requestAnimationFrame(transitStep);
   };
 
   // Reset to Current UTC
   const resetToNow = () => {
     const now = new Date();
+    simTimeRef.current = now.getTime();
     setSimulatedDate(now);
     setBaseEpoch(now);
     setIsPlaying(false);
+    sync3DPositionForEpoch(now.getTime());
   };
 
   // Step controls
   const stepTime = (hours: number) => {
-    const next = new Date(simulatedDate.getTime() + hours * 3600 * 1000);
+    const nextMs = simTimeRef.current + hours * 3600 * 1000;
+    simTimeRef.current = nextMs;
+    const next = new Date(nextMs);
     setSimulatedDate(next);
+    sync3DPositionForEpoch(nextMs);
+
+    const kepler = getKeplerianElements();
+    if (kepler) {
+      const st = propagateElementsClient(kepler, next);
+      setRealtimeDistLD(st.distEarthLunar);
+      setRealtimeDistAU(st.distEarthAU);
+      setRealtimeSpeedKmS(st.orbitalSpeedKmS);
+    }
+  };
+
+  // Reset 3D Camera View to default framing
+  const resetCameraView = () => {
+    if (!threeRef.current) return;
+    threeRef.current.targetRotation = { x: 0.35, y: -0.4 };
+    threeRef.current.targetZoom = viewPerspective === 'encounter' ? 75 : 120;
+    threeRef.current.currentTarget.set(0, 0, 0);
   };
 
   // Format Distance based on unit
@@ -241,7 +488,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
   };
 
   // -------------------------------------------------------------
-  // THREE.JS 3D SCENE SETUP & RENDERING
+  // THREE.JS 3D SCENE SETUP & SMOOTH CAMERA EASING
   // -------------------------------------------------------------
   useEffect(() => {
     if (renderEngine !== '3d' || !webglCanvasRef.current || !containerRef.current) return;
@@ -311,7 +558,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     const moonMesh = new THREE.Mesh(moonGeo, moonMat);
     scene.add(moonMesh);
 
-    // Moon Orbit Ring (Mapped to radius 18 units in encounter view)
+    // Moon Orbit Ring
     const moonOrbitGeo = new THREE.BufferGeometry();
     const moonPts: THREE.Vector3[] = [];
     for (let i = 0; i <= 64; i++) {
@@ -373,7 +620,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     );
     scene.add(velocityVector);
 
-    // Three State Reference
+    // Three State Reference with smooth camera target and angles
     threeRef.current = {
       scene,
       camera,
@@ -388,9 +635,16 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
       velocityVector,
       isDragging: false,
       prevMouse: { x: 0, y: 0 },
-      rotation: { x: 0.35, y: -0.4 },
-      zoom: 75
+      currentRotation: { x: 0.35, y: -0.4 },
+      targetRotation: { x: 0.35, y: -0.4 },
+      currentZoom: 75,
+      targetZoom: 75,
+      cameraTarget: new THREE.Vector3(0, 0, 0),
+      currentTarget: new THREE.Vector3(0, 0, 0)
     };
+
+    // Initial position sync
+    sync3DPositionForEpoch(simTimeRef.current);
 
     // Mouse Drag Controls for Orbit Rotation
     const onMouseDown = (e: MouseEvent) => {
@@ -403,8 +657,8 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
       if (!threeRef.current || !threeRef.current.isDragging) return;
       const dx = e.clientX - threeRef.current.prevMouse.x;
       const dy = e.clientY - threeRef.current.prevMouse.y;
-      threeRef.current.rotation.y += dx * 0.008;
-      threeRef.current.rotation.x = Math.max(-1.4, Math.min(1.4, threeRef.current.rotation.x + dy * 0.008));
+      threeRef.current.targetRotation.y += dx * 0.008;
+      threeRef.current.targetRotation.x = Math.max(-1.4, Math.min(1.4, threeRef.current.targetRotation.x + dy * 0.008));
       threeRef.current.prevMouse = { x: e.clientX, y: e.clientY };
     };
 
@@ -415,7 +669,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       if (!threeRef.current) return;
-      threeRef.current.zoom = Math.max(20, Math.min(220, threeRef.current.zoom + e.deltaY * 0.08));
+      threeRef.current.targetZoom = Math.max(20, Math.min(220, threeRef.current.targetZoom + e.deltaY * 0.08));
     };
 
     canvas.addEventListener('mousedown', onMouseDown);
@@ -443,8 +697,8 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
       if (e.touches.length === 1 && threeRef.current.isDragging) {
         const dx = e.touches[0].clientX - threeRef.current.prevMouse.x;
         const dy = e.touches[0].clientY - threeRef.current.prevMouse.y;
-        threeRef.current.rotation.y += dx * 0.008;
-        threeRef.current.rotation.x = Math.max(-1.4, Math.min(1.4, threeRef.current.rotation.x + dy * 0.008));
+        threeRef.current.targetRotation.y += dx * 0.008;
+        threeRef.current.targetRotation.x = Math.max(-1.4, Math.min(1.4, threeRef.current.targetRotation.x + dy * 0.008));
         threeRef.current.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
       } else if (e.touches.length === 2) {
         const dist = Math.hypot(
@@ -453,7 +707,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
         );
         const delta = touchStartDist - dist;
         touchStartDist = dist;
-        threeRef.current.zoom = Math.max(20, Math.min(220, threeRef.current.zoom + delta * 0.15));
+        threeRef.current.targetZoom = Math.max(20, Math.min(220, threeRef.current.targetZoom + delta * 0.15));
       }
     };
 
@@ -476,20 +730,41 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     };
     window.addEventListener('resize', handleResize);
 
-    // Render loop
+    // Render loop with smooth camera easing
     let animId: number;
     const render = () => {
-      if (threeRef.current) {
-        const { camera, scene, renderer, rotation, zoom, earthGroup } = threeRef.current;
-        // Apply camera spherical coordinates
-        const cy = Math.cos(rotation.x) * zoom;
-        camera.position.x = Math.sin(rotation.y) * cy;
-        camera.position.y = Math.sin(rotation.x) * zoom;
-        camera.position.z = Math.cos(rotation.y) * cy;
-        camera.lookAt(0, 0, 0);
+      if (threeRef.current && isDocumentVisible) {
+        const { 
+          camera, 
+          scene, 
+          renderer, 
+          currentRotation, 
+          targetRotation, 
+          currentZoom, 
+          targetZoom, 
+          cameraTarget, 
+          currentTarget, 
+          earthGroup 
+        } = threeRef.current;
 
-        // Gentle Earth rotation
-        earthGroup.rotation.y += 0.002;
+        // Smooth camera lerp
+        const lerpFactor = isReducedMotion ? 1.0 : 0.09;
+        currentRotation.x += (targetRotation.x - currentRotation.x) * lerpFactor;
+        currentRotation.y += (targetRotation.y - currentRotation.y) * lerpFactor;
+        threeRef.current.currentZoom += (targetZoom - currentZoom) * lerpFactor;
+        cameraTarget.lerp(currentTarget, lerpFactor);
+
+        // Compute camera Cartesian position
+        const cy = Math.cos(currentRotation.x) * threeRef.current.currentZoom;
+        camera.position.x = cameraTarget.x + Math.sin(currentRotation.y) * cy;
+        camera.position.y = cameraTarget.y + Math.sin(currentRotation.x) * threeRef.current.currentZoom;
+        camera.position.z = cameraTarget.z + Math.cos(currentRotation.y) * cy;
+        camera.lookAt(cameraTarget);
+
+        // Gentle ambient Earth rotation (disabled if reduced motion)
+        if (!isReducedMotion) {
+          earthGroup.rotation.y += 0.002;
+        }
 
         renderer.render(scene, camera);
       }
@@ -510,151 +785,20 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
       renderer.dispose();
       threeRef.current = null;
     };
-  }, [renderEngine]);
+  }, [renderEngine, isDocumentVisible, isReducedMotion, sync3DPositionForEpoch]);
 
-  // Synchronize 3D Objects with Motion Data
+  // Synchronize camera zoom when view perspective changes
   useEffect(() => {
-    if (renderEngine !== '3d' || !threeRef.current || !motionData) return;
-    const { 
-      earthGroup, 
-      asteroidMesh, 
-      moonMesh, 
-      sunMesh, 
-      orbitLine, 
-      earthOrbitLine, 
-      distanceLine, 
-      velocityVector 
-    } = threeRef.current;
-
-    const state = motionData.stateVector;
-    const isPha = motionData.asteroid.isPotentiallyHazardous;
-
-    if (viewPerspective === 'encounter') {
-      // Encounter View: Earth at center (0, 0, 0)
-      earthGroup.position.set(0, 0, 0);
-      earthGroup.visible = true;
-      sunMesh.visible = false;
-      earthOrbitLine.visible = false;
-
-      // Scale: 1 Lunar Distance = 18 Three.js units
-      const scaleLD = 18.0;
-      const missLD = state.distEarthLunar;
-      
-      // Calculate relative position scaled
-      const relNorm = Math.hypot(state.earthRelativeAU.x, state.earthRelativeAU.y, state.earthRelativeAU.z) || 1;
-      const clampedVisualDist = Math.max(5.5, Math.min(75, missLD * scaleLD));
-      const astX = (state.earthRelativeAU.x / relNorm) * clampedVisualDist;
-      const astY = (state.earthRelativeAU.z / relNorm) * clampedVisualDist;
-      const astZ = (state.earthRelativeAU.y / relNorm) * clampedVisualDist;
-
-      asteroidMesh.position.set(astX, astY, astZ);
-      (asteroidMesh.material as THREE.MeshStandardMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
-
-      // Moon position at 1 LD
-      const moonAngle = (simulatedDate.getTime() / (27.3 * 86400000)) * Math.PI * 2;
-      moonMesh.position.set(Math.cos(moonAngle) * 18, 0, Math.sin(moonAngle) * 18);
-      moonMesh.visible = showMoon;
-
-      // Trajectory flyby arc
-      const trajPoints: THREE.Vector3[] = [];
-      const flybyLen = 45;
-      const velAngle = Math.atan2(state.velocityVectorKmS.vy, state.velocityVectorKmS.vx);
-      for (let s = -flybyLen; s <= flybyLen; s += 2) {
-        trajPoints.push(new THREE.Vector3(
-          astX + Math.cos(velAngle) * s,
-          astY,
-          astZ + Math.sin(velAngle) * s
-        ));
-      }
-      orbitLine.geometry.dispose();
-      orbitLine.geometry = new THREE.BufferGeometry().setFromPoints(trajPoints);
-      orbitLine.visible = showOrbits;
-      (orbitLine.material as THREE.LineBasicMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
-
-      // Distance line from Earth to Asteroid
-      const distPts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(astX, astY, astZ)];
-      distanceLine.geometry.dispose();
-      distanceLine.geometry = new THREE.BufferGeometry().setFromPoints(distPts);
-      distanceLine.computeLineDistances();
-      distanceLine.visible = showVectors;
-
-      // Velocity Arrow
-      const dirVec = new THREE.Vector3(
-        state.velocityVectorKmS.vx,
-        state.velocityVectorKmS.vz,
-        state.velocityVectorKmS.vy
-      ).normalize();
-      velocityVector.position.set(astX, astY, astZ);
-      velocityVector.setDirection(dirVec);
-      velocityVector.setLength(7);
-      velocityVector.visible = showVectors;
-    } else {
-      // Heliocentric View: Sun at center (0, 0, 0)
-      sunMesh.visible = true;
-      moonMesh.visible = false;
-
-      // Scale: 1 AU = 35 Three.js units
-      const scaleAU = 35.0;
-
-      // Earth at true heliocentric AU
-      const earthX = state.earthPositionAU.x * scaleAU;
-      const earthY = state.earthPositionAU.z * scaleAU;
-      const earthZ = state.earthPositionAU.y * scaleAU;
-      earthGroup.position.set(earthX, earthY, earthZ);
-      earthGroup.visible = true;
-
-      // Asteroid at true heliocentric AU
-      const astX = state.heliocentricAU.x * scaleAU;
-      const astY = state.heliocentricAU.z * scaleAU;
-      const astZ = state.heliocentricAU.y * scaleAU;
-      asteroidMesh.position.set(astX, astY, astZ);
-      (asteroidMesh.material as THREE.MeshStandardMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
-
-      // Full Asteroid Orbit Ellipse
-      if (motionData.trajectories.asteroidOrbitPath) {
-        const orbitPts = motionData.trajectories.asteroidOrbitPath.map(
-          pt => new THREE.Vector3(pt.x * scaleAU, pt.z * scaleAU, pt.y * scaleAU)
-        );
-        orbitLine.geometry.dispose();
-        orbitLine.geometry = new THREE.BufferGeometry().setFromPoints(orbitPts);
-        orbitLine.visible = showOrbits;
-        (orbitLine.material as THREE.LineBasicMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
-      }
-
-      // Earth Orbit Ellipse
-      if (motionData.trajectories.earthOrbitPath) {
-        const earthPts = motionData.trajectories.earthOrbitPath.map(
-          pt => new THREE.Vector3(pt.x * scaleAU, pt.z * scaleAU, pt.y * scaleAU)
-        );
-        earthOrbitLine.geometry.dispose();
-        earthOrbitLine.geometry = new THREE.BufferGeometry().setFromPoints(earthPts);
-        earthOrbitLine.visible = showOrbits;
-      }
-
-      // Interplanetary distance line between Earth and Asteroid
-      const distPts = [new THREE.Vector3(earthX, earthY, earthZ), new THREE.Vector3(astX, astY, astZ)];
-      distanceLine.geometry.dispose();
-      distanceLine.geometry = new THREE.BufferGeometry().setFromPoints(distPts);
-      distanceLine.computeLineDistances();
-      distanceLine.visible = showVectors;
-
-      // Velocity Arrow
-      const dirVec = new THREE.Vector3(
-        state.velocityVectorKmS.vx,
-        state.velocityVectorKmS.vz,
-        state.velocityVectorKmS.vy
-      ).normalize();
-      velocityVector.position.set(astX, astY, astZ);
-      velocityVector.setDirection(dirVec);
-      velocityVector.setLength(8);
-      velocityVector.visible = showVectors;
-    }
-  }, [renderEngine, motionData, viewPerspective, showOrbits, showVectors, showMoon, simulatedDate]);
+    if (!threeRef.current) return;
+    threeRef.current.targetZoom = viewPerspective === 'encounter' ? 75 : 120;
+    threeRef.current.currentTarget.set(0, 0, 0);
+    sync3DPositionForEpoch(simTimeRef.current);
+  }, [viewPerspective, sync3DPositionForEpoch]);
 
   // -------------------------------------------------------------
   // 2D CANVAS RADAR RENDERING (ACCESSIBILITY & LOW-SPEC FALLBACK)
   // -------------------------------------------------------------
-  useEffect(() => {
+  const render2DRadar = useCallback((epochMs: number) => {
     if (renderEngine !== '2d' || !canvas2dRef.current || !motionData) return;
     const canvas = canvas2dRef.current;
     const ctx = canvas.getContext('2d');
@@ -678,7 +822,17 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
 
     const centerX = width / 2;
     const centerY = height / 2;
-    const state = motionData.stateVector;
+
+    const kepler = getKeplerianElements();
+    const currentDate = new Date(epochMs);
+    let state: AsteroidMotionStateVector | any;
+
+    if (kepler) {
+      state = propagateElementsClient(kepler, currentDate);
+    } else {
+      state = motionData.stateVector;
+    }
+
     const isPha = motionData.asteroid.isPotentiallyHazardous;
 
     if (viewPerspective === 'encounter') {
@@ -733,7 +887,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
 
       // Moon Marker (at 1.0 LD)
       if (showMoon) {
-        const moonAngle = (simulatedDate.getTime() / (27.3 * 86400000)) * Math.PI * 2;
+        const moonAngle = (epochMs / (27.3 * 86400000)) * Math.PI * 2;
         const moonX = centerX + Math.cos(moonAngle) * 1.0 * pxPerLD;
         const moonY = centerY + Math.sin(moonAngle) * 1.0 * pxPerLD;
         ctx.beginPath();
@@ -774,16 +928,9 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.setLineDash([]);
-
-        // Distance text
-        const midX = (centerX + astX) / 2;
-        const midY = (centerY + astY) / 2;
-        ctx.fillStyle = '#F8FAFC';
-        ctx.font = 'bold 11px monospace';
-        ctx.fillText(`Dist: ${state.distEarthLunar.toFixed(2)} LD (${state.distEarthKm.toLocaleString()} km)`, midX + 8, midY - 6);
       }
 
-      // Asteroid Marker
+      // Asteroid Dot
       ctx.beginPath();
       ctx.arc(astX, astY, 6, 0, Math.PI * 2);
       ctx.fillStyle = isPha ? '#EF4444' : '#F59E0B';
@@ -793,70 +940,57 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
       ctx.stroke();
 
       if (showLabels) {
-        ctx.fillStyle = isPha ? '#F87171' : '#F5C451';
+        ctx.fillStyle = '#F8FAFC';
         ctx.font = 'bold 11px monospace';
-        ctx.fillText(motionData.asteroid.shortName, astX + 14, astY - 6);
-        ctx.fillStyle = '#94A3B8';
+        ctx.fillText(motionData.asteroid.shortName, astX + 10, astY - 6);
+        ctx.fillStyle = '#38BDF8';
         ctx.font = '10px monospace';
-        ctx.fillText(`v = ${state.orbitalSpeedKmS} km/s`, astX + 14, astY + 8);
+        ctx.fillText(formatDist(state.distEarthLunar, state.distEarthAU), astX + 10, astY + 8);
       }
     } else {
-      // 2D HELIOCENTRIC ORBITAL VIEW: Sun at center
-      const pxPerAU = Math.min(width, height) / 3.2;
+      // 2D HELIOCENTRIC INNER SYSTEM VIEW: Sun at center
+      const pxPerAU = Math.min(width, height) / 3.8;
 
       // Central Sun
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, 12, 0, Math.PI * 2);
       ctx.fillStyle = '#FBBF24';
       ctx.fill();
       if (showLabels) {
-        ctx.fillStyle = '#FDE68A';
-        ctx.font = 'bold 10px monospace';
-        ctx.fillText('Sun', centerX + 12, centerY + 3);
+        ctx.fillStyle = '#050B1A';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Sun', centerX, centerY + 3);
+        ctx.textAlign = 'left';
       }
 
-      // Earth Orbit Circle (1 AU)
+      // Earth Orbit Ring
       if (showOrbits) {
         ctx.beginPath();
         ctx.arc(centerX, centerY, 1.0 * pxPerAU, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
         ctx.lineWidth = 1;
         ctx.stroke();
       }
 
-      // Earth Position
+      // Earth position
       const earthX = centerX + state.earthPositionAU.x * pxPerAU;
-      const earthY = centerY - state.earthPositionAU.y * pxPerAU;
+      const earthY = centerY + state.earthPositionAU.y * pxPerAU;
       ctx.beginPath();
-      ctx.arc(earthX, earthY, 5, 0, Math.PI * 2);
+      ctx.arc(earthX, earthY, 6, 0, Math.PI * 2);
       ctx.fillStyle = '#38BDF8';
       ctx.fill();
       if (showLabels) {
-        ctx.fillStyle = '#38BDF8';
-        ctx.font = 'bold 10px monospace';
-        ctx.fillText('Earth (1 AU)', earthX + 8, earthY + 3);
-      }
-
-      // Asteroid Full Elliptical Path
-      if (showOrbits && motionData.trajectories.asteroidOrbitPath) {
-        ctx.beginPath();
-        motionData.trajectories.asteroidOrbitPath.forEach((pt, i) => {
-          const px = centerX + pt.x * pxPerAU;
-          const py = centerY - pt.y * pxPerAU;
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
-        });
-        ctx.closePath();
-        ctx.strokeStyle = isPha ? '#F87171' : '#F5C451';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        ctx.fillStyle = '#F8FAFC';
+        ctx.font = '10px monospace';
+        ctx.fillText('Earth', earthX + 8, earthY + 3);
       }
 
       // Asteroid Position
       const astX = centerX + state.heliocentricAU.x * pxPerAU;
-      const astY = centerY - state.heliocentricAU.y * pxPerAU;
+      const astY = centerY + state.heliocentricAU.y * pxPerAU;
 
-      // Distance Line between Earth and Asteroid
+      // Distance Line
       if (showVectors) {
         ctx.beginPath();
         ctx.setLineDash([3, 3]);
@@ -868,167 +1002,136 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
         ctx.setLineDash([]);
       }
 
-      // Asteroid Marker
+      // Asteroid marker
       ctx.beginPath();
       ctx.arc(astX, astY, 5, 0, Math.PI * 2);
-      ctx.fillStyle = isPha ? '#EF4444' : '#F5C451';
+      ctx.fillStyle = isPha ? '#EF4444' : '#F59E0B';
       ctx.fill();
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
 
       if (showLabels) {
-        ctx.fillStyle = isPha ? '#F87171' : '#F5C451';
+        ctx.fillStyle = '#F8FAFC';
         ctx.font = 'bold 10px monospace';
-        ctx.fillText(motionData.asteroid.shortName, astX + 10, astY - 4);
+        ctx.fillText(motionData.asteroid.shortName, astX + 8, astY + 3);
       }
     }
-  }, [renderEngine, motionData, viewPerspective, showOrbits, showVectors, showMoon, showLabels, simulatedDate]);
+  }, [renderEngine, motionData, getKeplerianElements, viewPerspective, showLabels, showMoon, showOrbits, showVectors, distanceUnit]);
+
+  // Redraw 2D radar on epoch change
+  useEffect(() => {
+    if (renderEngine === '2d') {
+      render2DRadar(simulatedDate.getTime());
+    }
+  }, [renderEngine, simulatedDate, render2DRadar]);
 
   return (
     <div className="space-y-6">
-      {/* 1. TOP TOOLBAR & MODE CONTROLS */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Left: Title & Mode Switcher */}
+      {/* 1. TOP STATUS & ENGINE CONTROLS BAR */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#38BDF8] animate-ping" />
-                <span>Motion Mode: Data-Driven Orbital Engine</span>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
+                <Orbit className="w-3.5 h-3.5" />
+                Motion Mode • JPL Keplerian Ephemeris
               </span>
-              {motionData?.provenance.isLive ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  LIVE JPL SBDB FEED
-                </span>
-              ) : (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
-                  VERIFIED ARCHIVAL PROPAGATION
+              <span className="text-xs text-[#A7B4CC] font-mono">ICRF / J2000 Frame</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-[#F8FAFC] tracking-tight flex items-center gap-2">
+              <span>{motionData?.asteroid.name || selectedDes}</span>
+              {motionData?.asteroid.isPotentiallyHazardous && (
+                <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#EF4444]/20 text-[#FCA5A5] border border-[#EF4444]/40">
+                  Potentially Hazardous
                 </span>
               )}
-            </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#F8FAFC] tracking-tight">
-              Interactive Asteroid Orbital Motion
             </h2>
-            <p className="text-xs text-[#A7B4CC] leading-relaxed max-w-2xl">
-              Observe true Keplerian motion calculated from official NASA/JPL Small-Body Database osculating elements and Standish planetary ephemerides.
-            </p>
           </div>
 
-          {/* Right: Switch Mode & Target Selector */}
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={onSwitchToListMode}
-              className="px-4 py-2 rounded-xl bg-[#050B1A] hover:bg-[#0E1B38] border border-[#1E293B] text-xs font-mono text-[#A7B4CC] hover:text-[#F8FAFC] transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <span>Switch to List Mode</span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#38BDF8]" />
-            </button>
-
-            {/* Target Asteroid Selector Dropdown */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono text-[#A7B4CC]">Target:</span>
-              <select
-                value={selectedDes}
-                onChange={e => handleSelectTarget(e.target.value)}
-                className="bg-[#050B1A] border border-[#1E293B] rounded-xl px-3 py-2 text-xs font-mono text-[#F8FAFC] focus:outline-none focus:border-[#38BDF8] cursor-pointer"
-              >
-                {FAMOUS_NEO_PRESETS.map(p => (
-                  <option key={p.des} value={p.des}>
-                    {p.label} — {p.note}
-                  </option>
-                ))}
-                {allApproaches
-                  .filter(a => !FAMOUS_NEO_PRESETS.some(p => p.des === a.designation))
-                  .map(a => (
-                    <option key={a.designation} value={a.designation}>
-                      {a.designation} ({a.closeApproachDate.split(' ')[0]} • {a.missDistanceLunar.toFixed(2)} LD)
-                    </option>
-                  ))}
-              </select>
+          {/* Quick Preset Selector */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-[#A7B4CC] font-mono">Featured NEOs:</span>
+            <div className="flex flex-wrap gap-1.5">
+              {FAMOUS_NEO_PRESETS.map(preset => (
+                <button
+                  key={preset.des}
+                  onClick={() => handleSelectTarget(preset.des)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
+                    selectedDes === preset.des
+                      ? 'bg-[#38BDF8] text-[#050B1A] font-bold shadow-md shadow-[#38BDF8]/20'
+                      : 'bg-[#0E1B38] text-[#A7B4CC] hover:text-[#F8FAFC] hover:bg-[#1E293B] border border-[#1E293B]'
+                  }`}
+                  title={preset.note}
+                >
+                  {preset.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Quick Famous Asteroid Chips */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-[#1E293B]">
-          <span className="text-[11px] font-mono text-[#A7B4CC] mr-1">Quick Select:</span>
-          {FAMOUS_NEO_PRESETS.slice(0, 6).map(p => (
-            <button
-              key={p.des}
-              onClick={() => handleSelectTarget(p.des)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all cursor-pointer ${
-                selectedDes === p.des
-                  ? 'bg-[#38BDF8] text-[#050B1A] font-bold shadow-sm'
-                  : 'bg-[#050B1A] text-[#A7B4CC] hover:text-[#F8FAFC] border border-[#1E293B]'
-              }`}
-            >
-              {p.label.split(' ')[1] || p.label}
-            </button>
-          ))}
-        </div>
+        {/* Mode Switchers: 3D WebGL vs 2D Radar & Perspectives */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#1E293B] text-xs font-mono">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Perspective Toggle */}
+            <div className="flex rounded-xl bg-[#050B1A] p-1 border border-[#1E293B]">
+              <button
+                onClick={() => setViewPerspective('encounter')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  viewPerspective === 'encounter'
+                    ? 'bg-[#38BDF8] text-[#050B1A]'
+                    : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
+                }`}
+                title="Earth-centered flyby geometry (measured in Lunar Distances)"
+              >
+                Earth Flyby Radar
+              </button>
+              <button
+                onClick={() => setViewPerspective('heliocentric')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  viewPerspective === 'heliocentric'
+                    ? 'bg-[#38BDF8] text-[#050B1A]'
+                    : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
+                }`}
+                title="Sun-centered inner Solar System orbit view (measured in AU)"
+              >
+                Heliocentric Inner System
+              </button>
+            </div>
 
-        {/* View Perspective & Engine Toggles */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-[#1E293B]">
-          {/* Perspective Switcher */}
-          <div className="flex rounded-xl bg-[#050B1A] p-1 border border-[#1E293B] text-xs font-mono">
-            <button
-              onClick={() => setViewPerspective('encounter')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                viewPerspective === 'encounter'
-                  ? 'bg-[#38BDF8] text-[#050B1A] shadow-sm'
-                  : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5" />
-              <span>Earth Flyby Radar</span>
-            </button>
-            <button
-              onClick={() => setViewPerspective('heliocentric')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                viewPerspective === 'heliocentric'
-                  ? 'bg-[#38BDF8] text-[#050B1A] shadow-sm'
-                  : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
-              }`}
-            >
-              <Orbit className="w-3.5 h-3.5" />
-              <span>Heliocentric Inner System</span>
-            </button>
-          </div>
-
-          {/* Engine & Layer Toggles */}
-          <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-            {/* 3D vs 2D Engine Toggle */}
-            <div className="flex rounded-lg bg-[#050B1A] p-0.5 border border-[#1E293B]">
+            {/* Render Engine Toggle */}
+            <div className="flex rounded-xl bg-[#050B1A] p-1 border border-[#1E293B]">
               <button
                 onClick={() => setRenderEngine('3d')}
-                className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
-                  renderEngine === '3d' ? 'bg-[#38BDF8] text-[#050B1A]' : 'text-[#A7B4CC]'
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  renderEngine === '3d'
+                    ? 'bg-[#8B5CF6] text-[#F8FAFC]'
+                    : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
                 }`}
               >
-                3D WebGL
+                3D Interactive
               </button>
               <button
                 onClick={() => setRenderEngine('2d')}
-                className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
-                  renderEngine === '2d' ? 'bg-[#38BDF8] text-[#050B1A]' : 'text-[#A7B4CC]'
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  renderEngine === '2d'
+                    ? 'bg-[#8B5CF6] text-[#F8FAFC]'
+                    : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
                 }`}
               >
                 2D Radar Canvas
               </button>
             </div>
+          </div>
 
-            {/* Orbit paths toggle */}
+          {/* Display Layer Toggles */}
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowOrbits(!showOrbits)}
               className={`px-2.5 py-1 rounded-lg border text-[11px] transition-all cursor-pointer ${
                 showOrbits ? 'bg-[#0E1B38] text-[#38BDF8] border-[#38BDF8]/40' : 'bg-[#050B1A] text-[#64748B] border-[#1E293B]'
               }`}
             >
-              Orbits: {showOrbits ? 'ON' : 'OFF'}
+              Orbit: {showOrbits ? 'ON' : 'OFF'}
             </button>
-
-            {/* Vectors toggle */}
             <button
               onClick={() => setShowVectors(!showVectors)}
               className={`px-2.5 py-1 rounded-lg border text-[11px] transition-all cursor-pointer ${
@@ -1037,8 +1140,6 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
             >
               Vectors: {showVectors ? 'ON' : 'OFF'}
             </button>
-
-            {/* Labels toggle */}
             <button
               onClick={() => setShowLabels(!showLabels)}
               className={`px-2.5 py-1 rounded-lg border text-[11px] transition-all cursor-pointer ${
@@ -1103,7 +1204,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
         <div className="lg:col-span-2 space-y-4">
           <div
             ref={containerRef}
-            className="relative rounded-2xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-2xl h-[500px] flex items-center justify-center group"
+            className="relative rounded-2xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-2xl h-125 flex items-center justify-center group"
           >
             {renderEngine === '3d' ? (
               <canvas ref={webglCanvasRef} className="w-full h-full cursor-grab active:cursor-grabbing block" />
@@ -1121,14 +1222,25 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
               </div>
               {motionData && (
                 <div className="text-[11px] text-[#38BDF8]">
-                  Dist to Earth: {formatDist(motionData.stateVector.distEarthLunar, motionData.stateVector.distEarthAU)}
+                  Dist to Earth: {formatDist(realtimeDistLD || motionData.stateVector.distEarthLunar, realtimeDistAU || motionData.stateVector.distEarthAU)}
                 </div>
               )}
             </div>
 
-            {/* Interaction Hint (Top-Right) */}
-            <div className="absolute top-4 right-4 p-2.5 rounded-xl bg-[#050B1A]/80 backdrop-blur-md border border-[#1E293B] text-[10px] font-mono text-[#A7B4CC] pointer-events-none">
-              {renderEngine === '3d' ? 'Drag to rotate • Wheel to zoom' : '2D High-DPI Radar Canvas'}
+            {/* Top-Right HUD Controls: Hint & Reset View */}
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+              <button
+                onClick={resetCameraView}
+                className="px-2.5 py-1.5 rounded-xl bg-[#050B1A]/85 hover:bg-[#1E293B] backdrop-blur-md border border-[#1E293B] text-[11px] font-mono text-[#38BDF8] flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+                title="Reset camera to default vantage point"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset View</span>
+              </button>
+
+              <div className="p-2 rounded-xl bg-[#050B1A]/80 backdrop-blur-md border border-[#1E293B] text-[10px] font-mono text-[#A7B4CC] pointer-events-none hidden sm:block">
+                {renderEngine === '3d' ? 'Drag to rotate • Wheel to zoom' : '2D High-DPI Radar Canvas'}
+              </div>
             </div>
 
             {/* Scientific Scaling Disclaimer (Bottom-Left) */}
@@ -1138,7 +1250,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
 
             {/* Playback Indicator (Bottom-Right) */}
             <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-[#050B1A]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#1E293B] text-[10px] font-mono">
-              <span className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-emerald-400 animate-ping' : 'bg-amber-400'}`} />
+              <span className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-emerald-400 beacon-pulse' : 'bg-amber-400'}`} />
               <span className="text-[#F8FAFC]">{isPlaying ? 'PLAYING MOTION' : 'PAUSED'}</span>
             </div>
           </div>
@@ -1246,187 +1358,197 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
                 value={Math.round((simulatedDate.getTime() - baseEpoch.getTime()) / 1000)}
                 onChange={e => {
                   const offsetSec = parseInt(e.target.value, 10);
-                  setSimulatedDate(new Date(baseEpoch.getTime() + offsetSec * 1000));
+                  const newMs = baseEpoch.getTime() + offsetSec * 1000;
+                  simTimeRef.current = newMs;
+                  const newDate = new Date(newMs);
+                  setSimulatedDate(newDate);
+                  sync3DPositionForEpoch(newMs);
+
+                  const kepler = getKeplerianElements();
+                  if (kepler) {
+                    const st = propagateElementsClient(kepler, newDate);
+                    setRealtimeDistLD(st.distEarthLunar);
+                    setRealtimeDistAU(st.distEarthAU);
+                    setRealtimeSpeedKmS(st.orbitalSpeedKmS);
+                  }
                 }}
                 className="w-full accent-[#38BDF8] cursor-pointer"
               />
 
               <div className="flex justify-between text-[10px] font-mono text-[#64748B]">
-                <span>-30 Days from Base</span>
-                <span>Base Encounter Epoch</span>
-                <span>+30 Days from Base</span>
+                <span>-30 Days</span>
+                <span className="text-[#38BDF8] font-bold">Base Encounter Epoch</span>
+                <span>+30 Days</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Selected Asteroid Telemetry & Inspector Panel */}
-        <div className="space-y-4">
+        {/* Telemetry Inspector Panel (Col Span 1) */}
+        <div className="space-y-6">
           {motionData ? (
-            <div className="p-6 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-5">
-              {/* Header Badge & Name */}
-              <div className="space-y-2 border-b border-[#1E293B] pb-4">
+            <div className="p-5 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-5">
+              {/* Header with Visual Card */}
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-[#38BDF8] font-bold">
-                    NASA JPL SBDB Orbit
+                  <span className="text-xs font-mono font-semibold text-[#38BDF8] uppercase tracking-wider">
+                    Orbital Telemetry
                   </span>
-                  {motionData.asteroid.isPotentiallyHazardous ? (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
-                      PHA Flagged
+                  <button
+                    onClick={onSwitchToListMode}
+                    className="text-xs font-mono text-[#A7B4CC] hover:text-[#F8FAFC] flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <span>View in Table</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Object Image Preview */}
+                <div className="rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A]">
+                  <AstronomicalImage
+                    target={{
+                      id: motionData.asteroid.designation.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                      name: motionData.asteroid.name,
+                      classification: motionData.asteroid.orbitClass
+                    }}
+                    targetType="small-body"
+                    aspectRatio="16/9"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold text-[#F8FAFC]">{motionData.asteroid.name}</h3>
+                  <p className="text-xs text-[#A7B4CC] font-mono">{motionData.asteroid.orbitClass}</p>
+                </div>
+              </div>
+
+              {/* Real-time State Vector Telemetry */}
+              <div className="p-3.5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-2 text-xs font-mono">
+                <div className="text-[11px] font-bold text-[#38BDF8] uppercase tracking-wider">
+                  Real-time Dynamics
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[#A7B4CC]">
+                  <div>
+                    <span className="text-[#64748B] block text-[10px]">DISTANCE (EARTH)</span>
+                    <span className="font-bold text-[#F8FAFC]">
+                      {formatDist(realtimeDistLD || motionData.stateVector.distEarthLunar, realtimeDistAU || motionData.stateVector.distEarthAU)}
                     </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                      Standard NEO
+                  </div>
+                  <div>
+                    <span className="text-[#64748B] block text-[10px]">DISTANCE (SUN)</span>
+                    <span className="font-bold text-[#F8FAFC]">
+                      {(realtimeDistAU || motionData.stateVector.distSunAU).toFixed(3)} AU
                     </span>
-                  )}
-                </div>
-
-                <h3 className="text-2xl font-bold font-mono text-[#F8FAFC]">
-                  {motionData.asteroid.name}
-                </h3>
-                <div className="text-xs font-mono text-[#A7B4CC]">
-                  Orbit Class: <span className="text-[#F8FAFC]">{motionData.asteroid.orbitClass}</span>
-                </div>
-              </div>
-
-              {/* Verified Astronomical Visual */}
-              <div className="rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A]">
-                <AstronomicalImage
-                  target={{
-                    id: motionData.asteroid.designation.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-                    name: motionData.asteroid.name,
-                    classification: motionData.asteroid.isPotentiallyHazardous ? 'Potentially Hazardous Asteroid' : 'Near-Earth Asteroid',
-                    diameterEstimateMeters: motionData.asteroid.diameterMeters.avg
-                  }}
-                  targetType="small-body"
-                  aspectRatio="16/9"
-                  showBadge={true}
-                  className="w-full h-36 object-cover"
-                />
-              </div>
-
-              {/* Telemetry Metrics */}
-              <div className="space-y-2.5 font-mono text-xs">
-                <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] flex items-center justify-between">
-                  <span className="text-[#A7B4CC]">Distance to Earth:</span>
-                  <span className="font-bold text-[#38BDF8] text-sm">
-                    {formatDist(motionData.stateVector.distEarthLunar, motionData.stateVector.distEarthAU)}
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] flex items-center justify-between">
-                  <span className="text-[#A7B4CC]">Distance to Sun:</span>
-                  <span className="font-bold text-[#F8FAFC]">
-                    {motionData.stateVector.distSunAU.toFixed(3)} AU ({motionData.stateVector.distSunMillionKm}M km)
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] flex items-center justify-between">
-                  <span className="text-[#A7B4CC]">Heliocentric Speed:</span>
-                  <span className="font-bold text-[#F5C451]">
-                    {motionData.stateVector.orbitalSpeedKmS} km/s
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] flex items-center justify-between">
-                  <span className="text-[#A7B4CC]">Estimated Diameter:</span>
-                  <span className="font-bold text-[#F8FAFC]">
-                    {motionData.asteroid.diameterMeters.min} – {motionData.asteroid.diameterMeters.max} m (~{motionData.asteroid.diameterMeters.avg} m)
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] flex items-center justify-between">
-                  <span className="text-[#A7B4CC]">Absolute Magnitude (H):</span>
-                  <span className="font-bold text-[#F8FAFC]">
-                    {motionData.asteroid.absoluteMagnitudeH ? `${motionData.asteroid.absoluteMagnitudeH} mag` : 'N/A'}
-                  </span>
+                  </div>
+                  <div>
+                    <span className="text-[#64748B] block text-[10px]">ORBITAL SPEED</span>
+                    <span className="font-bold text-[#F8FAFC]">
+                      {(realtimeSpeedKmS || motionData.stateVector.orbitalSpeedKmS).toFixed(1)} km/s
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[#64748B] block text-[10px]">VELOCITY VECTOR</span>
+                    <span className="font-bold text-[#F8FAFC]">
+                      ({motionData.stateVector.velocityVectorKmS.vx.toFixed(1)}, {motionData.stateVector.velocityVectorKmS.vy.toFixed(1)})
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Everyday Size Comparison */}
-              <div className="p-3.5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-1 text-xs">
-                <span className="text-[#A7B4CC] font-mono text-[11px] uppercase font-bold">
-                  Size Scale Benchmark:
-                </span>
-                <div className="text-[#F8FAFC] font-medium leading-relaxed">
-                  {getSizeBenchmark(motionData.asteroid.diameterMeters.avg)}
+              {/* Physical Properties & Size Benchmark */}
+              <div className="p-3.5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-2 text-xs font-mono">
+                <div className="text-[11px] font-bold text-[#38BDF8] uppercase tracking-wider">
+                  Physical Scale
+                </div>
+                <div className="space-y-1 text-[#A7B4CC]">
+                  <div className="flex justify-between">
+                    <span>Estimated Diameter:</span>
+                    <span className="font-bold text-[#F8FAFC]">
+                      {motionData.asteroid.diameterMeters.avg} m ({motionData.asteroid.diameterMeters.min}–{motionData.asteroid.diameterMeters.max} m)
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Absolute Magnitude (H):</span>
+                    <span className="font-bold text-[#F8FAFC]">
+                      {motionData.asteroid.absoluteMagnitudeH?.toFixed(1) || 'N/A'} mag
+                    </span>
+                  </div>
+                  <div className="pt-1 border-t border-[#1E293B]/60 text-[11px]">
+                    <span className="text-[#64748B] block text-[10px]">SCALE BENCHMARK</span>
+                    <span className="text-[#F5C451]">
+                      {getSizeBenchmark(motionData.asteroid.diameterMeters.avg)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Sentry Impact Risk Notice */}
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2 text-xs">
-                <div className="flex items-center gap-2 font-bold font-mono text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>NASA CNEOS Sentry Assessment</span>
+              {/* Close Approach Parameters */}
+              {motionData.asteroid.closeApproach && (
+                <div className="p-3.5 rounded-xl bg-[#0E1B38] border border-[#38BDF8]/30 space-y-2 text-xs font-mono">
+                  <div className="text-[11px] font-bold text-[#38BDF8] uppercase tracking-wider">
+                    Nominal Close Approach
+                  </div>
+                  <div className="space-y-1 text-[#A7B4CC]">
+                    <div className="flex justify-between">
+                      <span>Predicted Date:</span>
+                      <span className="font-bold text-[#F8FAFC]">{motionData.asteroid.closeApproach.date}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Miss Distance:</span>
+                      <span className="font-bold text-[#38BDF8]">
+                        {motionData.asteroid.closeApproach.nominalDistanceLD.toFixed(2)} LD ({Math.round(motionData.asteroid.closeApproach.nominalDistanceKm).toLocaleString()} km)
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Relative Velocity:</span>
+                      <span className="font-bold text-[#F8FAFC]">
+                        {motionData.asteroid.closeApproach.relativeVelocityKmS.toFixed(2)} km/s
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Sentry Impact Risk:</span>
+                      <span className="font-bold text-emerald-400">
+                        {motionData.asteroid.closeApproach.sentryImpactProbability}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-[#F8FAFC] leading-relaxed">
-                  {motionData.asteroid.closeApproach?.sentryImpactProbability || 'Impact probability is assessed at 0.00%. The predicted pass clears Earth with zero collision risk.'}
-                </p>
+              )}
+
+              {/* Educational Summary */}
+              <div className="text-xs text-[#A7B4CC] leading-relaxed">
+                {motionData.asteroid.educationalSummary}
+              </div>
+
+              {/* CNEOS Sentry Link */}
+              <div className="pt-2 border-t border-[#1E293B] flex items-center justify-between text-xs font-mono">
                 <a
                   href={motionData.provenance.sentryUrl || 'https://cneos.jpl.nasa.gov/sentry/'}
                   target="_blank"
-                  rel="noreferrer"
-                  className="text-emerald-400 hover:underline flex items-center gap-1 font-mono text-[11px] pt-1"
+                  rel="noopener noreferrer"
+                  className="text-[#38BDF8] hover:underline flex items-center gap-1.5"
                 >
-                  <span>NASA CNEOS Sentry Risk Table</span>
-                  <ExternalLink className="w-3 h-3" />
+                  <span>Verify on NASA CNEOS Sentry</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
                 </a>
-              </div>
-
-              {/* Scientific Reference Links */}
-              <div className="pt-2 border-t border-[#1E293B] flex items-center justify-between text-xs font-mono">
-                <span className="text-[11px] text-[#A7B4CC]">
-                  e = {motionData.asteroid.orbitalElements.eccentricity.toFixed(3)} • i = {motionData.asteroid.orbitalElements.inclinationDeg.toFixed(1)}°
-                </span>
-                <a
-                  href={motionData.provenance.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[#38BDF8] hover:underline flex items-center gap-1"
-                >
-                  <span>JPL SBDB Record</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                <span className="text-[10px] text-[#64748B]">JPL Horizons Ephemeris</span>
               </div>
             </div>
           ) : (
             <div className="p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] text-center text-xs font-mono text-[#A7B4CC]">
-              {isLoading ? 'Retrieving JPL osculating elements...' : 'No asteroid selected.'}
+              {isLoading ? 'Loading orbital telemetries from JPL Small-Body Database...' : 'Loading orbital telemetries from JPL Small-Body Database...'}
             </div>
           )}
-        </div>
-      </div>
 
-      {/* 4. SCIENTIFIC TRANSPARENCY, REFERENCE FRAME & PROVENANCE BOX */}
-      <div className="p-6 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-4">
-        <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#38BDF8] font-bold">
-          <Radio className="w-4 h-4 text-[#38BDF8]" />
-          <span>Scientific Ephemeris Provenance & Dynamical Integrity</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
-          <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-1.5">
-            <span className="text-[11px] uppercase text-[#A7B4CC]">Accelerated Playback vs. Live Stream</span>
-            <p className="text-[#F8FAFC] leading-relaxed">
-              Accelerated playback is a mathematical Keplerian orbital simulation calculated from NASA/JPL osculating orbital elements and Standish planetary ephemerides, not continuous live optical telescope streaming.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-1.5">
-            <span className="text-[11px] uppercase text-[#A7B4CC]">Coordinate Frame & Epoch</span>
-            <p className="text-[#F8FAFC] leading-relaxed">
-              Reference Frame: <strong className="text-[#38BDF8]">{motionData?.provenance.coordinateFrame || 'ICRF / J2000 Ecliptic & Geocentric'}</strong>.
-              <br />
-              Calculation Epoch: <span className="text-[#A7B4CC]">{simulatedDate.toISOString()}</span>
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-1.5">
-            <span className="text-[11px] uppercase text-[#A7B4CC]">Data Source & Methodology</span>
-            <p className="text-[#F8FAFC] leading-relaxed">
-              Source: <strong className="text-[#38BDF8]">{motionData?.provenance.source || 'NASA/JPL Solar System Dynamics'}</strong>.
-              <br />
-              Unperturbed 2-body Keplerian propagation between epochs; n-body perturbations integrated by JPL for close passes.
+          {/* Scientific Transparency Context Box */}
+          <div className="p-4 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-2 text-xs font-mono text-[#A7B4CC]">
+            <div className="font-bold text-[#F8FAFC] flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Accelerated Playback vs. Live Stream</span>
+            </div>
+            <p className="text-[11px] leading-relaxed">
+              Accelerated playback is a mathematical Keplerian orbital simulation calculated using two-body gravitational dynamics and osculating orbital elements from the NASA/JPL Small-Body Database. It does not represent a live camera stream.
             </p>
           </div>
         </div>
@@ -1434,3 +1556,5 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     </div>
   );
 };
+
+export default AsteroidMotionViewer;

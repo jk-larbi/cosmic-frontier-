@@ -8,6 +8,7 @@ import type {
 } from '../types';
 import { fetchObservatoryObjects } from '../services/astronomyDataService';
 import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
+import { useReducedMotion, useDocumentVisibility } from '../utils/motion';
 import {
   Play,
   Pause,
@@ -44,6 +45,9 @@ const PRESET_EPOCHS = [
 ];
 
 export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNavigate }) => {
+  const isReducedMotion = useReducedMotion();
+  const isDocumentVisible = useDocumentVisibility();
+
   // Data state
   const [observatoryData, setObservatoryData] = useState<ObservatoryApiResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -148,6 +152,11 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     lastTimeRef.current = performance.now();
 
     const animatePlayback = (now: number) => {
+      if (!isDocumentVisible) {
+        requestRef.current = requestAnimationFrame(animatePlayback);
+        return;
+      }
+
       const deltaSec = (now - lastTimeRef.current) / 1000;
       lastTimeRef.current = now;
 
@@ -166,7 +175,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [isPlaying, playbackSpeed]);
+  }, [isPlaying, playbackSpeed, isDocumentVisible]);
 
   // Refresh data whenever simulation date changes significantly (e.g. paused jump or after 5 days of playback)
   const lastFetchedEpochRef = useRef<number>(simulatedDate.getTime());
@@ -282,22 +291,16 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     const orbitLinesGroup = new THREE.Group();
     scene.add(orbitLinesGroup);
 
-    // 6. Camera Orbit Interaction Setup
+    // 6. Camera Orbit Interaction Setup with smooth inertial easing
     let isDragging = false;
     let prevMouseX = 0;
     let prevMouseY = 0;
-    let camDistance = 95;
-    let camTheta = 0; // horizontal angle
-    let camPhi = 0.45; // vertical angle
-
-    const updateCameraPosition = () => {
-      const sinPhiRadius = camDistance * Math.sin(camPhi);
-      camera.position.x = sinPhiRadius * Math.sin(camTheta);
-      camera.position.y = camDistance * Math.cos(camPhi);
-      camera.position.z = sinPhiRadius * Math.cos(camTheta);
-      camera.lookAt(0, 0, 0);
-    };
-    updateCameraPosition();
+    let currentDistance = 95;
+    let targetDistance = 95;
+    let currentTheta = 0;
+    let targetTheta = 0;
+    let currentPhi = 0.45;
+    let targetPhi = 0.45;
 
     const onMouseDown = (e: MouseEvent) => {
       isDragging = true;
@@ -312,9 +315,8 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       prevMouseX = e.clientX;
       prevMouseY = e.clientY;
 
-      camTheta -= deltaX * 0.007;
-      camPhi = Math.max(0.05, Math.min(Math.PI - 0.05, camPhi - deltaY * 0.007));
-      updateCameraPosition();
+      targetTheta -= deltaX * 0.007;
+      targetPhi = Math.max(0.05, Math.min(Math.PI - 0.05, targetPhi - deltaY * 0.007));
     };
 
     const onMouseUp = () => {
@@ -323,8 +325,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      camDistance = Math.max(10, Math.min(1200, camDistance + e.deltaY * 0.08));
-      updateCameraPosition();
+      targetDistance = Math.max(10, Math.min(1200, targetDistance + e.deltaY * 0.08));
     };
 
     const domElement = renderer.domElement;
@@ -358,10 +359,23 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     };
     window.addEventListener('resize', handleResize);
 
-    // Animation Loop
+    // Animation Loop with camera flight lerp and tab visibility pause
     let animId: number;
     const renderLoop = () => {
-      renderer.render(scene, camera);
+      if (isDocumentVisible) {
+        const lerpFactor = isReducedMotion ? 1.0 : 0.09;
+        currentDistance += (targetDistance - currentDistance) * lerpFactor;
+        currentTheta += (targetTheta - currentTheta) * lerpFactor;
+        currentPhi += (targetPhi - currentPhi) * lerpFactor;
+
+        const sinPhiRadius = currentDistance * Math.sin(currentPhi);
+        camera.position.x = sinPhiRadius * Math.sin(currentTheta);
+        camera.position.y = currentDistance * Math.cos(currentPhi);
+        camera.position.z = sinPhiRadius * Math.cos(currentTheta);
+        camera.lookAt(0, 0, 0);
+
+        renderer.render(scene, camera);
+      }
       animId = requestAnimationFrame(renderLoop);
     };
     animId = requestAnimationFrame(renderLoop);

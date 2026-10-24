@@ -586,7 +586,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
             return (
               <div
                 key={galaxy.id}
-                className={`group rounded-2xl bg-[#0B1630] border transition-all overflow-hidden flex flex-col justify-between ${
+                className={`card-interactive group rounded-2xl bg-[#0B1630] border transition-all overflow-hidden flex flex-col justify-between ${
                   isSelected
                     ? 'border-[#8B5CF6] shadow-xl shadow-[#8B5CF6]/10'
                     : 'border-[#1E293B] hover:border-[#8B5CF6]/50'
