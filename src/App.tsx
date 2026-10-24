@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { AppPage } from './types';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { HomePage } from './components/HomePage';
 import { MissionControlDashboard } from './components/MissionControlDashboard';
 import { LiveCosmicObservatory } from './components/LiveCosmicObservatory';
 import { Universe3DExplorer } from './components/Universe3DExplorer';
@@ -15,18 +16,18 @@ import { AIGuide } from './components/AIGuide';
 import { AboutPage } from './components/AboutPage';
 
 export function App() {
-  const [currentPage, setCurrentPage] = useState<AppPage>('mission-control');
+  const [currentPage, setCurrentPage] = useState<AppPage>('home');
 
   // Handle URL hash routing or direct navigation
   const handleNavigate = (page: AppPage) => {
     let targetPage: AppPage = page;
     if (page === 'guide' || page === 'ai-guide') {
       targetPage = 'ai-guide';
-    } else if (page === 'home' || page === 'mission-control' || (page as string) === 'live-space') {
+    } else if ((page as string) === 'live-space') {
       targetPage = 'mission-control';
     }
     setCurrentPage(targetPage);
-    window.location.hash = targetPage;
+    window.location.hash = targetPage === 'home' ? '' : targetPage;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -46,9 +47,9 @@ export function App() {
         setCurrentPage('ai-guide');
       } else if (candidate === 'spherex' || candidate === 'image-lab') {
         setCurrentPage('spherex');
-      } else if (candidate === 'mission-control' || candidate === 'home' || !candidate) {
-        setCurrentPage('mission-control');
-      } else if (['observatory', 'universe', 'asteroid-watch', 'exoplanets', 'galaxies', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
+      } else if (candidate === 'home' || !candidate) {
+        setCurrentPage('home');
+      } else if (['mission-control', 'observatory', 'universe', 'asteroid-watch', 'exoplanets', 'galaxies', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
         setCurrentPage(candidate as AppPage);
       }
     };
@@ -70,7 +71,8 @@ export function App() {
       {/* Main Content Area */}
       <main className="flex-1">
         <div key={currentPage} className="animate-page-enter">
-          {(currentPage === 'mission-control' || currentPage === 'home') && (
+          {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
+          {currentPage === 'mission-control' && (
             <MissionControlDashboard onNavigate={handleNavigate} />
           )}
           {currentPage === 'observatory' && <LiveCosmicObservatory onNavigate={handleNavigate} />}

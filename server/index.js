@@ -756,7 +756,8 @@ app.get('/api/data/galaxies', async (req, res) => {
       g.catalogIdentifier.toLowerCase().includes(searchTerm) ||
       (g.constellation && g.constellation.toLowerCase().includes(searchTerm)) ||
       (g.morphologicalType && g.morphologicalType.toLowerCase().includes(searchTerm)) ||
-      (g.alternateNames && g.alternateNames.some(a => a.toLowerCase().includes(searchTerm)))
+      (g.alternateNames && g.alternateNames.some(a => a.toLowerCase().includes(searchTerm))) ||
+      (g.catalogs && Object.values(g.catalogs).some(v => typeof v === 'string' && v.toLowerCase().includes(searchTerm)))
     );
   }
 

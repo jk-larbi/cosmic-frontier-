@@ -6,7 +6,8 @@ export type AstronomicalAssetClassification =
   | 'artist-impression'
   | 'scientific-illustration'
   | 'simulation'
-  | 'contextual';
+  | 'contextual'
+  | 'category-fallback';
 
 export interface AstronomicalImageRecord {
   id: string;
@@ -69,7 +70,32 @@ export interface GalaxyObject {
   bibcode?: string;
   dataStatus: DataStatusType;
   image?: GalaxyImage;
+  images?: AstronomicalImageRecord[];
   isLiveLookup?: boolean;
+  catalogs?: {
+    messier?: string;
+    ngc?: string;
+    ic?: string;
+    pgc?: string;
+    ugc?: string;
+    ned?: string;
+    simbad?: string;
+  };
+  fieldStatus?: {
+    redshift: 'measured' | 'estimated';
+    distance: 'measured' | 'estimated';
+    diameter: 'measured' | 'estimated' | 'unmeasured';
+    apparentMagnitude: 'measured' | 'unmeasured';
+  };
+  observationalMetadata?: {
+    telescope: string;
+    instrument: string;
+    wavelength: string;
+    observationDate?: string;
+    processing: string;
+    credit: string;
+    license: string;
+  };
 }
 
 export interface InfraredBand {

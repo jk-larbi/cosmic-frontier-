@@ -406,6 +406,32 @@ async function runTests() {
     });
     const chatGalaxiesData = await resChatGalaxies.json();
     assert(chatGalaxiesData.links && chatGalaxiesData.links.some(l => l.page === 'galaxies'), 'Test 14.12: AI Guide provides contextual link to Galaxy Explorer');
+
+    // 14.13: Every galaxy record has authentic catalog cross-identifications and field status
+    assert(allGalJson.records.every(g => g.catalogs && (g.catalogs.ned || g.catalogs.simbad || g.catalogs.messier || g.catalogs.ngc)), 'Test 14.13: All galaxy records have authentic catalog cross-identifications');
+    assert(allGalJson.records.every(g => g.fieldStatus && g.fieldStatus.redshift && g.fieldStatus.distance), 'Test 14.14: All galaxy records define measured vs estimated field status flags');
+
+    // 14.15: Every galaxy record has verified photographic imagery
+    assert(allGalJson.records.every(g => (g.image && g.image.url && !g.image.isIllustration) || (Array.isArray(g.images) && g.images.some(img => img.isVerifiedRealObservation))), 'Test 14.15: All galaxies carry authentic observational imagery from verified archives');
+
+    // 14.16: Multi-wavelength observations exist for flagship targets
+    const andromedaRec = allGalJson.records.find(g => g.id === 'andromeda-m31');
+    assert(andromedaRec && Array.isArray(andromedaRec.images) && andromedaRec.images.length >= 2, 'Test 14.16: Multi-wavelength observations available for Andromeda M31');
+
+    // 14.17: Component implements 4-tab details inspector
+    assert(galFile.includes("'overview'") && galFile.includes("'multi-wavelength'") && galFile.includes("'spectroscopy'") && galFile.includes("'evidence'"), 'Test 14.17: Details inspector implements Overview, Multi-Wavelength, Spectroscopy, and Evidence tabs');
+
+    // 14.18: Component displays Measured vs Estimated status badges
+    assert(galFile.includes('Measured') && galFile.includes('Estimated') && galFile.includes('fieldStatus'), 'Test 14.18: Displays explicit Measured vs Estimated status badges for observational parameters');
+
+    // 14.19: Multi-wavelength physical interpretation notice and evidence audit table
+    assert(galFile.includes('Multi-Wavelength Physical Interpretation & Scientific Notice') && galFile.includes('Ultraviolet') && galFile.includes('Infrared'), 'Test 14.19: Features scientific multi-wavelength physics guide explaining distinct spectral regimes');
+    assert(galFile.includes('Scientific Provenance & Archival Audit Table') && galFile.includes('NED') && galFile.includes('SIMBAD'), 'Test 14.20: Renders auditable scientific evidence table with direct NED and SIMBAD links');
+
+    // 14.21: Search matching on catalog identifiers (e.g. NGC 224 finds Andromeda)
+    const resSearchNgc = await fetch(`${BASE_URL}/api/data/galaxies?search=NGC+224`);
+    const ngcJson = await resSearchNgc.json();
+    assert(ngcJson.records.some(g => g.name.includes('Andromeda')), 'Test 14.21: Search query resolves catalog designation NGC 224 to Andromeda');
   } catch (err) {
     assert(false, `Test 14: Galaxy Explorer test failed: ${err.message}`);
   }

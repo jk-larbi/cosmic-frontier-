@@ -49,10 +49,28 @@ export function resolveAstronomicalVisual(
     return resolvedImageCache.get(cacheKey)!;
   }
 
-  // 1. If object already carries a verified image record
-  if (object.image && object.image.imageUrl) {
-    resolvedImageCache.set(cacheKey, object.image);
-    return object.image;
+  // 1. If object already carries a verified image record (supports both imageUrl and url)
+  const rawImg = object.image as any;
+  if (rawImg && (rawImg.imageUrl || rawImg.url)) {
+    const normalizedRecord: AstronomicalImageRecord = {
+      id: rawImg.id || `img-${normalizeObjectId(objectId)}`,
+      associatedObjectId: objectId,
+      imageUrl: rawImg.imageUrl || rawImg.url,
+      thumbnailUrl: rawImg.thumbnailUrl || rawImg.url || rawImg.imageUrl,
+      hdUrl: rawImg.hdUrl || rawImg.imageUrl || rawImg.url,
+      title: rawImg.title || objectName,
+      caption: rawImg.caption || `Verified scientific imagery for ${objectName}.`,
+      sourceOrganization: rawImg.sourceOrganization || (rawImg.credit?.includes('NASA') ? 'NASA' : 'NASA / Space Telescope Science Institute'),
+      sourceUrl: rawImg.sourcePage || rawImg.sourceUrl || 'https://images.nasa.gov/',
+      credit: rawImg.credit || 'NASA/ESA/STScI',
+      assetClassification: rawImg.assetClassification || (rawImg.isIllustration ? 'artist-impression' : 'observation'),
+      isVerifiedRealObservation: rawImg.isVerifiedRealObservation !== undefined ? rawImg.isVerifiedRealObservation : !rawImg.isIllustration,
+      observationDate: rawImg.observationDate,
+      instrument: rawImg.instrument || rawImg.mission,
+      wavelength: rawImg.wavelength
+    };
+    resolvedImageCache.set(cacheKey, normalizedRecord);
+    return normalizedRecord;
   }
 
   // 2. Lookup in Verified Astronomical Images Registry (Priority 1 & 2)

@@ -1,6 +1,7 @@
 import { useState, type ReactNode, type FC } from 'react';
 import type { AppPage } from '../types';
 import { 
+  Home,
   Telescope, 
   Orbit, 
   Sparkles, 
@@ -23,6 +24,7 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems: { page: AppPage; label: string; icon: ReactNode }[] = [
+    { page: 'home', label: 'Home', icon: <Home className="w-4 h-4" /> },
     { page: 'mission-control', label: 'Mission Control', icon: <Radio className="w-4 h-4" /> },
     { page: 'observatory', label: 'Observatory', icon: <Telescope className="w-4 h-4" /> },
     { page: 'universe', label: '3D Universe', icon: <Globe className="w-4 h-4" /> },
@@ -48,9 +50,9 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
         <div className="flex items-center justify-between h-16 sm:h-18">
           {/* Logo & Brand */}
           <button 
-            onClick={() => handleNavClick('mission-control')}
+            onClick={() => handleNavClick('home')}
             className="flex items-center gap-2.5 text-left group focus:outline-none focus:ring-2 focus:ring-[#38BDF8]/50 rounded-lg p-1"
-            aria-label="Cosmic Frontier Mission Control"
+            aria-label="Cosmic Frontier Home"
           >
             <div className="relative w-9 h-9 rounded-lg bg-[#0B1630] border border-[#38BDF8]/30 flex items-center justify-center shadow-md group-hover:border-[#38BDF8] transition-all">
               <Compass className="w-4.5 h-4.5 text-[#38BDF8] group-hover:rotate-45 transition-transform duration-500" />
@@ -74,7 +76,6 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
           <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1" aria-label="Main Navigation">
             {navItems.map((item) => {
               const isActive = currentPage === item.page || 
-                (item.page === 'mission-control' && currentPage === 'home') ||
                 (item.page === 'ai-guide' && currentPage === 'guide');
               return (
                 <button
@@ -124,7 +125,6 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
         <div className="lg:hidden bg-[#0B1630] border-b border-[#1E293B] px-4 pt-2 pb-4 space-y-1 animate-fadeIn">
           {navItems.map((item) => {
             const isActive = currentPage === item.page || 
-              (item.page === 'mission-control' && currentPage === 'home') ||
               (item.page === 'ai-guide' && currentPage === 'guide');
             return (
               <button

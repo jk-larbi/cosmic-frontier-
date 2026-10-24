@@ -142,3 +142,4 @@ export function useDocumentVisibility(): boolean {
 
   return isVisible;
 }
+
