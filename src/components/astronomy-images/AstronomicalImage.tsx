@@ -2,7 +2,7 @@ import { useState, useMemo, type FC } from 'react';
 import type { AstronomicalImageRecord } from '../../types';
 import { resolveAstronomicalVisual } from '../../services/astronomicalImageService';
 import { AstronomicalBadge } from './AstronomicalBadge';
-import { ExternalLink, ZoomIn, Image as ImageIcon } from 'lucide-react';
+import { ExternalLink, ZoomIn, Image as ImageIcon, ImageOff } from 'lucide-react';
 
 export interface AstronomicalImageProps {
   image?: AstronomicalImageRecord;
@@ -89,17 +89,27 @@ export const AstronomicalImage: FC<AstronomicalImageProps> = ({
         </div>
       )}
 
-      {/* Main Image */}
-      <img
-        src={currentSrc}
-        alt={alt || resolvedImage.title || 'Astronomical body visualization'}
-        loading="lazy"
-        onLoad={() => setIsLoading(false)}
-        onError={handleImageError}
-        className={`w-full h-full object-cover transition-transform duration-300 ${
-          onClick ? 'group-hover:scale-105' : ''
-        } ${isLoading ? 'opacity-0' : 'opacity-100'}`}
-      />
+      {/* Main Image or Honest Unavailable State */}
+      {resolvedImage.assetClassification === 'unavailable' || !currentSrc ? (
+        <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#070D1E] border border-dashed border-[#1E293B]">
+          <ImageOff className="w-8 h-8 text-slate-500 mb-2 opacity-60" />
+          <span className="text-xs font-mono font-semibold text-slate-300">Direct Optical Observation Unavailable</span>
+          <span className="text-[10px] text-slate-500 mt-1 max-w-[85%] leading-relaxed font-mono line-clamp-2">
+            {resolvedImage.caption || 'No verified high-resolution photograph is currently archived in open data. Astrometric and spectroscopic telemetry preserved.'}
+          </span>
+        </div>
+      ) : (
+        <img
+          src={currentSrc}
+          alt={alt || resolvedImage.title || 'Astronomical body visualization'}
+          loading="lazy"
+          onLoad={() => setIsLoading(false)}
+          onError={handleImageError}
+          className={`w-full h-full object-cover transition-transform duration-300 ${
+            onClick ? 'group-hover:scale-105' : ''
+          } ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        />
+      )}
 
       {/* Scientific Classification Badge */}
       {showBadge && (

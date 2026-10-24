@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import type { AstronomicalAssetClassification } from '../../types';
-import { Camera, Satellite, Sparkles, Binary, Compass, Info } from 'lucide-react';
+import { Camera, Satellite, Sparkles, Binary, Compass, Info, ImageOff } from 'lucide-react';
 
 interface AstronomicalBadgeProps {
   classification: AstronomicalAssetClassification;
@@ -42,10 +42,20 @@ export const AstronomicalBadge: FC<AstronomicalBadgeProps> = ({
     Icon = Compass;
     title = 'Computer dynamical simulation based on gravitational perturbation models.';
   } else if (classification === 'contextual') {
-    label = 'Host Star Context';
+    label = 'Contextual Visual';
     badgeStyle = 'bg-blue-500/15 text-blue-300 border-blue-500/30';
     Icon = Info;
-    title = 'Direct image of host star system; planet surface is unresolvable with current optics.';
+    title = 'Contextual observation of surrounding starfield or parent cluster.';
+  } else if (classification === 'unavailable') {
+    label = 'No Direct Image';
+    badgeStyle = 'bg-slate-500/15 text-slate-400 border-slate-500/30';
+    Icon = ImageOff;
+    title = 'No verified direct telescope photograph is currently archived in open data.';
+  } else if (classification === 'category-fallback') {
+    label = 'Visual Placeholder';
+    badgeStyle = 'bg-slate-500/15 text-slate-400 border-slate-500/30';
+    Icon = Info;
+    title = 'Category visual placeholder.';
   }
 
   return (

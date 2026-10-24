@@ -937,6 +937,103 @@ async function runTests() {
     assert(false, `Test 20: Motion Design & Interaction Refinement test failed: ${err.message}`);
   }
 
+  // ---------------------------------------------------------
+  // TEST 21: Global Scientific Data & Image Integrity Audit Suite
+  // ---------------------------------------------------------
+  try {
+    // 21.1 - 21.4: Extragalactic Data & Image Integrity
+    const galRes = await fetch(`${BASE_URL}/api/data/galaxies`);
+    assert(galRes.status === 200, 'Test 21.1: /api/data/galaxies returns HTTP 200');
+    const galData = await galRes.json();
+    assert(Array.isArray(galData.records) && galData.records.length === 24, 'Test 21.2: Galaxy catalog has exactly 24 verified targets from NASA/IPAC NED');
+
+    const primaryImageUrls = galData.records.map(g => g.image && g.image.url).filter(Boolean);
+    const uniqueImageUrls = new Set(primaryImageUrls);
+    assert(primaryImageUrls.length === 24 && uniqueImageUrls.size === 24, 'Test 21.3: Zero duplicate primary observation image URLs across all 24 galaxies');
+
+    const categories = new Set(galData.records.map(g => g.category));
+    assert(
+      categories.has('spiral') && categories.has('elliptical') && categories.has('irregular') && categories.has('active-agn') && categories.has('cluster'),
+      'Test 21.4: Deep-sky galaxies include representative targets across all 5 morphological classes'
+    );
+
+    // 21.5 - 21.6: Solar System & Planet X Integrity
+    const solarRes = await fetch(`${BASE_URL}/api/data/solar-system`);
+    const solarData = await solarRes.json();
+    assert(
+      solarData.records.every(p => p.isHypothetical === false && p.statusLabel === 'Confirmed'),
+      'Test 21.5: Solar system endpoint verifies isHypothetical: false and statusLabel: Confirmed on all major planets'
+    );
+
+    const solarSystemTs = fs.readFileSync(path.resolve(__dirname, '../src/data/solarSystemData.ts'), 'utf8');
+    assert(
+      solarSystemTs.includes("id: 'planet-x'") && solarSystemTs.includes("isHypothetical: true") && solarSystemTs.includes("statusLabel: 'Hypothetical (Unconfirmed)'"),
+      'Test 21.6: Solar system registry verifies planet-x is strictly hypothetical (isHypothetical: true)'
+    );
+
+    // 21.7 - 21.8: Exoplanet Image Integrity & Deterministic Physical Models
+    const exoRes = await fetch(`${BASE_URL}/api/data/exoplanets`);
+    const exoData = await exoRes.json();
+    const exoList = exoData.records || [];
+    
+    // Check that we never assign the exact same photo (PIA19832) to all unphotographed exoplanets
+    const pia19832Count = exoList.filter(e => e.image && e.image.imageUrl && e.image.imageUrl.includes('PIA19832')).length;
+    assert(pia19832Count <= 1, 'Test 21.7: Exoplanet API does not assign blanket duplicate image URLs to unphotographed exoplanets');
+
+    const modelExos = exoList.filter(e => e.image && e.image.assetClassification === 'scientific-illustration');
+    assert(
+      modelExos.length > 0 && modelExos.every(e => e.image.isVerifiedRealObservation === false && e.image.imageUrl),
+      'Test 21.8: Exoplanet API attaches deterministic physical model illustrations with disclaimer to unphotographed exoplanets'
+    );
+
+    // 21.9 - 21.12: Shared Scientific Verification Service
+    const verificationTs = fs.readFileSync(path.resolve(__dirname, '../src/services/scientificVerificationService.ts'), 'utf8');
+    assert(
+      verificationTs.includes('verifyDataProvenance') &&
+      verificationTs.includes('verifyImageClassification') &&
+      verificationTs.includes('formatScientificMeasurement') &&
+      verificationTs.includes('createScientificMeasurement') &&
+      verificationTs.includes('getDataFreshness'),
+      'Test 21.9: Shared scientific verification service exports all required provenance and measurement helpers'
+    );
+
+    const typesTs = fs.readFileSync(path.resolve(__dirname, '../src/types/index.ts'), 'utf8');
+    assert(
+      typesTs.includes('ScientificProvenance') &&
+      typesTs.includes('ScientificMeasurement') &&
+      typesTs.includes('ImageMatchingStatus') &&
+      typesTs.includes("'unavailable'"),
+      'Test 21.10: types/index.ts defines ScientificProvenance, ScientificMeasurement, and unavailable classification'
+    );
+
+    // Functional verification of verification helpers
+    const { verifyDataProvenance, verifyImageClassification, formatScientificMeasurement } = await import('../src/services/scientificVerificationService.ts');
+    const prov = verifyDataProvenance({ name: 'Andromeda' }, 'galaxy');
+    assert(prov.sourceOrganization.includes('NED') && prov.verificationLevel === 'peer-reviewed-archive', 'Test 21.11: verifyDataProvenance correctly attributes NASA/IPAC NED archive');
+
+    const statusObs = verifyImageClassification({ assetClassification: 'observation', isVerifiedRealObservation: true, imageUrl: 'https://images.nasa.gov/test.jpg' });
+    const statusUnavail = verifyImageClassification({ assetClassification: 'unavailable' });
+    assert(statusObs.includes('observation') && statusUnavail === 'unavailable', 'Test 21.12: verifyImageClassification correctly distinguishes verified observations from unavailable states');
+
+    const formatted = formatScientificMeasurement(2.54, 'Mly', { uncertainty: 0.05, method: 'Cepheid Leavitt Law' });
+    assert(formatted.includes('2.54 Mly') && formatted.includes('0.05 Mly') && formatted.includes('Cepheid'), 'Test 21.13: formatScientificMeasurement preserves values, units, uncertainty, and method');
+
+    // 21.14 - 21.15: Visual Components Verification
+    const astroBadgeTs = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalBadge.tsx'), 'utf8');
+    assert(
+      astroBadgeTs.includes("'unavailable'") && astroBadgeTs.includes('No Direct Image'),
+      'Test 21.14: AstronomicalBadge.tsx supports unavailable direct image classification'
+    );
+
+    const astroImgTs = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalImage.tsx'), 'utf8');
+    assert(
+      astroImgTs.includes("resolvedImage.assetClassification === 'unavailable'") && astroImgTs.includes('Direct Optical Observation Unavailable'),
+      'Test 21.15: AstronomicalImage.tsx implements honest visual rendering when direct observation is unavailable'
+    );
+  } catch (err) {
+    assert(false, `Test 21: Global Scientific Data & Image Integrity Audit Suite failed: ${err.message}`);
+  }
+
   console.log('\n====================================================');
   console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('====================================================');

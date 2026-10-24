@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, type FC } from 'react';
 import type { GalaxyObject, GalaxyCategory, AppPage } from '../types';
 import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
+import { AstronomicalBadge } from './astronomy-images/AstronomicalBadge';
 import { 
   Search, 
   Filter, 
@@ -1099,7 +1100,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
               {/* Right Column: Visual Preview & Quick Links */}
               <div className="lg:col-span-5 space-y-4">
                 <div className="rounded-2xl bg-[#050B1A] border border-[#1E293B] p-4 overflow-hidden space-y-3">
-                  <div className="relative rounded-xl overflow-hidden aspect-16/9 bg-black">
+                  <div className="relative rounded-xl overflow-hidden aspect-video bg-black">
                     <AstronomicalImage
                       target={selectedGalaxy}
                       targetType="galaxy"
@@ -1198,18 +1199,18 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
                     {/* Active Observation Viewport */}
                     {activeImg ? (
                       <div className="p-5 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-4">
-                        <div className="relative rounded-xl overflow-hidden bg-black max-h-[500px] flex items-center justify-center border border-[#1E293B]">
+                        <div className="relative rounded-xl overflow-hidden bg-black max-h-125 flex items-center justify-center border border-[#1E293B]">
                           <img
                             src={activeImg.hdUrl || activeImg.imageUrl}
                             alt={activeImg.title}
-                            className="max-h-[500px] w-full object-contain"
+                            className="max-h-125 w-full object-contain"
                           />
                           {/* Top Badges */}
                           <div className="absolute top-3 left-3 flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                              <span>Verified Real Observation</span>
-                            </span>
+                            <AstronomicalBadge
+                              classification={activeImg.assetClassification || (activeImg.isVerifiedRealObservation ? 'observation' : 'scientific-illustration')}
+                              isVerifiedRealObservation={activeImg.isVerifiedRealObservation}
+                            />
                             {activeImg.wavelength && (
                               <span className="px-2 py-1 rounded-lg bg-[#050B1A]/85 backdrop-blur-md text-[#38BDF8] border border-[#38BDF8]/40 text-[10px] font-mono">
                                 {activeImg.wavelength}
@@ -1301,7 +1302,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1 font-sans">
                         <div className="p-3 rounded-xl bg-[#0B1630] border border-[#1E293B] space-y-1">
-                          <span className="text-[#38BDF8] font-bold block flex items-center gap-1">
+                          <span className="text-[#38BDF8] font-bold flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full bg-[#38BDF8]" />
                             <span>Ultraviolet (UV, 0.1–0.4 µm):</span>
                           </span>
@@ -1310,7 +1311,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
                           </span>
                         </div>
                         <div className="p-3 rounded-xl bg-[#0B1630] border border-[#1E293B] space-y-1">
-                          <span className="text-emerald-400 font-bold block flex items-center gap-1">
+                          <span className="text-emerald-400 font-bold flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full bg-emerald-400" />
                             <span>Optical (Visible Light, 0.4–0.8 µm):</span>
                           </span>
@@ -1319,7 +1320,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
                           </span>
                         </div>
                         <div className="p-3 rounded-xl bg-[#0B1630] border border-[#1E293B] space-y-1">
-                          <span className="text-[#F5C451] font-bold block flex items-center gap-1">
+                          <span className="text-[#F5C451] font-bold flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full bg-[#F5C451]" />
                             <span>Infrared (IR, 0.8–500 µm):</span>
                           </span>
@@ -1328,7 +1329,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
                           </span>
                         </div>
                         <div className="p-3 rounded-xl bg-[#0B1630] border border-[#1E293B] space-y-1">
-                          <span className="text-[#A78BFA] font-bold block flex items-center gap-1">
+                          <span className="text-[#A78BFA] font-bold flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full bg-[#A78BFA]" />
                             <span>X-Ray & High Energy (&lt; 10 nm):</span>
                           </span>

@@ -7,7 +7,51 @@ export type AstronomicalAssetClassification =
   | 'scientific-illustration'
   | 'simulation'
   | 'contextual'
+  | 'unavailable'
   | 'category-fallback';
+
+export type VerificationLevel = 
+  | 'peer-reviewed-archive'
+  | 'in-situ-spacecraft'
+  | 'space-telescope-calibrated'
+  | 'ground-based-astrometry'
+  | 'ephemeris-propagation'
+  | 'theoretical-model'
+  | 'unverified';
+
+export type FreshnessStatus = 'live' | 'cached' | 'archival' | 'stale';
+
+export interface ScientificProvenance {
+  sourceOrganization: string;
+  catalogName?: string;
+  archiveUrl?: string;
+  bibcode?: string;
+  retrievalDateUTC?: string;
+  isLive: boolean;
+  freshnessStatus: FreshnessStatus;
+  verificationLevel: VerificationLevel;
+  disclaimer?: string;
+}
+
+export interface ScientificMeasurement<T = number> {
+  value: T | null;
+  unit: string;
+  uncertainty?: T | null;
+  method?: string;
+  isEstimate: boolean;
+  status: 'measured' | 'derived' | 'estimated' | 'unmeasured' | 'hypothetical';
+  provenance?: Partial<ScientificProvenance>;
+}
+
+export type ImageMatchingStatus = 
+  | 'verified-direct-observation'
+  | 'verified-spacecraft-photo'
+  | 'verified-composite'
+  | 'artist-impression'
+  | 'physical-model-illustration'
+  | 'contextual-field'
+  | 'unavailable'
+  | 'unverified';
 
 export interface AstronomicalImageRecord {
   id: string;
