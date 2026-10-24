@@ -494,3 +494,74 @@ export interface ObservatoryApiResponse {
   };
   objects: ObservatoryObject[];
 }
+
+export interface AsteroidOrbitalElements {
+  semiMajorAxisAU: number;
+  eccentricity: number;
+  inclinationDeg: number;
+  longitudeOfAscendingNodeDeg: number;
+  argumentOfPerihelionDeg: number;
+  meanAnomalyDeg: number;
+  epochJd: number;
+  orbitalPeriodYears: number;
+  meanMotionDegDay?: number;
+}
+
+export interface AsteroidMotionStateVector {
+  epochIso: string;
+  epochJd: number;
+  heliocentricAU: { x: number; y: number; z: number };
+  heliocentricKm: { x: number; y: number; z: number };
+  earthPositionAU: { x: number; y: number; z: number };
+  earthRelativeAU: { x: number; y: number; z: number };
+  earthRelativeKm: { x: number; y: number; z: number };
+  distSunAU: number;
+  distSunMillionKm: number;
+  distEarthAU: number;
+  distEarthKm: number;
+  distEarthMillionKm: number;
+  distEarthLunar: number;
+  orbitalSpeedKmS: number;
+  velocityVectorKmS: { vx: number; vy: number; vz: number };
+  meanAnomalyDeg: number;
+  trueAnomalyDeg: number;
+}
+
+export interface AsteroidMotionResponse {
+  success: boolean;
+  asteroid: {
+    designation: string;
+    name: string;
+    shortName: string;
+    orbitClass: string;
+    isPotentiallyHazardous: boolean;
+    diameterKm: number | null;
+    diameterMeters: { min: number; max: number; avg: number };
+    absoluteMagnitudeH: number | null;
+    orbitalElements: AsteroidOrbitalElements;
+    closeApproach: {
+      date: string;
+      iso: string;
+      nominalDistanceLD: number;
+      nominalDistanceKm: number;
+      relativeVelocityKmS: number;
+      sentryImpactProbability: string;
+    } | null;
+    educationalSummary: string;
+  };
+  stateVector: AsteroidMotionStateVector;
+  trajectories: {
+    asteroidOrbitPath: Array<{ x: number; y: number; z: number }>;
+    earthOrbitPath: Array<{ x: number; y: number; z: number }>;
+  };
+  provenance: {
+    source: string;
+    isLive: boolean;
+    calculationEpoch: string;
+    calculationMethod: string;
+    coordinateFrame: string;
+    retrievalTimestamp: string;
+    sourceUrl: string;
+    sentryUrl: string;
+  };
+}

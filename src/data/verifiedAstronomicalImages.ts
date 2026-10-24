@@ -773,3 +773,4 @@ export function getVerifiedAstronomicalGallery(idOrName: string): AstronomicalIm
 
   return [];
 }
+

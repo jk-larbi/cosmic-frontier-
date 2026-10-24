@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, type FC } from 'react';
 import type { AppPage, ExoplanetRecord } from '../types';
 import { fetchConfirmedExoplanets } from '../services/astronomyDataService';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { AstronomicalImageGallery } from './astronomy-images/AstronomicalImageGallery';
 import { AstronomicalComparisonVisual } from './astronomy-images/AstronomicalComparisonVisual';
 import { 
@@ -352,10 +353,13 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
                 items={compareList.map(p => ({
                   id: p.planetName,
                   name: p.planetName,
-                  radiusLabel: p.radiusEarthRadii !== null ? `${p.radiusEarthRadii} R⊕` : 'Unknown',
-                  radiusRelative: p.radiusEarthRadii ?? 1,
-                  image: '' as never,
+                  target: p,
+                  type: 'exoplanet',
+                  label: p.planetName,
+                  sublabel: p.radiusEarthRadii !== null ? `${p.radiusEarthRadii} R⊕` : undefined,
+                  scaleValue: p.radiusEarthRadii || 1.0,
                 }))}
+                baselineName="Earth (1.0 R⊕)"
               />
             </div>
 
@@ -546,8 +550,12 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
 
                     {/* Planet Visual Representation */}
                     <div className="mb-3 rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A] relative shadow-inner">
-                      <AstronomicalImageGallery
+                      <AstronomicalImage
+                        target={planet}
                         targetType="exoplanet"
+                        aspectRatio="16/9"
+                        showBadge={true}
+                        className="w-full h-36 object-cover"
                       />
                     </div>
 
@@ -857,6 +865,7 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
               {/* Astronomical Visual & Gallery */}
               <div className="space-y-2">
                 <AstronomicalImageGallery
+                  target={activePlanetModal}
                   targetType="exoplanet"
                 />
               </div>

@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { findVerifiedAnswer, VERIFIED_KNOWLEDGE_BASE } from './knowledge.js';
 import { getCompleteEphemeris, AU_KM, LD_KM } from './ephemerisEngine.js';
+import { getAsteroidOrbitData, VERIFIED_NEO_PRESETS } from './asteroidMotionEngine.js';
 import { VERIFIED_IMAGES, getVerifiedServerImage, searchNasaImagesApi } from './verifiedImages.js';
 
 dotenv.config();
@@ -621,6 +622,19 @@ app.get('/api/data/small-bodies', async (req, res) => {
     isLive: false,
     ...localData
   });
+});
+
+// 4b. GET /api/data/asteroid/orbit - Data-driven Keplerian orbital motion & state vectors
+app.get('/api/data/asteroid/orbit', async (req, res) => {
+  try {
+    const { des = '99942', date } = req.query;
+    const targetDate = date ? new Date(date) : new Date();
+    const motionData = await getAsteroidOrbitData(des, targetDate);
+    return res.json(motionData);
+  } catch (err) {
+    console.error('[Asteroid Motion] Error computing orbit:', err.message);
+    return res.status(500).json({ error: 'Failed to compute asteroid orbital motion' });
+  }
 });
 
 // In-memory cache for live NED queries

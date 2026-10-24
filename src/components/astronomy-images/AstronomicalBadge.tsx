@@ -58,3 +58,4 @@ export const AstronomicalBadge: FC<AstronomicalBadgeProps> = ({
     </span>
   );
 };
+

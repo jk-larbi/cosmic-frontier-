@@ -662,6 +662,117 @@ async function runTests() {
     assert(false, `Test 18: Complete Astronomical Image Coverage test failed: ${err.message}`);
   }
 
+  // ---------------------------------------------------------
+  // TEST 19: Asteroid Watch Motion Mode & NASA/JPL Orbital Telemetry
+  // ---------------------------------------------------------
+  try {
+    const orbitRes = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=99942`);
+    assert(orbitRes.status === 200, 'Test 19.1: /api/data/asteroid/orbit returns HTTP 200');
+    const orbitData = await orbitRes.json();
+    assert(orbitData.success === true && orbitData.asteroid && orbitData.stateVector, 'Test 19.2: Returns structured orbital motion object');
+
+    const elems = orbitData.asteroid.orbitalElements;
+    assert(
+      elems &&
+      typeof elems.semiMajorAxisAU === 'number' &&
+      typeof elems.eccentricity === 'number' &&
+      typeof elems.inclinationDeg === 'number' &&
+      typeof elems.epochJd === 'number',
+      'Test 19.3: Orbital elements contain semiMajorAxisAU, eccentricity, inclinationDeg, and epochJd'
+    );
+
+    const sv = orbitData.stateVector;
+    assert(
+      sv &&
+      typeof sv.distEarthLunar === 'number' &&
+      typeof sv.distSunAU === 'number' &&
+      typeof sv.orbitalSpeedKmS === 'number' &&
+      sv.velocityVectorKmS,
+      'Test 19.4: State vector computes real-time Earth distance, Sun distance, and velocity vector'
+    );
+
+    assert(
+      Array.isArray(orbitData.trajectories.asteroidOrbitPath) && orbitData.trajectories.asteroidOrbitPath.length >= 60,
+      'Test 19.5: Generates complete 3D Keplerian elliptical orbit path points'
+    );
+
+    // Test future close-approach epoch propagation (Apophis 2029 pass)
+    const futureRes = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=99942&date=2029-04-13T21:46:00.000Z`);
+    const futureData = await futureRes.json();
+    assert(
+      futureData.success === true && futureData.stateVector.distEarthLunar < 20,
+      'Test 19.6: Future epoch propagation accurately computes Apophis 2029 close approach geometry'
+    );
+
+    assert(
+      orbitData.provenance &&
+      orbitData.provenance.coordinateFrame.includes('J2000') &&
+      orbitData.provenance.calculationMethod.includes('Keplerian'),
+      'Test 19.7: Provenance specifies J2000 coordinate frame and Keplerian propagation methodology'
+    );
+
+    // Test non-preset asteroid query
+    const customRes = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=2010%20VQ`);
+    const customData = await customRes.json();
+    assert(
+      customRes.status === 200 && customData.success === true && customData.asteroid.designation === '2010 VQ',
+      'Test 19.8: Dynamic lookup handles non-preset small bodies (2010 VQ)'
+    );
+
+    // Test graceful fallback for unknown designations
+    const unknownRes = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=UNKNOWN_ASTEROID_99999`);
+    const unknownData = await unknownRes.json();
+    assert(
+      unknownRes.status === 200 && unknownData.success === true && unknownData.asteroid,
+      'Test 19.9: Unknown asteroid falls back gracefully without 500 error'
+    );
+
+    // Frontend Component File Checks
+    const asteroidWatchContent = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidWatch.tsx'), 'utf8');
+    assert(
+      asteroidWatchContent.includes('List Mode') && asteroidWatchContent.includes('Motion Mode'),
+      'Test 19.10: AsteroidWatch.tsx contains prominent List Mode and Motion Mode toggle'
+    );
+
+    assert(
+      asteroidWatchContent.includes('<AsteroidMotionViewer') && asteroidWatchContent.includes('Inspect Orbit in Motion Mode'),
+      'Test 19.11: AsteroidWatch integrates AsteroidMotionViewer and provides direct motion links'
+    );
+
+    const viewerContent = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidMotionViewer.tsx'), 'utf8');
+    assert(
+      viewerContent.includes('WebGLRenderer') && viewerContent.includes('2D Radar Canvas'),
+      'Test 19.12: AsteroidMotionViewer supports dual 3D WebGL and 2D Radar Canvas fallback engines'
+    );
+
+    assert(
+      viewerContent.includes('Play Motion') &&
+      viewerContent.includes('Jump to Close Approach') &&
+      viewerContent.includes('Now (UTC)') &&
+      viewerContent.includes('SPEED_PRESETS'),
+      'Test 19.13: AsteroidMotionViewer implements interactive playback, speed multipliers, step controls, and encounter jump'
+    );
+
+    assert(
+      viewerContent.includes('Accelerated playback is a mathematical Keplerian orbital simulation') ||
+      viewerContent.includes('Accelerated Playback vs. Live Stream'),
+      'Test 19.14: Mandatory scientific distinction clearly separates accelerated orbital simulation from continuous live optical stream'
+    );
+
+    assert(
+      viewerContent.includes('visually magnified') && viewerContent.includes('cneos.jpl.nasa.gov/sentry'),
+      'Test 19.15: Explains visual magnification of celestial sizes and links to NASA CNEOS Sentry impact risk table'
+    );
+
+    const missionControlContent = fs.readFileSync(path.resolve(__dirname, '../src/components/MissionControlDashboard.tsx'), 'utf8');
+    assert(
+      missionControlContent.includes('mode=motion') || missionControlContent.includes('Inspect Motion Mode Trajectory'),
+      'Test 19.16: Mission Control Dashboard provides direct deep-link into Asteroid Watch Motion Mode'
+    );
+  } catch (err) {
+    assert(false, `Test 19: Asteroid Motion Mode test failed: ${err.message}`);
+  }
+
   console.log('\n====================================================');
   console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('====================================================');

@@ -36,7 +36,8 @@ export function App() {
       // Strip leading and trailing slashes and hashes
       const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '');
       const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
-      const candidate = (rawHash || rawPath).toLowerCase();
+      const fullCandidate = (rawHash || rawPath).toLowerCase();
+      const candidate = fullCandidate.split('?')[0];
 
       if (candidate === 'live-space') {
         setCurrentPage('mission-control');

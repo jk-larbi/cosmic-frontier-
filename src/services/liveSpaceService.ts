@@ -6,7 +6,7 @@
  *   - /api/data/live-space/close-approaches: Verified near-Earth close approaches from NASA/JPL CNEOS CAD API
  */
 
-import type { LiveEphemerisResponse, LiveCloseApproachesResponse } from '../types';
+import type { LiveEphemerisResponse, LiveCloseApproachesResponse, AsteroidMotionResponse } from '../types';
 
 export interface EphemerisQueryParams {
   date?: string;
@@ -20,6 +20,31 @@ export interface CloseApproachesQueryParams {
   limit?: number;
   dateMin?: string;
   dateMax?: string;
+}
+
+export interface AsteroidOrbitQueryParams {
+  des?: string;
+  date?: string;
+}
+
+export async function fetchAsteroidOrbit(
+  params?: AsteroidOrbitQueryParams,
+  signal?: AbortSignal
+): Promise<AsteroidMotionResponse> {
+  const url = new URL('/api/data/asteroid/orbit', window.location.origin);
+  if (params?.des) url.searchParams.set('des', params.des);
+  if (params?.date) url.searchParams.set('date', params.date);
+
+  const res = await fetch(url.toString(), {
+    signal,
+    headers: { 'Accept': 'application/json' }
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch asteroid orbit: HTTP ${res.status}`);
+  }
+
+  return res.json();
 }
 
 export async function fetchLiveEphemeris(

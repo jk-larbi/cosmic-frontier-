@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, type FC } from 'react';
 import type { AppPage, LiveCloseApproach, LiveCloseApproachesResponse, LiveDataBadgeStatus } from '../types';
 import { fetchLiveCloseApproaches } from '../services/liveSpaceService';
 import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
+import { AsteroidMotionViewer } from './AsteroidMotionViewer';
 import { 
   ShieldAlert, 
   CheckCircle2, 
@@ -10,7 +11,9 @@ import {
   Calendar, 
   Crosshair,
   Globe,
-  ArrowRight
+  ArrowRight,
+  Orbit,
+  List
 } from 'lucide-react';
 
 interface AsteroidWatchProps {
@@ -18,6 +21,10 @@ interface AsteroidWatchProps {
 }
 
 export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
+  // Mode State: 'list' (records & CAD feed) vs 'motion' (interactive orbital scene)
+  const [viewMode, setViewMode] = useState<'list' | 'motion'>('list');
+  const [motionTargetDes, setMotionTargetDes] = useState<string>('99942');
+
   // Feed Data State
   const [cadResponse, setCadResponse] = useState<LiveCloseApproachesResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -33,6 +40,18 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
   const [customDateMax, setCustomDateMax] = useState<string>(
     new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10)
   );
+
+  // Check URL hash/query on mount for initial deep-linking
+  useEffect(() => {
+    const raw = window.location.hash || window.location.search;
+    if (raw.includes('mode=motion')) {
+      setViewMode('motion');
+    }
+    const targetMatch = raw.match(/target=([^&]+)/);
+    if (targetMatch && targetMatch[1]) {
+      setMotionTargetDes(decodeURIComponent(targetMatch[1]));
+    }
+  }, []);
 
   // Canvas Ref for Approach Visualizer
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -372,6 +391,45 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
           </div>
         )}
 
+        {/* Mode Switch Tabs: List Mode vs Motion Mode */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-[#1E293B]">
+          <div className="flex rounded-xl bg-[#050B1A] p-1 border border-[#1E293B] text-xs font-mono">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                viewMode === 'list'
+                  ? 'bg-[#38BDF8] text-[#050B1A] shadow-md'
+                  : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
+              }`}
+            >
+              <List className="w-4 h-4" />
+              <span>List Mode (Records & CAD Feed)</span>
+            </button>
+            <button
+              onClick={() => {
+                if (selectedApproach) {
+                  setMotionTargetDes(selectedApproach.designation);
+                }
+                setViewMode('motion');
+              }}
+              className={`px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                viewMode === 'motion'
+                  ? 'bg-[#38BDF8] text-[#050B1A] shadow-md'
+                  : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
+              }`}
+            >
+              <Orbit className="w-4 h-4" />
+              <span>Motion Mode (Interactive Orbital Scene)</span>
+            </button>
+          </div>
+
+          <span className="text-[11px] font-mono text-[#A7B4CC]">
+            {viewMode === 'list' 
+              ? 'Viewing catalog records, close approach tables & encounter schematic'
+              : `Viewing time-controlled Keplerian motion & orbital state vectors for ${motionTargetDes}`}
+          </span>
+        </div>
+
         {/* Cross-navigation links */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           <button
@@ -398,7 +456,19 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* 3. Filter Controls Toolbar */}
+      {viewMode === 'motion' ? (
+        <AsteroidMotionViewer
+          initialDesignation={motionTargetDes || selectedApproach?.designation || '99942'}
+          allApproaches={cadResponse?.approaches || []}
+          onSwitchToListMode={() => setViewMode('list')}
+          onSelectApproach={(app: LiveCloseApproach) => {
+            setSelectedApproach(app);
+            setMotionTargetDes(app.designation);
+          }}
+        />
+      ) : (
+        <>
+          {/* 3. Filter Controls Toolbar */}
       <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1630] border border-[#1E293B] space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Timeframe Presets */}
@@ -681,6 +751,18 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                 </div>
               </div>
 
+              {/* Inspect Orbit in Motion Mode CTA Button */}
+              <button
+                onClick={() => {
+                  setMotionTargetDes(selectedApproach.designation);
+                  setViewMode('motion');
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-linear-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#38BDF8]/90 hover:to-[#0284C7]/90 text-[#050B1A] font-bold text-xs font-mono transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+              >
+                <Orbit className="w-4 h-4" />
+                <span>Inspect Orbit in Motion Mode</span>
+              </button>
+
               {/* Official JPL SBDB Link */}
               <div className="pt-2 border-t border-[#1E293B] flex items-center justify-between text-xs font-mono">
                 <span className="text-[11px] text-[#A7B4CC]">Orbit ID: {selectedApproach.orbitId}</span>
@@ -730,6 +812,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                   <th className="py-3 px-4">Rel. Velocity</th>
                   <th className="py-3 px-4">Est. Diameter</th>
                   <th className="py-3 px-4">Classification</th>
+                  <th className="py-3 px-4 text-right">Orbit Motion</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1E293B]/60">
@@ -769,6 +852,20 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                           </span>
                         )}
                       </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedApproach(item);
+                            setMotionTargetDes(item.designation);
+                            setViewMode('motion');
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] text-[#38BDF8] border border-[#38BDF8]/40 hover:border-[#38BDF8] text-[11px] font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <Orbit className="w-3.5 h-3.5" />
+                          <span>Motion</span>
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -788,6 +885,8 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
           </div>
         )}
       </div>
+      </>
+      )}
 
       {/* 6. Scientific Distinction: Close Approach vs PHA vs Impact Risk (Section 7) */}
       <div className="p-6 sm:p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] space-y-6">

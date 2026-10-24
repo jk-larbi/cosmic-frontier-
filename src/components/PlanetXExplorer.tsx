@@ -673,7 +673,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               onClick={handleCanvasClick}
-              className={`w-full h-[440px] sm:h-[500px] block select-none focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/40 ${
+              className={`w-full h-110 sm:h-125 block select-none focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/40 ${
                 isPanning ? 'cursor-grabbing' : 'cursor-grab'
               }`}
             />
@@ -946,7 +946,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
       </div>
 
       {/* 7. CANDIDATE INVESTIGATION EDUCATIONAL WORKFLOW (SECTION 8) */}
-      <div className="rounded-2xl bg-gradient-to-r from-[#0B1630] to-[#0E1B38] border border-[#8B5CF6]/30 p-8 sm:p-10 space-y-8 shadow-2xl">
+      <div className="rounded-2xl bg-linear-to-r from-[#0B1630] to-[#0E1B38] border border-[#8B5CF6]/30 p-8 sm:p-10 space-y-8 shadow-2xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 text-xs font-mono text-[#8B5CF6] uppercase tracking-wider font-bold">

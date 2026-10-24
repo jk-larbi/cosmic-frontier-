@@ -434,7 +434,10 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
       {/* 2. SECTION A: NEXT UPCOMING ASTEROID ENCOUNTER TICKER */}
       {nextAsteroid && (
         <div 
-          onClick={() => onNavigate('asteroid-watch')}
+          onClick={() => {
+            window.location.hash = `asteroid-watch?mode=motion&target=${encodeURIComponent(nextAsteroid.designation)}`;
+            onNavigate('asteroid-watch');
+          }}
           className="p-4 sm:p-5 rounded-2xl bg-linear-to-r from-[#0B1630] via-[#0E1C38] to-[#0B1630] border border-[#38BDF8]/30 hover:border-[#38BDF8] shadow-md transition-all cursor-pointer flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group"
         >
           <div className="flex items-center gap-3.5">
@@ -463,7 +466,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
           </div>
           <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#38BDF8] shrink-0">
-            <span>Inspect Radar Trajectory</span>
+            <span>Inspect Motion Mode Trajectory</span>
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
@@ -764,7 +767,10 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             {cadData.approaches.slice(0, 6).map(app => (
               <div
                 key={`${app.designation}-${app.closeApproachDate}`}
-                onClick={() => onNavigate('asteroid-watch')}
+                onClick={() => {
+                  window.location.hash = `asteroid-watch?mode=motion&target=${encodeURIComponent(app.designation)}`;
+                  onNavigate('asteroid-watch');
+                }}
                 className="p-4 rounded-2xl bg-[#050B1A] border border-[#1E293B] hover:border-[#38BDF8] transition-all cursor-pointer space-y-3 group"
               >
                 <div className="flex items-center justify-between">
@@ -820,7 +826,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
                 </div>
 
                 <div className="pt-2 border-t border-[#1E293B]/60 flex items-center justify-between text-[11px] font-mono text-[#38BDF8]">
-                  <span>Inspect Radar View</span>
+                  <span>Inspect in Motion Mode</span>
                   <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>

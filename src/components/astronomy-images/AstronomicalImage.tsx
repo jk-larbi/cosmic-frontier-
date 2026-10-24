@@ -140,3 +140,4 @@ export const AstronomicalImage: FC<AstronomicalImageProps> = ({
     </div>
   );
 };
+
