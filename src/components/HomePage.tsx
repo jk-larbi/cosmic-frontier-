@@ -45,6 +45,33 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Card: Live Cosmic Observatory (New Motion Viewer) */}
+          <div 
+            onClick={() => onNavigate('observatory')}
+            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#38BDF8]/15 transition-all cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
+                <Telescope className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono text-[#38BDF8] font-bold uppercase tracking-wider">
+                  Cross-Catalog Motion Viewer & Timeline
+                </span>
+                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors mt-0.5">
+                  Live Cosmic Observatory
+                </h3>
+              </div>
+              <p className="text-xs text-[#A7B4CC] leading-relaxed">
+                Visually explore real-time and predicted celestial motion through time for 60+ objects across Solar System, asteroids, TNOs, exoplanets, and deep sky.
+              </p>
+            </div>
+            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
+              <span>Launch Observatory</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+            </div>
+          </div>
+
           {/* Card: Mission Control Dashboard (Stage 9) */}
           <div 
             onClick={() => onNavigate('mission-control')}

@@ -68,6 +68,34 @@ export async function fetchNasaImages(query = 'SPHEREx') {
   return safeFetch(`/api/data/images?q=${encodeURIComponent(query)}`, []);
 }
 
+export async function fetchObservatoryObjects(params?: { date?: string; category?: string; search?: string }) {
+  const query = new URLSearchParams();
+  if (params?.date) query.append('date', params.date);
+  if (params?.category && params.category !== 'all') query.append('category', params.category);
+  if (params?.search) query.append('search', params.search);
+  const qStr = query.toString() ? `?${query.toString()}` : '';
+
+  return safeFetch(`/api/data/observatory/objects${qStr}`, {
+    success: false,
+    epoch: new Date().toISOString(),
+    julianDate: 2451545.0,
+    retrievalTimestamp: new Date().toISOString(),
+    coordinateFrame: 'ICRF / J2000 Ecliptic',
+    statusLabel: 'UNAVAILABLE',
+    totalCount: 0,
+    allAvailableCount: 0,
+    categories: {
+      'solar-system': 0,
+      'asteroids-comets': 0,
+      'distant-tnos': 0,
+      'exoplanets': 0,
+      'deep-sky': 0,
+      'spherex-targets': 0
+    },
+    objects: []
+  });
+}
+
 export async function fetchCatalogItems(
   category: CatalogCategory = 'all', 
   searchQuery = ''

@@ -1,4 +1,4 @@
-export type AppPage = 'home' | 'mission-control' | 'universe' | 'live-space' | 'asteroid-watch' | 'exoplanets' | 'galaxies' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
+export type AppPage = 'home' | 'mission-control' | 'observatory' | 'universe' | 'live-space' | 'asteroid-watch' | 'exoplanets' | 'galaxies' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
 
 export type GalaxyCategory = 'spiral' | 'elliptical' | 'irregular' | 'active-agn' | 'cluster';
 
@@ -358,4 +358,104 @@ export interface LiveCloseApproachesResponse {
   timeframe: string;
   count: number;
   approaches: LiveCloseApproach[];
+}
+
+export type ObservatoryCategory = 
+  | 'all' 
+  | 'solar-system' 
+  | 'asteroids-comets' 
+  | 'distant-tnos' 
+  | 'exoplanets' 
+  | 'deep-sky' 
+  | 'spherex-targets';
+
+export type ObservatoryMotionType = 
+  | 'analytical-ephemeris' 
+  | 'keplerian-orbit' 
+  | 'simulation-hypothetical' 
+  | 'illustrative-exoplanet' 
+  | 'stationary-sky-coord' 
+  | 'observation-footprint';
+
+export interface ObservatoryObject {
+  id: string;
+  name: string;
+  designation: string;
+  category: ObservatoryCategory;
+  categoryLabel: string;
+  classification: string;
+  color: string;
+  radiusKm: number | string;
+  motionType: ObservatoryMotionType;
+  dataStatus: string;
+  isHypothetical: boolean;
+  heliocentricAU?: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  distSunAU?: number;
+  distSunMillionKm?: number;
+  distEarthAU?: number;
+  distEarthLunar?: number;
+  orbitalSpeedKmS?: number;
+  rightAscension?: string;
+  declination?: string;
+  orbitalElements?: {
+    semiMajorAxisAU: number;
+    eccentricity: number;
+    inclinationDeg: number;
+    longitudeOfAscendingNodeDeg: number;
+    argumentOfPerihelionDeg: number;
+    meanAnomalyDeg: number;
+    trueAnomalyDeg: number;
+    orbitalPeriodYears: number;
+  };
+  exoplanetParams?: {
+    hostStar: string;
+    orbitalPeriodDays: number | null;
+    semiMajorAxisAU: number | null;
+    eccentricity: number;
+    discoveryMethod: string;
+    discoveryYear: number;
+    distanceLightYears: number | null;
+  };
+  celestialCoords?: {
+    rightAscension?: string;
+    declination?: string;
+    redshift?: number;
+    radialVelocityKmS?: number;
+    distanceMly?: number;
+    distanceLightYears?: number;
+    constellation?: string;
+    apparentMagnitude?: number;
+    effectiveTemperatureK?: number;
+  };
+  description: string;
+  source: string;
+  sourceUrl: string;
+  calculationEpoch: string;
+  retrievalTimestamp: string;
+  coordinateFrame: string;
+  scientificDisclaimer: string;
+}
+
+export interface ObservatoryApiResponse {
+  success: boolean;
+  epoch: string;
+  julianDate: number;
+  retrievalTimestamp: string;
+  coordinateFrame: string;
+  statusLabel: LiveDataBadgeStatus | string;
+  totalCount: number;
+  allAvailableCount: number;
+  categories: {
+    'solar-system': number;
+    'asteroids-comets': number;
+    'distant-tnos': number;
+    'exoplanets': number;
+    'deep-sky': number;
+    'spherex-targets': number;
+  };
+  objects: ObservatoryObject[];
 }

@@ -160,6 +160,22 @@ function getExplorerLinks(text) {
     });
   }
 
+  const mentionsObservatory = lower.includes('observatory') ||
+    lower.includes('live cosmic') ||
+    lower.includes('motion viewer') ||
+    lower.includes('playback') ||
+    lower.includes('timeline') ||
+    lower.includes('celestial motion through time') ||
+    lower.includes('sky view');
+
+  if (mentionsObservatory) {
+    links.push({
+      label: 'Explore Live Cosmic Observatory',
+      page: 'observatory',
+      reason: 'Visually explore real-time and predicted celestial motion through time across all astronomical catalogs.'
+    });
+  }
+
   const mentionsAsteroidWatch = lower.includes('asteroid') ||
     lower.includes('close approach') ||
     lower.includes('near-earth') ||
@@ -1013,6 +1029,333 @@ app.get('/api/data/live-space/close-approaches', async (req, res) => {
   } catch (err) {
     console.error('[CAD API] Error serving close approaches:', err.message);
     return res.status(500).json({ error: 'Failed to retrieve close approach data' });
+  }
+});
+
+// 8.5 GET /api/data/observatory/objects (Unified Live Cosmic Observatory Aggregator)
+app.get('/api/data/observatory/objects', async (req, res) => {
+  try {
+    const { date: dateQuery, category, search } = req.query;
+    const targetDate = dateQuery ? new Date(dateQuery) : new Date();
+    const validDate = !isNaN(targetDate.getTime()) ? targetDate : new Date();
+    const retrievalTimestamp = new Date().toISOString();
+
+    // 1. Get analytical ephemeris for Solar System, Asteroids, and TNOs at requested epoch
+    const ephem = getCompleteEphemeris(validDate);
+
+    const solarSystemIds = ['sun', 'mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'moon'];
+    const asteroidIds = ['ceres', 'vesta', 'eros', 'apophis', 'halley', 'churyumov'];
+    const tnoIds = ['pluto', 'sedna', 'vp113', 'leleakuhonua', 'planetX'];
+
+    const items = [];
+
+    for (const obj of ephem.objects) {
+      let cat = 'solar-system';
+      let catLabel = 'Solar System Body';
+      let motionType = 'analytical-ephemeris';
+      const dataStatus = obj.dataStatus || 'PREDICTED';
+
+      if (solarSystemIds.includes(obj.id)) {
+        cat = 'solar-system';
+        catLabel = 'Solar System Body';
+        motionType = 'analytical-ephemeris';
+      } else if (asteroidIds.includes(obj.id)) {
+        cat = 'asteroids-comets';
+        catLabel = 'Asteroid & Comet (Small Body)';
+        motionType = 'analytical-ephemeris';
+      } else if (tnoIds.includes(obj.id)) {
+        cat = 'distant-tnos';
+        catLabel = 'Trans-Neptunian Object';
+        motionType = obj.isHypothetical ? 'simulation-hypothetical' : 'keplerian-orbit';
+      }
+
+      items.push({
+        id: obj.id,
+        name: obj.name,
+        designation: obj.designation,
+        category: cat,
+        categoryLabel: catLabel,
+        classification: obj.classification,
+        color: obj.color,
+        radiusKm: obj.radiusKm,
+        motionType,
+        dataStatus,
+        isHypothetical: !!obj.isHypothetical,
+        heliocentricAU: obj.heliocentricAU,
+        distSunAU: obj.distSunAU,
+        distSunMillionKm: obj.distSunMillionKm,
+        distEarthAU: obj.distEarthAU,
+        distEarthLunar: obj.distEarthLunar,
+        orbitalSpeedKmS: obj.orbitalSpeedKmS,
+        rightAscension: obj.rightAscension,
+        declination: obj.declination,
+        orbitalElements: obj.orbitalElements,
+        description: obj.educationalSummary,
+        source: obj.source,
+        sourceUrl: obj.sourceUrl,
+        calculationEpoch: obj.calculationEpoch,
+        retrievalTimestamp: obj.retrievalTimestamp,
+        coordinateFrame: obj.coordinateFrame,
+        scientificDisclaimer: obj.isHypothetical 
+          ? 'Mathematical hypothesis based on eTNO orbital clustering. Not visually detected or confirmed.'
+          : 'Calculated using NASA/JPL Standish analytical Keplerian ephemeris in ICRF/J2000 frame.'
+      });
+    }
+
+    // 2. Load confirmed exoplanets
+    const exoplanetFile = readLocalData('data/exoplanets/confirmed-exoplanets.json');
+    const rawExoplanets = (cachedLiveExoplanets || exoplanetFile?.records || []).slice(0, 16);
+    for (const exo of rawExoplanets) {
+      items.push({
+        id: `exo-${exo.planetName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+        name: exo.planetName,
+        designation: `${exo.planetName} (${exo.hostStar} System)`,
+        category: 'exoplanets',
+        categoryLabel: 'Exoplanet System',
+        classification: exo.disposition || 'Confirmed Exoplanet',
+        color: '#8B5CF6',
+        radiusKm: exo.radiusEarthRadii ? Math.round(exo.radiusEarthRadii * 6371) : 10000,
+        motionType: 'illustrative-exoplanet',
+        dataStatus: 'ILLUSTRATIVE MODEL',
+        isHypothetical: false,
+        exoplanetParams: {
+          hostStar: exo.hostStar,
+          orbitalPeriodDays: exo.orbitalPeriodDays,
+          semiMajorAxisAU: exo.semiMajorAxisAU,
+          eccentricity: exo.eccentricity ?? 0.05,
+          discoveryMethod: exo.discoveryMethod,
+          discoveryYear: exo.discoveryYear,
+          distanceLightYears: exo.distanceLightYears
+        },
+        orbitalElements: {
+          semiMajorAxisAU: exo.semiMajorAxisAU || 0.1,
+          eccentricity: exo.eccentricity ?? 0.05,
+          inclinationDeg: 88.0,
+          longitudeOfAscendingNodeDeg: 0,
+          argumentOfPerihelionDeg: 0,
+          meanAnomalyDeg: 0,
+          trueAnomalyDeg: 0,
+          orbitalPeriodYears: exo.orbitalPeriodDays ? +(exo.orbitalPeriodDays / 365.25).toFixed(4) : 0.1
+        },
+        description: `${exo.planetName} orbits host star ${exo.hostStar} with an orbital period of ${exo.orbitalPeriodDays} days at a distance of ${exo.distanceLightYears ?? 'N/A'} light-years from Earth.`,
+        source: 'NASA Exoplanet Archive (Caltech/IPAC)',
+        sourceUrl: exo.sourceUrl || `https://exoplanetarchive.ipac.caltech.edu/overview/${encodeURIComponent(exo.planetName)}`,
+        calculationEpoch: validDate.toISOString(),
+        retrievalTimestamp,
+        coordinateFrame: 'Stellar Centric Orbital Frame',
+        scientificDisclaimer: 'Illustrative Keplerian orbital motion based on verified semi-major axis and period. True current spatial phase and inclination relative to Earth are unverified.'
+      });
+    }
+
+    // 3. Load galaxies
+    const galaxiesFile = readLocalData('data/galaxies/deep-sky-galaxies.json');
+    const rawGalaxies = (galaxiesFile?.records || []).slice(0, 16);
+    for (const gal of rawGalaxies) {
+      items.push({
+        id: `gal-${gal.id || gal.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+        name: gal.name,
+        designation: gal.catalogIdentifier,
+        category: 'deep-sky',
+        categoryLabel: 'Extragalactic Deep-Sky Object',
+        classification: `${(gal.category || 'spiral').toUpperCase()} (${gal.morphologicalType || 'Galaxy'})`,
+        color: '#38BDF8',
+        radiusKm: gal.estimatedDiameterKpc ? Math.round(gal.estimatedDiameterKpc * 3.086e16) : 50000,
+        motionType: 'stationary-sky-coord',
+        dataStatus: 'STATIC RECORD',
+        isHypothetical: false,
+        celestialCoords: {
+          rightAscension: gal.rightAscension,
+          declination: gal.declination,
+          redshift: gal.redshift,
+          radialVelocityKmS: gal.radialVelocityKmS,
+          distanceMly: gal.distanceMly,
+          constellation: gal.constellation
+        },
+        description: gal.description,
+        source: 'NASA/IPAC Extragalactic Database (NED)',
+        sourceUrl: gal.sourceUrl,
+        calculationEpoch: 'J2000.0 Catalog Epoch',
+        retrievalTimestamp,
+        coordinateFrame: 'ICRF / Geocentric Equatorial (J2000)',
+        scientificDisclaimer: 'Stationary celestial coordinates. Extragalactic proper motion over human observation timescales is negligible.'
+      });
+    }
+
+    // 4. Load bright stars
+    const starsFile = readLocalData('data/stars/bright-stars.json');
+    const rawStars = starsFile?.records || [];
+    for (const star of rawStars) {
+      items.push({
+        id: `star-${star.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+        name: star.name,
+        designation: star.designation,
+        category: 'deep-sky',
+        categoryLabel: 'Stellar Landmark',
+        classification: star.spectralType,
+        color: '#F5C451',
+        radiusKm: 696340,
+        motionType: 'stationary-sky-coord',
+        dataStatus: 'STATIC RECORD',
+        isHypothetical: false,
+        celestialCoords: {
+          constellation: star.constellation,
+          apparentMagnitude: star.apparentMagnitudeV,
+          distanceLightYears: star.distanceLightYears,
+          effectiveTemperatureK: star.effectiveTemperatureK
+        },
+        description: star.description,
+        source: 'CDS SIMBAD Astronomical Database',
+        sourceUrl: star.sourceUrl,
+        calculationEpoch: 'J2000.0 Catalog Epoch',
+        retrievalTimestamp,
+        coordinateFrame: 'ICRF / Geocentric Equatorial (J2000)',
+        scientificDisclaimer: 'Stationary stellar reference coordinate. Stellar parallax and proper motion require high-precision astrometric reduction (e.g. ESA Gaia).'
+      });
+    }
+
+    // 5. SPHEREx Mission Observation Targets
+    const spherexTargets = [
+      {
+        id: 'carina-nebula',
+        name: 'Carina Nebula (Cosmic Cliffs)',
+        designation: 'NGC 3372 / ESO 128-EN013',
+        category: 'spherex-targets',
+        categoryLabel: 'SPHEREx Observation Target',
+        classification: 'Diffuse Ionized & Molecular Nebula',
+        color: '#38BDF8',
+        motionType: 'observation-footprint',
+        dataStatus: 'OBSERVATION TARGET',
+        isHypothetical: false,
+        celestialCoords: {
+          rightAscension: '10h 43m 48s',
+          declination: '-59° 52′ 00″',
+          distanceLightYears: 7600,
+          constellation: 'Carina'
+        },
+        description: 'Stellar nursery mapped in 102 infrared bands (0.75-5.0 µm) to detect embedded protostars and 3.05 µm water ice absorption.',
+        source: 'NASA/JPL-Caltech SPHEREx & STScI MAST Archive',
+        sourceUrl: 'https://spherex.caltech.edu/',
+        calculationEpoch: 'Survey Planning Epoch',
+        retrievalTimestamp,
+        coordinateFrame: 'Geocentric Equatorial (J2000)',
+        scientificDisclaimer: 'Astronomical observation target footprint. Represents an infrared telescope spectroscopic survey pointing, not a moving celestial body.'
+      },
+      {
+        id: 'orion-nebula',
+        name: 'Orion Molecular Cloud (M42)',
+        designation: 'MESSIER 042 / NGC 1976',
+        category: 'spherex-targets',
+        categoryLabel: 'SPHEREx Observation Target',
+        classification: 'Giant Molecular Cloud / Star Forming Region',
+        color: '#C084FC',
+        motionType: 'observation-footprint',
+        dataStatus: 'OBSERVATION TARGET',
+        isHypothetical: false,
+        celestialCoords: {
+          rightAscension: '05h 35m 17s',
+          declination: '-05° 23′ 28″',
+          distanceLightYears: 1344,
+          constellation: 'Orion'
+        },
+        description: 'Nearest massive star-forming region, benchmark for protoplanetary disk water ice and polycyclic aromatic hydrocarbon (PAH) emissions.',
+        source: 'NASA/JPL-Caltech SPHEREx Project Office',
+        sourceUrl: 'https://spherex.caltech.edu/',
+        calculationEpoch: 'Survey Planning Epoch',
+        retrievalTimestamp,
+        coordinateFrame: 'Geocentric Equatorial (J2000)',
+        scientificDisclaimer: 'Astronomical observation target footprint. Represents an infrared telescope spectroscopic survey pointing, not a moving celestial body.'
+      },
+      {
+        id: 'stephans-quintet',
+        name: "Stephan's Quintet",
+        designation: 'HCG 92 / Arp 319',
+        category: 'spherex-targets',
+        categoryLabel: 'SPHEREx Observation Target',
+        classification: 'Compact Interacting Galaxy Group',
+        color: '#FB7185',
+        motionType: 'observation-footprint',
+        dataStatus: 'OBSERVATION TARGET',
+        isHypothetical: false,
+        celestialCoords: {
+          rightAscension: '22h 35m 57s',
+          declination: '+33° 57′ 36″',
+          distanceLightYears: 290000000,
+          constellation: 'Pegasus'
+        },
+        description: 'A compact galaxy group undergoing violent tidal collisions, creating intergalactic shock waves traced in molecular hydrogen infrared lines.',
+        source: 'NASA SPHEREx Extragalactic Core Survey',
+        sourceUrl: 'https://spherex.caltech.edu/',
+        calculationEpoch: 'Survey Planning Epoch',
+        retrievalTimestamp,
+        coordinateFrame: 'Geocentric Equatorial (J2000)',
+        scientificDisclaimer: 'Astronomical observation target footprint. Represents an infrared telescope spectroscopic survey pointing, not a moving celestial body.'
+      },
+      {
+        id: 'cosmic-dawn-field',
+        name: 'Cosmic Dawn Deep Field',
+        designation: 'SPHEREx North Ecliptic Pole Deep Survey',
+        category: 'spherex-targets',
+        categoryLabel: 'SPHEREx Observation Target',
+        classification: 'Cosmological Deep Survey Field',
+        color: '#F5C451',
+        motionType: 'observation-footprint',
+        dataStatus: 'OBSERVATION TARGET',
+        isHypothetical: false,
+        celestialCoords: {
+          rightAscension: '03h 32m 38s',
+          declination: '-27° 48′ 00″',
+          constellation: 'Fornax'
+        },
+        description: 'Deep survey field toward the ecliptic pole designed to measure Cosmic Infrared Background (CIB) fluctuations from the first stars in the Epoch of Reionization.',
+        source: 'NASA/JPL-Caltech SPHEREx Cosmology Survey',
+        sourceUrl: 'https://spherex.caltech.edu/',
+        calculationEpoch: 'Survey Planning Epoch',
+        retrievalTimestamp,
+        coordinateFrame: 'Geocentric Equatorial (J2000)',
+        scientificDisclaimer: 'Astronomical observation target footprint. Represents an infrared telescope spectroscopic survey pointing, not a moving celestial body.'
+      }
+    ];
+
+    items.push(...spherexTargets);
+
+    // Filter by category if requested
+    let filtered = items;
+    if (category && category !== 'all') {
+      filtered = filtered.filter(i => i.category === category);
+    }
+
+    // Filter by search query if requested
+    if (search && String(search).trim()) {
+      const q = String(search).toLowerCase().trim();
+      filtered = filtered.filter(i => 
+        i.name.toLowerCase().includes(q) || 
+        i.designation.toLowerCase().includes(q) ||
+        i.classification.toLowerCase().includes(q)
+      );
+    }
+
+    return res.json({
+      success: true,
+      epoch: validDate.toISOString(),
+      julianDate: ephem.julianDate,
+      retrievalTimestamp,
+      coordinateFrame: 'ICRF / J2000 Ecliptic & Geocentric Equatorial',
+      statusLabel: Math.abs(Date.now() - validDate.getTime()) < 15 * 60 * 1000 ? 'LIVE DATA' : 'PREDICTED',
+      totalCount: filtered.length,
+      allAvailableCount: items.length,
+      categories: {
+        'solar-system': items.filter(i => i.category === 'solar-system').length,
+        'asteroids-comets': items.filter(i => i.category === 'asteroids-comets').length,
+        'distant-tnos': items.filter(i => i.category === 'distant-tnos').length,
+        'exoplanets': items.filter(i => i.category === 'exoplanets').length,
+        'deep-sky': items.filter(i => i.category === 'deep-sky').length,
+        'spherex-targets': items.filter(i => i.category === 'spherex-targets').length
+      },
+      objects: filtered
+    });
+  } catch (err) {
+    console.error('[Observatory API] Error serving observatory objects:', err.message);
+    return res.status(500).json({ error: 'Failed to retrieve cosmic observatory objects' });
   }
 });
 

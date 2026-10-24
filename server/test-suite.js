@@ -189,7 +189,7 @@ async function runTests() {
   }
 
   // 8. Navigation Routes & SPA Fallback
-  const appRoutes = ['/', '/mission-control', '/universe', '/live-space', '/asteroid-watch', '/exoplanets', '/galaxies', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
+  const appRoutes = ['/', '/mission-control', '/observatory', '/universe', '/live-space', '/asteroid-watch', '/exoplanets', '/galaxies', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
   for (const route of appRoutes) {
     try {
       const resRoute = await fetch(`${BASE_URL}${route}`);
@@ -521,6 +521,71 @@ async function runTests() {
     assert(chatMCData.links && chatMCData.links.some(l => l.page === 'mission-control'), 'Test 16.17: AI Space Guide provides contextual link to Mission Control Dashboard');
   } catch (err) {
     assert(false, `Test 16: Unified Mission Control Dashboard test failed: ${err.message}`);
+  }
+
+  // 17. Live Cosmic Observatory Tests
+  try {
+    // 17.1 - 17.10: Backend Aggregator & Endpoint Tests
+    const resObs = await fetch(`${BASE_URL}/api/data/observatory/objects`);
+    assert(resObs.status === 200, 'Test 17.1: /api/data/observatory/objects returns HTTP 200');
+    const obsJson = await resObs.json();
+
+    assert(obsJson.success === true, 'Test 17.2: Observatory API response has success: true');
+    assert(typeof obsJson.totalCount === 'number' && obsJson.totalCount >= 60, 'Test 17.3: Returns 60+ verified objects across all catalogs');
+
+    const expectedCategories = ['solar-system', 'asteroids-comets', 'distant-tnos', 'exoplanets', 'deep-sky', 'spherex-targets'];
+    const hasAllCats = expectedCategories.every(c => typeof obsJson.categories[c] === 'number' && obsJson.categories[c] > 0);
+    assert(hasAllCats, 'Test 17.4: Aggregates objects from all 6 scientific categories');
+
+    const solarBody = obsJson.objects.find(o => o.category === 'solar-system');
+    const asteroidBody = obsJson.objects.find(o => o.category === 'asteroids-comets');
+    const tnoBody = obsJson.objects.find(o => o.category === 'distant-tnos');
+    const exoBody = obsJson.objects.find(o => o.category === 'exoplanets');
+    const deepSkyBody = obsJson.objects.find(o => o.category === 'deep-sky');
+    const spherexBody = obsJson.objects.find(o => o.category === 'spherex-targets');
+
+    assert(solarBody && solarBody.motionType === 'analytical-ephemeris' && solarBody.heliocentricAU, 'Test 17.5: Solar system bodies use analytical ephemeris with heliocentric coordinates');
+    assert(asteroidBody && asteroidBody.motionType === 'analytical-ephemeris', 'Test 17.6: Asteroids & comets use analytical ephemeris');
+    assert(tnoBody && (tnoBody.motionType === 'keplerian-orbit' || tnoBody.motionType === 'simulation-hypothetical'), 'Test 17.7: Distant TNOs distinguish confirmed orbits from hypothetical models');
+    assert(exoBody && exoBody.motionType === 'illustrative-exoplanet' && exoBody.dataStatus === 'ILLUSTRATIVE MODEL', 'Test 17.8: Exoplanets strictly labeled as illustrative models');
+    assert(deepSkyBody && deepSkyBody.motionType === 'stationary-sky-coord' && deepSkyBody.celestialCoords, 'Test 17.9: Galaxies & stars strictly labeled as stationary sky coordinates');
+    assert(spherexBody && spherexBody.motionType === 'observation-footprint', 'Test 17.10: SPHEREx targets strictly labeled as observation footprints');
+
+    // 17.11 - 17.13: Category, Search & Custom Date Tests
+    const resExoOnly = await fetch(`${BASE_URL}/api/data/observatory/objects?category=exoplanets`);
+    const exoOnlyJson = await resExoOnly.json();
+    assert(exoOnlyJson.objects.every(o => o.category === 'exoplanets'), 'Test 17.11: Category filtering successfully isolates exoplanets');
+
+    const resApophis = await fetch(`${BASE_URL}/api/data/observatory/objects?search=Apophis`);
+    const apophisJson = await resApophis.json();
+    assert(apophisJson.objects.some(o => o.id === 'apophis'), 'Test 17.12: Search query correctly returns Apophis');
+
+    const resFuture = await fetch(`${BASE_URL}/api/data/observatory/objects?date=2029-04-13T21:46:00Z`);
+    const futureJson = await resFuture.json();
+    assert(futureJson.statusLabel === 'PREDICTED' && futureJson.epoch.includes('2029-04-13'), 'Test 17.13: Supports custom date propagation for future epochs');
+
+    // 17.14 - 17.18: Component Architecture & Science Integrity
+    const obsComponent = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveCosmicObservatory.tsx'), 'utf8');
+    assert(obsComponent.includes('THREE.WebGLRenderer') && obsComponent.includes('canvas2DRef'), 'Test 17.14: Observatory supports dual 3D WebGL and 2D radar rendering engines');
+    assert(obsComponent.includes('PRESET_EPOCHS') && obsComponent.includes('Apophis Super-Close Pass'), 'Test 17.15: Timeline features historical and future astronomical presets');
+    assert(obsComponent.includes('handleStepDays') && obsComponent.includes('playbackSpeed'), 'Test 17.16: Timeline supports interactive play, pause, stepping, and speed multipliers');
+    assert(obsComponent.includes('ScaleMode') && obsComponent.includes('exoplanet') && obsComponent.includes('sky'), 'Test 17.17: Supports multiple scale viewing modes including Exoplanet and Celestial Sky View');
+    assert(obsComponent.includes('scientificDisclaimer') && obsComponent.includes('Observatory Legend'), 'Test 17.18: Context panel includes mandatory scientific disclaimers and technical legend');
+
+    // 17.19 Navigation & Routing
+    const navFile = fs.readFileSync(path.resolve(__dirname, '../src/components/Navbar.tsx'), 'utf8');
+    assert(navFile.includes("page: 'observatory', label: 'Observatory'"), 'Test 17.19: Navbar contains Observatory in primary navigation');
+
+    // 17.20 AI Guide Integration
+    const resChatObs = await fetch(`${BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'How does the Live Cosmic Observatory visualize celestial motion through time?' })
+    });
+    const chatObsData = await resChatObs.json();
+    assert(chatObsData.links && chatObsData.links.some(l => l.page === 'observatory'), 'Test 17.20: AI Space Guide provides contextual link to Live Cosmic Observatory');
+  } catch (err) {
+    assert(false, `Test 17: Live Cosmic Observatory test failed: ${err.message}`);
   }
 
   console.log('\n====================================================');

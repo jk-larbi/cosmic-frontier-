@@ -257,6 +257,52 @@ const SMALL_BODIES_TABLE = {
     M0: 358.1,
     periodYears: 11400.0,
     educationalSummary: 'One of the most distant known objects in the Solar System with a perihelion of 76 AU and aphelion over 900 AU. Its unusual orbit is key evidence for the hypothetical Planet Nine.'
+  },
+  vp113: {
+    name: '2012 VP113',
+    designation: '2012 VP113',
+    classification: 'Extreme Trans-Neptunian Object (Sednoid)',
+    color: '#FB7185',
+    radiusKm: 300.0,
+    a: 261.0,
+    e: 0.69,
+    i: 24.1,
+    node: 90.8,
+    peri: 293.7,
+    M0: 10.5,
+    periodYears: 4200.0,
+    educationalSummary: 'A distant sednoid with a perihelion of 80.5 AU, completely detached from Neptune’s direct gravitational influence. Proved Sedna was not a lone anomaly.'
+  },
+  leleakuhonua: {
+    name: 'Leleākūhonua',
+    designation: '541132 Leleākūhonua (2015 TG387)',
+    classification: 'Extreme Trans-Neptunian Object (Sednoid)',
+    color: '#FDA4AF',
+    radiusKm: 110.0,
+    a: 1094.0,
+    e: 0.940,
+    i: 11.66,
+    node: 301.0,
+    peri: 118.0,
+    M0: 2.1,
+    periodYears: 32000.0,
+    educationalSummary: 'Nicknamed "The Goblin", this object travels on a colossal 32,000-year orbit carrying it beyond 2,000 AU into the inner Oort cloud before returning to 65 AU.'
+  },
+  planetX: {
+    name: 'Planet X (Hypothetical)',
+    designation: 'Planet X (Hypothetical Planet Nine)',
+    classification: 'Hypothetical Planet (Dynamical Simulation)',
+    color: '#8B5CF6',
+    radiusKm: 25000.0,
+    a: 420.0,
+    e: 0.60,
+    i: 18.0,
+    node: 95.0,
+    peri: 150.0,
+    M0: 180.0,
+    periodYears: 8600.0,
+    isHypothetical: true,
+    educationalSummary: 'A hypothetical planet proposed by Konstantin Batygin & Mike Brown (Caltech) to explain the orbital clustering of extreme trans-Neptunian objects. It has NOT been visually detected or confirmed.'
   }
 };
 
@@ -420,7 +466,9 @@ function calculatePlanetEphemeris(key, date, earthState = null) {
       trueAnomalyDeg: nuDeg,
       orbitalPeriodYears
     },
-    dataStatus: 'PREDICTED',
+    dataStatus: cfg.isHypothetical ? 'SIMULATION' : 'PREDICTED',
+    isHypothetical: !!cfg.isHypothetical,
+    statusLabel: cfg.isHypothetical ? 'Hypothetical (Unconfirmed)' : 'Confirmed',
     coordinateFrame: 'ICRF / J2000 Ecliptic',
     calculationEpoch: date.toISOString(),
     retrievalTimestamp: new Date().toISOString(),
@@ -503,6 +551,8 @@ function calculateMoonEphemeris(date, earthState) {
       orbitalPeriodYears: 0.0748 // ~27.3 days
     },
     dataStatus: 'PREDICTED',
+    isHypothetical: false,
+    statusLabel: 'Confirmed',
     coordinateFrame: 'ICRF / J2000 Ecliptic',
     calculationEpoch: date.toISOString(),
     retrievalTimestamp: new Date().toISOString(),
@@ -598,7 +648,9 @@ function calculateSmallBodyEphemeris(key, date, earthState) {
       trueAnomalyDeg: nuDeg,
       orbitalPeriodYears: cfg.periodYears
     },
-    dataStatus: 'PREDICTED',
+    dataStatus: cfg.isHypothetical ? 'SIMULATION' : 'PREDICTED',
+    isHypothetical: !!cfg.isHypothetical,
+    statusLabel: cfg.isHypothetical ? 'Hypothetical (Unconfirmed)' : 'Confirmed',
     coordinateFrame: 'ICRF / J2000 Ecliptic',
     calculationEpoch: date.toISOString(),
     retrievalTimestamp: new Date().toISOString(),

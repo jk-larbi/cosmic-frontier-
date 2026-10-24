@@ -484,22 +484,32 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </p>
           </div>
 
-          {/* Jump to 3D Universe Button */}
-          <button
-            onClick={() => onNavigate('universe')}
-            className="px-5 py-2.5 rounded-xl bg-linear-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#0284C7] hover:to-[#0369A1] text-[#050B1A] font-mono font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-[#38BDF8]/20 shrink-0 cursor-pointer"
-          >
-            <Globe className="w-4 h-4" />
-            <span>Open Full 3D Universe</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              onClick={() => onNavigate('observatory')}
+              className="px-4 py-2.5 rounded-xl bg-linear-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#0284C7] hover:to-[#0369A1] text-[#050B1A] font-mono font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-[#38BDF8]/20 cursor-pointer"
+            >
+              <Telescope className="w-4 h-4" />
+              <span>Live Cosmic Observatory</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => onNavigate('universe')}
+              className="px-4 py-2.5 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8] text-[#F8FAFC] font-mono font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+            >
+              <Globe className="w-4 h-4 text-[#38BDF8]" />
+              <span>Open Full 3D Universe</span>
+            </button>
+          </div>
         </div>
 
         {/* Canvas & Controls Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Canvas Viewport (Col Span 2) */}
           <div className="lg:col-span-2 space-y-3">
-            <div className="relative rounded-2xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-inner h-[440px] flex items-center justify-center">
+            <div className="relative rounded-2xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-inner h-110 flex items-center justify-center">
               <canvas
                 ref={canvasRef}
                 onMouseDown={handleMouseDown}

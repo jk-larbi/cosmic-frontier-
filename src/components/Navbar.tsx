@@ -24,10 +24,11 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
 
   const navItems: { page: AppPage; label: string; icon: ReactNode }[] = [
     { page: 'mission-control', label: 'Mission Control', icon: <Radio className="w-4 h-4" /> },
+    { page: 'observatory', label: 'Observatory', icon: <Telescope className="w-4 h-4" /> },
     { page: 'universe', label: '3D Universe', icon: <Globe className="w-4 h-4" /> },
     { page: 'exoplanets', label: 'Exoplanets', icon: <Disc className="w-4 h-4" /> },
     { page: 'galaxies', label: 'Galaxies', icon: <Sparkles className="w-4 h-4" /> },
-    { page: 'spherex', label: 'Cosmic Image Lab', icon: <Telescope className="w-4 h-4" /> },
+    { page: 'spherex', label: 'Cosmic Image Lab', icon: <Compass className="w-4 h-4" /> },
     { page: 'asteroid-watch', label: 'Asteroid Watch', icon: <Compass className="w-4 h-4" /> },
     { page: 'planet-x', label: 'Planet X', icon: <Orbit className="w-4 h-4" /> },
     { page: 'data-centre', label: 'Data Centre', icon: <Database className="w-4 h-4" /> },

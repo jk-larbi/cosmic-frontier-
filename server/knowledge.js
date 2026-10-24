@@ -335,6 +335,34 @@ Key concepts of celestial tracking:
     scientificReference: 'NASA/JPL Solar System Dynamics Group & Horizons Ephemeris System'
   },
   {
+    id: 'live-cosmic-observatory',
+    keywords: ['observatory', 'live observatory', 'motion viewer', 'playback', 'timeline', 'animation', 'simulate motion', 'sky view', 'speed controls', 'celestial motion through time'],
+    question: 'How does the Live Cosmic Observatory visualize celestial motion through time?',
+    answer: `The **Live Cosmic Observatory** in COSMIC FRONTIER provides an interactive time-travel workspace to visualize the motion and spatial distribution of all supported astronomical objects across authoritative NASA and international catalogs.
+
+**Key Observatory Science Concepts**:
+1. **Analytical Ephemeris Propagation**: For Solar System planets, moons, asteroids, and comets, positions at any chosen epoch are calculated from NASA/JPL Standish J2000 orbital state vectors and vis-viva velocity equations.
+2. **Timeline Playback**: Users can step forward or backward through time, adjust simulation speeds from 1x up to 1 year/second, or jump to historic and future astronomical milestones (such as the 2029 Apophis super-close pass).
+3. **Strict Scientific Transparency**:
+   - **Planets & Asteroids**: True Keplerian orbits with dynamic heliocentric coordinates.
+   - **Exoplanets**: Illustrative local Keplerian models based on verified period and semi-major axis (true spatial phase is not directly resolved).
+   - **Galaxies & Stars**: Stationary celestial coordinates (RA/Dec); extragalactic proper motion is imperceptible over human timescales.
+   - **SPHEREx Images**: Plotted as telescope observation footprints, not moving celestial objects.`,
+    suggestions: [
+      'What is an astronomical unit?',
+      'How do astronomers track celestial motion in real time?',
+      'What will happen when Apophis flies by Earth in 2029?'
+    ],
+    links: [
+      {
+        label: 'Open Live Cosmic Observatory',
+        page: 'observatory',
+        reason: 'Interact with the 3D/2D motion viewer and timeline across all astronomical catalogs.'
+      }
+    ],
+    scientificReference: 'NASA/JPL Solar System Dynamics, NASA Exoplanet Archive & IPAC NED'
+  },
+  {
     id: 'asteroid-close-approaches',
     keywords: ['asteroid', 'close approach', 'potentially hazardous', 'pha', 'impact', 'risk', 'sentry', 'apophis', 'near earth object', 'neo', 'hit earth', 'meteor'],
     question: 'What is a near-Earth asteroid close approach and should we be worried?',
@@ -401,6 +429,9 @@ export function findVerifiedAnswer(query) {
     }
     if (item.id === 'asteroid-close-approaches' && (normalized.includes('asteroid') || normalized.includes('close approach') || normalized.includes('pha') || normalized.includes('sentry'))) {
       score += 15;
+    }
+    if (item.id === 'live-cosmic-observatory' && (normalized.includes('observatory') || normalized.includes('motion viewer') || normalized.includes('playback') || normalized.includes('timeline') || normalized.includes('celestial motion through time'))) {
+      score += 16;
     }
     if (score > highestScore) {
       highestScore = score;

@@ -3,6 +3,7 @@ import type { AppPage } from './types';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { MissionControlDashboard } from './components/MissionControlDashboard';
+import { LiveCosmicObservatory } from './components/LiveCosmicObservatory';
 import { Universe3DExplorer } from './components/Universe3DExplorer';
 import { AsteroidWatch } from './components/AsteroidWatch';
 import { ExoplanetDiscoveryLab } from './components/ExoplanetDiscoveryLab';
@@ -46,7 +47,7 @@ export function App() {
         setCurrentPage('spherex');
       } else if (candidate === 'mission-control' || candidate === 'home' || !candidate) {
         setCurrentPage('mission-control');
-      } else if (['universe', 'asteroid-watch', 'exoplanets', 'galaxies', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
+      } else if (['observatory', 'universe', 'asteroid-watch', 'exoplanets', 'galaxies', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
         setCurrentPage(candidate as AppPage);
       }
     };
@@ -70,6 +71,7 @@ export function App() {
         {(currentPage === 'mission-control' || currentPage === 'home') && (
           <MissionControlDashboard onNavigate={handleNavigate} />
         )}
+        {currentPage === 'observatory' && <LiveCosmicObservatory onNavigate={handleNavigate} />}
         {currentPage === 'universe' && <Universe3DExplorer onNavigate={handleNavigate} />}
         {currentPage === 'asteroid-watch' && <AsteroidWatch onNavigate={handleNavigate} />}
         {currentPage === 'exoplanets' && <ExoplanetDiscoveryLab onNavigate={handleNavigate} />}
