@@ -1132,7 +1132,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
                   >
                     <span className="flex items-center gap-2">
                       <Telescope className="w-4 h-4" />
-                      <span>Inspect in Cosmic Image Laboratory (SPHEREx)</span>
+                      <span>Inspect in SPHEREx Explorer</span>
                     </span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </button>

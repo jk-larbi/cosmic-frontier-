@@ -14,8 +14,7 @@ import {
   ArrowRight,
   Database,
   Compass,
-  Disc,
-  Radio
+  Disc
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -44,11 +43,11 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        {/* PRIMARY FLAGSHIPS: Live Observatory & Mission Control */}
+        {/* PRIMARY FLAGSHIPS: SPHEREx Explorer & Planet X Investigation Lab */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Flagship 1: Live Cosmic Observatory (7 Cols) */}
+          {/* Flagship 1: SPHEREx Explorer (7 Cols) */}
           <div 
-            onClick={() => onNavigate('observatory')}
+            onClick={() => onNavigate('spherex')}
             className="lg:col-span-7 group rounded-2xl bg-linear-to-br from-[#0B1630] via-[#0D1B3E] to-[#071126] border border-[#1E293B] hover:border-[#38BDF8] p-6 sm:p-8 space-y-6 shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
             <div className="space-y-4">
@@ -57,83 +56,83 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
                   <Telescope className="w-5 h-5" />
                 </div>
                 <span className="text-[11px] font-mono font-semibold text-[#38BDF8] px-2.5 py-0.5 rounded-full bg-[#050B1A] border border-[#1E293B]">
-                  63 Verified Bodies • 6 Catalogs
+                  102 Infrared Bands • 0.75–5.0 µm
                 </span>
               </div>
               <div className="space-y-1">
                 <span className="text-xs font-mono text-[#38BDF8] uppercase tracking-wider font-semibold">
-                  Cross-Catalog Motion Viewer & Timeline
+                  All-Sky Spectral Survey Workbench
                 </span>
                 <h3 className="text-2xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
-                  Live Cosmic Observatory
+                  SPHEREx Explorer
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-[#A7B4CC] leading-relaxed">
-                Step through simulated time to inspect orbital mechanics across the inner planets, gas giants, Kuiper Belt objects, exoplanets, and deep-sky constellations. Features dual 3D WebGL and 2D radar projections.
+                Explore infrared astronomy, spectral information, and cosmic questions addressed by NASA’s SPHEREx mission. Inspect 102 Linear Variable Filter channels, the 3.05 µm interstellar water ice absorption band, and IRSA ObsCore archival metadata.
               </p>
               
               <div className="grid grid-cols-3 gap-2.5 pt-2 text-xs font-mono">
                 <div className="p-2.5 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
-                  <div className="text-[10px] text-[#A7B4CC]">Rendering</div>
-                  <div className="font-bold text-[#F8FAFC]">3D & 2D Radar</div>
+                  <div className="text-[10px] text-[#A7B4CC]">Spectral Span</div>
+                  <div className="font-bold text-[#F8FAFC]">0.75 – 5.0 µm</div>
                 </div>
                 <div className="p-2.5 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
-                  <div className="text-[10px] text-[#A7B4CC]">Time Travel</div>
-                  <div className="font-bold text-[#38BDF8]">1x to 1yr/s</div>
+                  <div className="text-[10px] text-[#A7B4CC]">Channels</div>
+                  <div className="font-bold text-[#38BDF8]">102 Bands (LVF)</div>
                 </div>
                 <div className="p-2.5 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
-                  <div className="text-[10px] text-[#A7B4CC]">Ephemeris</div>
-                  <div className="font-bold text-emerald-400">JPL Standish</div>
+                  <div className="text-[10px] text-[#A7B4CC]">Pipeline</div>
+                  <div className="font-bold text-emerald-400">IRSA ObsCore</div>
                 </div>
               </div>
             </div>
 
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
-              <span>Launch Live Cosmic Observatory</span>
+              <span>Launch SPHEREx Explorer</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
             </div>
           </div>
 
-          {/* Flagship 2: Unified Mission Control Dashboard (5 Cols) */}
+          {/* Flagship 2: Planet X Investigation Lab (5 Cols) */}
           <div 
-            onClick={() => onNavigate('mission-control')}
-            className="lg:col-span-5 group rounded-2xl bg-linear-to-br from-[#0B1630] via-[#09142B] to-[#050B1A] border border-[#1E293B] hover:border-[#38BDF8] p-6 sm:p-8 space-y-6 shadow-xl transition-all cursor-pointer flex flex-col justify-between"
+            onClick={() => onNavigate('planet-x')}
+            className="lg:col-span-5 group rounded-2xl bg-linear-to-br from-[#0B1630] via-[#09142B] to-[#050B1A] border border-[#1E293B] hover:border-[#8B5CF6] p-6 sm:p-8 space-y-6 shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="w-11 h-11 rounded-xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8]">
-                  <Radio className="w-5 h-5" />
+                <div className="w-11 h-11 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#C084FC]">
+                  <Orbit className="w-5 h-5" />
                 </div>
-                <span className="text-[11px] font-mono font-semibold text-emerald-400 px-2.5 py-0.5 rounded-full bg-[#050B1A] border border-[#1E293B]">
-                  UTC Telemetry Online
+                <span className="text-[11px] font-mono font-semibold text-[#C084FC] px-2.5 py-0.5 rounded-full bg-[#050B1A] border border-[#1E293B]">
+                  Batygin & Brown Hypotheses
                 </span>
               </div>
               <div className="space-y-1">
-                <span className="text-xs font-mono text-[#38BDF8] uppercase tracking-wider font-semibold">
-                  Aerospace Flight Deck
+                <span className="text-xs font-mono text-[#8B5CF6] uppercase tracking-wider font-semibold">
+                  Dynamical Orbital Mechanics & eTNOs
                 </span>
-                <h3 className="text-2xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
-                  Mission Control Dashboard
+                <h3 className="text-2xl font-bold text-[#F8FAFC] group-hover:text-[#C084FC] transition-colors">
+                  Planet X Investigation Lab
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-[#A7B4CC] leading-relaxed">
-                A single command center combining synchronized UTC clocks, ICRF / J2000 celestial coordinates, live planetary velocities, and NASA/JPL CNEOS Earth approach telemetry.
+                Investigate the evidence and competing explanations surrounding the hypothetical ninth planet using known distant Solar System objects (Sedna, 2012 VP113), clustering analysis, and dynamical simulations.
               </p>
 
               <div className="space-y-2 pt-2 text-xs font-mono">
                 <div className="flex items-center justify-between p-2 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
-                  <span className="text-[#A7B4CC]">Earth Orbital Speed:</span>
-                  <span className="font-bold text-[#F5C451]">29.78 km/s</span>
+                  <span className="text-[#A7B4CC]">Predicted Mass:</span>
+                  <span className="font-bold text-[#F5C451]">5 – 10 M⊕ (~380 AU)</span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
-                  <span className="text-[#A7B4CC]">Coordinate Frame:</span>
-                  <span className="font-bold text-[#38BDF8]">ICRF / J2000</span>
+                  <span className="text-[#A7B4CC]">Orbital Signature:</span>
+                  <span className="font-bold text-[#C084FC]">ω & Ω Anti-Aligned</span>
                 </div>
               </div>
             </div>
 
-            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
-              <span>Enter Mission Control</span>
+            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#C084FC]">
+              <span>Enter Planet X Investigation Lab</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
             </div>
           </div>
@@ -165,7 +164,7 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
                 onClick={() => onNavigate('planet-x')}
                 className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-[#050B1A] text-xs font-mono text-[#F8FAFC] hover:text-[#8B5CF6] flex items-center justify-between transition-colors cursor-pointer"
               >
-                <span>Planet X Explorer</span>
+                <span>Planet X Investigation Lab</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -218,7 +217,7 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
                 onClick={() => onNavigate('spherex')}
                 className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-[#050B1A] text-xs font-mono text-[#F8FAFC] hover:text-[#38BDF8] flex items-center justify-between transition-colors cursor-pointer"
               >
-                <span>Cosmic Image Lab</span>
+                <span>SPHEREx Explorer</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
               <button

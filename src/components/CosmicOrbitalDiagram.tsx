@@ -303,7 +303,7 @@ export const CosmicOrbitalDiagram: FC<CosmicOrbitalDiagramProps> = ({ onNavigate
               className="w-full py-2.5 px-4 rounded-xl bg-linear-to-r from-[#8B5CF6] to-[#7C3AED] hover:from-[#7C3AED] hover:to-[#6D28D9] text-[#FFFFFF] font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-2"
             >
               <Orbit className="w-4 h-4" />
-              <span>Simulate in Planet X Explorer</span>
+              <span>Simulate in Planet X Investigation Lab</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>

@@ -116,7 +116,7 @@ export const PlanetaryShowcase: FC<PlanetaryShowcaseProps> = ({ onNavigate }) =>
                 className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#38BDF8] to-[#0284C7] text-[#050B1A] font-bold text-sm shadow-lg hover:shadow-[#38BDF8]/20 hover:scale-[1.02] transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Orbit className="w-4 h-4" />
-                <span>Simulate in Planet X Explorer</span>
+                <span>Simulate in Planet X Investigation Lab</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
 
@@ -296,7 +296,7 @@ export const PlanetaryShowcase: FC<PlanetaryShowcaseProps> = ({ onNavigate }) =>
                 onClick={() => onNavigate('planet-x')}
                 className="w-full py-2.5 px-3.5 rounded-xl bg-[#050B1A] hover:bg-[#38BDF8] text-[#A7B4CC] hover:text-[#050B1A] border border-[#1E293B] hover:border-[#38BDF8] font-mono text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-3"
               >
-                <span>Track in Planet X Explorer</span>
+                <span>Track in Planet X Investigation Lab</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </button>
             </div>

@@ -8,8 +8,7 @@ import {
   Sparkles,
   Telescope,
   Orbit,
-  ArrowDown,
-  Radio
+  ArrowDown
 } from 'lucide-react';
 
 interface NovaCommandHeroProps {
@@ -52,8 +51,20 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
         {/* Center Pill Nav Bar (Exact NOVA Pill Style) */}
         <nav className="hidden md:flex items-center gap-1 p-1 rounded-full bg-[#0B1329]/80 border border-[#1E293B] backdrop-blur-md text-xs font-medium">
           <button
-            onClick={() => onNavigate('mission-control')}
+            onClick={() => onNavigate('spherex')}
             className="px-3.5 py-1.5 rounded-full bg-[#1E293B] text-[#38BDF8] shadow-sm font-semibold hover:text-[#FFFFFF] transition-colors"
+          >
+            SPHEREx Explorer
+          </button>
+          <button
+            onClick={() => onNavigate('planet-x')}
+            className="px-3.5 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
+          >
+            Planet X Lab
+          </button>
+          <button
+            onClick={() => onNavigate('mission-control')}
+            className="px-3.5 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
           >
             Mission Control
           </button>
@@ -76,16 +87,10 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
             Exoplanets
           </button>
           <button
-            onClick={() => onNavigate('spherex')}
+            onClick={() => onNavigate('galaxies')}
             className="px-3.5 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
           >
-            SPHEREx
-          </button>
-          <button
-            onClick={() => onNavigate('planet-x')}
-            className="px-3.5 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
-          >
-            Planet X
+            Galaxies
           </button>
           <button
             onClick={() => onNavigate('data-centre')}
@@ -133,26 +138,26 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
           </div>
 
           <p className="max-w-xl text-sm sm:text-base text-[#94A3B8] leading-relaxed">
-            A beginner-friendly astronomical workspace powered by real NASA open data, JPL Standish analytical ephemerides, 102-channel infrared spectroscopy, and interactive celestial motion across our Solar System and beyond.
+            A citizen-science astronomy workbench powered by real NASA open data. Explore two primary research frontiers: analyze authentic 102-band infrared survey products with the <strong className="text-[#38BDF8]">SPHEREx Explorer</strong>, and investigate dynamical eTNO evidence for the hypothetical ninth planet in the <strong className="text-[#C084FC]">Planet X Investigation Lab</strong>.
           </p>
 
           {/* Two Prominent Action Buttons */}
           <div className="flex flex-wrap items-center gap-4 pt-2">
             <button
-              onClick={() => onNavigate('observatory')}
+              onClick={() => onNavigate('spherex')}
               className="px-7 py-3.5 rounded-full bg-[#FFFFFF] hover:bg-[#F1F5F9] text-[#050811] font-bold text-sm tracking-wide shadow-xl hover:shadow-[#FFFFFF]/20 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-2 cursor-pointer"
             >
               <Telescope className="w-4 h-4 text-[#0284C7]" />
-              <span>LIVE OBSERVATORY</span>
+              <span>SPHEREx EXPLORER</span>
               <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
             </button>
 
             <button
-              onClick={() => onNavigate('mission-control')}
-              className="px-6 py-3.5 rounded-full bg-[#0B1329]/90 hover:bg-[#131D38] text-[#F8FAFC] border border-[#38BDF8]/40 hover:border-[#38BDF8] font-semibold text-sm shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-2 cursor-pointer backdrop-blur-sm"
+              onClick={() => onNavigate('planet-x')}
+              className="px-6 py-3.5 rounded-full bg-[#0B1329]/90 hover:bg-[#131D38] text-[#F8FAFC] border border-[#8B5CF6]/50 hover:border-[#8B5CF6] font-semibold text-sm shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-2 cursor-pointer backdrop-blur-sm"
             >
-              <Radio className="w-4 h-4 text-[#38BDF8]" />
-              <span>MISSION CONTROL</span>
+              <Orbit className="w-4 h-4 text-[#C084FC]" />
+              <span>PLANET X INVESTIGATION LAB</span>
             </button>
           </div>
         </div>

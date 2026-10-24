@@ -181,7 +181,7 @@ export const AIGuide: FC<AIGuideProps> = ({ onNavigate }) => {
       let fallbackSuggestions = STARTER_QUESTIONS.slice(0, 4);
       let fallbackLinks = [
         { label: 'SPHEREx Explorer', page: 'spherex' as AppPage, reason: 'Inspect 102 infrared spectral channels and interstellar ices' },
-        { label: 'Planet X Explorer', page: 'planet-x' as AppPage, reason: 'Review extreme TNO orbits and gravitational clustering models' }
+        { label: 'Planet X Investigation Lab', page: 'planet-x' as AppPage, reason: 'Review extreme TNO orbits and gravitational clustering models' }
       ];
       let fallbackRef = 'NASA Astrophysics & Minor Planet Center Educational Archive';
 

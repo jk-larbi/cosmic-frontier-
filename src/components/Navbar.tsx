@@ -25,14 +25,14 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
 
   const navItems: { page: AppPage; label: string; icon: ReactNode }[] = [
     { page: 'home', label: 'Home', icon: <Home className="w-4 h-4" /> },
+    { page: 'spherex', label: 'SPHEREx Explorer', icon: <Telescope className="w-4 h-4" /> },
+    { page: 'planet-x', label: 'Planet X Lab', icon: <Orbit className="w-4 h-4" /> },
     { page: 'mission-control', label: 'Mission Control', icon: <Radio className="w-4 h-4" /> },
     { page: 'observatory', label: 'Observatory', icon: <Telescope className="w-4 h-4" /> },
     { page: 'universe', label: '3D Universe', icon: <Globe className="w-4 h-4" /> },
     { page: 'exoplanets', label: 'Exoplanets', icon: <Disc className="w-4 h-4" /> },
     { page: 'galaxies', label: 'Galaxies', icon: <Sparkles className="w-4 h-4" /> },
-    { page: 'spherex', label: 'Cosmic Image Lab', icon: <Compass className="w-4 h-4" /> },
     { page: 'asteroid-watch', label: 'Asteroid Watch', icon: <Compass className="w-4 h-4" /> },
-    { page: 'planet-x', label: 'Planet X', icon: <Orbit className="w-4 h-4" /> },
     { page: 'data-centre', label: 'Data Centre', icon: <Database className="w-4 h-4" /> },
     { page: 'ai-guide', label: 'AI Guide', icon: <Sparkles className="w-4 h-4" /> },
     { page: 'about', label: 'About', icon: <Info className="w-4 h-4" /> },
@@ -139,7 +139,7 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
                 <span className={isActive ? 'text-[#38BDF8]' : 'text-[#A7B4CC]'}>
                   {item.icon}
                 </span>
-                <span>{item.label}</span>
+                <span>{item.page === 'planet-x' ? 'Planet X Investigation Lab' : item.label}</span>
               </button>
             );
           })}

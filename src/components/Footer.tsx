@@ -86,7 +86,7 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
                   className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Telescope className="w-3.5 h-3.5 text-[#38BDF8]" />
-                  <span>SPHEREx Cosmic Image Lab</span>
+                  <span>SPHEREx Explorer</span>
                 </button>
               </li>
               <li>
@@ -104,7 +104,7 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
                   className="hover:text-[#8B5CF6] flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Orbit className="w-3.5 h-3.5 text-[#8B5CF6]" />
-                  <span>Planet X Outer System Map</span>
+                  <span>Planet X Investigation Lab</span>
                 </button>
               </li>
               <li>

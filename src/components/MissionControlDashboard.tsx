@@ -908,7 +908,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
           </div>
 
-          {/* Card 3: Cosmic Image Lab & SPHEREx */}
+          {/* Card 3: SPHEREx Explorer */}
           <div
             onClick={() => onNavigate('spherex')}
             className="p-5 rounded-2xl bg-[#0B1630]/80 border border-[#1E293B] hover:border-[#38BDF8]/60 transition-all cursor-pointer flex flex-col justify-between shadow-md group space-y-4"
@@ -918,7 +918,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
                 <Telescope className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold font-mono text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
-                Cosmic Image Lab
+                SPHEREx Explorer
               </h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
                 SPHEREx 102 infrared spectral channels, water ice absorption signatures, and dual-view image comparisons.
@@ -952,7 +952,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
           </div>
 
-          {/* Card 5: Planet X Investigation */}
+          {/* Card 5: Planet X Investigation Lab */}
           <div
             onClick={() => onNavigate('planet-x')}
             className="p-5 rounded-2xl bg-[#0B1630]/80 border border-[#1E293B] hover:border-[#F5C451]/60 transition-all cursor-pointer flex flex-col justify-between shadow-md group space-y-4"
@@ -962,7 +962,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
                 <Orbit className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold font-mono text-[#F8FAFC] group-hover:text-[#F5C451] transition-colors">
-                Planet X Explorer
+                Planet X Investigation Lab
               </h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
                 Batygin & Brown theoretical models, extreme TNO clustering, and interactive Tombaugh blink comparator.

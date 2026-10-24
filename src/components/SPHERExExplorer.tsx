@@ -308,10 +308,10 @@ export const SPHERExExplorer: FC = () => {
               <span>NASA SPHEREx Mission Surveyor & Infrared Laboratory</span>
             </div>
             <h1 className="text-3xl sm:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">
-              Cosmic Image Laboratory
+              SPHEREx Explorer
             </h1>
             <p className="text-base sm:text-lg text-[#F5C451] font-medium mt-1">
-              Multi-Wavelength Infrared Spectroscopy & SPHEREx Explorer
+              Multi-Wavelength Infrared Spectroscopy & Mission Data Laboratory
             </p>
           </div>
 
@@ -1074,9 +1074,9 @@ export const SPHERExExplorer: FC = () => {
           <div className="p-4 rounded-xl bg-[#050B1A] border border-[#F5C451]/30 flex items-start gap-3 text-xs text-[#A7B4CC]">
             <ShieldAlert className="w-5 h-5 text-[#F5C451] shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <span className="font-bold text-[#F8FAFC] block">Scientific Transparency</span>
+              <span className="font-bold text-[#F8FAFC] block">Scientific Transparency & Archival Analogs</span>
               <p className="text-[11px] leading-relaxed">
-                Display stretch functions and false-color palettes are mathematical transformations applied to image pixels. For verified FITS data, these map directly to physical calibrated flux densities (MJy/sr).
+                Display stretch functions and false-color palettes are mathematical transformations applied to image pixels. For verified FITS data, these map directly to physical calibrated flux densities (MJy/sr). Current multi-wavelength previews utilize verified archival analogs (Spitzer IRAC, WISE, JWST NIRCam) mapped to SPHEREx's 102 LVF channels; full all-sky spectroscopic data cubes will be released via NASA/IPAC IRSA following orbital commissioning.
               </p>
             </div>
           </div>

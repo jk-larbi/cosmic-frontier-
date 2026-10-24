@@ -463,10 +463,10 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
           <span>Outer Solar System Dynamics</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">
-          Planet X Explorer
+          Planet X Investigation Lab
         </h1>
         <p className="text-base sm:text-lg text-[#F5C451] font-medium">
-          Explore the outer solar system. Investigate the unknown.
+          Evidence-Based Investigation of the Planet Nine Hypothesis
         </p>
         <p className="text-sm text-[#A7B4CC] leading-relaxed max-w-3xl">
           Beyond Neptune lies a vast, frozen frontier populated by icy trans-Neptunian objects. By studying how these distant bodies orbit the Sun, astronomers search for clues to an undiscovered planet that might be shaping their trajectories from the outer darkness.
