@@ -1,4 +1,4 @@
-export type AppPage = 'home' | 'universe' | 'live-space' | 'asteroid-watch' | 'exoplanets' | 'galaxies' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
+export type AppPage = 'home' | 'mission-control' | 'universe' | 'live-space' | 'asteroid-watch' | 'exoplanets' | 'galaxies' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
 
 export type GalaxyCategory = 'spiral' | 'elliptical' | 'irregular' | 'active-agn' | 'cluster';
 

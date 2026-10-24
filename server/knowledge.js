@@ -312,14 +312,14 @@ You can inspect verified archival JPL cleanroom photos (such as PIA25784, PIA265
   },
   {
     id: 'live-space-monitoring',
-    keywords: ['live space', 'ephemeris', 'celestial motion', 'planetary motion', 'orbit', 'real time position', 'jpl horizons', 'where is mars', 'where is jupiter', 'speed of earth'],
+    keywords: ['mission control', 'live space', 'ephemeris', 'celestial motion', 'planetary motion', 'orbit', 'real time position', 'jpl horizons', 'where is mars', 'where is jupiter', 'speed of earth'],
     question: 'How do astronomers track celestial motion in real time?',
     answer: `Astronomers track celestial motion in real time using **orbital ephemerides**—mathematical models based on Newton's and Einstein's laws of gravitation and continuously refined by radar ranging, spacecraft telemetry, and ground-based telescope astrometry.
 
 Key concepts of celestial tracking:
 1. **Keplerian Orbits**: Planets travel in elliptical paths around the Sun with the Sun at one focus (Kepler's First Law). Objects move fastest at perihelion (closest to Sun) and slowest at aphelion (farthest from Sun).
 2. **Speed Differences**: Inner planets travel much faster than outer planets because solar gravity is stronger closer in (Mercury travels at ~47.4 km/s, Earth at ~29.8 km/s, and distant Neptune at ~5.4 km/s).
-3. **Ephemeris Epochs**: An ephemeris specifies precise 3D coordinates (X, Y, Z in Astronomical Units) and velocities for an exact timestamp (epoch). In COSMIC FRONTIER, the Live Space Observatory uses NASA/JPL Solar System Dynamics state vectors propagated to the current UTC epoch.`,
+3. **Ephemeris Epochs**: An ephemeris specifies precise 3D coordinates (X, Y, Z in Astronomical Units) and velocities for an exact timestamp (epoch). In COSMIC FRONTIER, the Mission Control Dashboard uses NASA/JPL Solar System Dynamics state vectors propagated to the current UTC epoch.`,
     suggestions: [
       'What is an astronomical unit?',
       'What is an asteroid close approach?',
@@ -327,8 +327,8 @@ Key concepts of celestial tracking:
     ],
     links: [
       {
-        label: 'Open Live Space Observatory',
-        page: 'live-space',
+        label: 'Open Mission Control Dashboard',
+        page: 'mission-control',
         reason: 'Explore real-time 3D planetary positions, velocities, and J2000 coordinates.'
       }
     ],
@@ -396,7 +396,7 @@ export function findVerifiedAnswer(query) {
     if (item.id === 'infrared-light' && normalized.includes('infrared')) {
       score += 12;
     }
-    if (item.id === 'live-space-monitoring' && (normalized.includes('live space') || normalized.includes('ephemeris') || normalized.includes('celestial motion'))) {
+    if (item.id === 'live-space-monitoring' && (normalized.includes('mission control') || normalized.includes('live space') || normalized.includes('ephemeris') || normalized.includes('celestial motion'))) {
       score += 15;
     }
     if (item.id === 'asteroid-close-approaches' && (normalized.includes('asteroid') || normalized.includes('close approach') || normalized.includes('pha') || normalized.includes('sentry'))) {

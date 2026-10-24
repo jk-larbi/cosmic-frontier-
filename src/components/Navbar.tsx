@@ -5,7 +5,6 @@ import {
   Orbit, 
   Sparkles, 
   Info, 
-  Home, 
   Menu, 
   X, 
   Compass, 
@@ -24,13 +23,12 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems: { page: AppPage; label: string; icon: ReactNode }[] = [
-    { page: 'home', label: 'Home', icon: <Home className="w-4 h-4" /> },
-    { page: 'live-space', label: 'Live Space', icon: <Radio className="w-4 h-4" /> },
-    { page: 'asteroid-watch', label: 'Asteroid Watch', icon: <Compass className="w-4 h-4" /> },
+    { page: 'mission-control', label: 'Mission Control', icon: <Radio className="w-4 h-4" /> },
     { page: 'universe', label: '3D Universe', icon: <Globe className="w-4 h-4" /> },
-    { page: 'exoplanets', label: 'Exoplanet Lab', icon: <Disc className="w-4 h-4" /> },
+    { page: 'exoplanets', label: 'Exoplanets', icon: <Disc className="w-4 h-4" /> },
     { page: 'galaxies', label: 'Galaxies', icon: <Sparkles className="w-4 h-4" /> },
     { page: 'spherex', label: 'Cosmic Image Lab', icon: <Telescope className="w-4 h-4" /> },
+    { page: 'asteroid-watch', label: 'Asteroid Watch', icon: <Compass className="w-4 h-4" /> },
     { page: 'planet-x', label: 'Planet X', icon: <Orbit className="w-4 h-4" /> },
     { page: 'data-centre', label: 'Data Centre', icon: <Database className="w-4 h-4" /> },
     { page: 'ai-guide', label: 'AI Guide', icon: <Sparkles className="w-4 h-4" /> },
@@ -49,9 +47,9 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo & Brand */}
           <button 
-            onClick={() => handleNavClick('home')}
+            onClick={() => handleNavClick('mission-control')}
             className="flex items-center gap-3 text-left group focus:outline-none focus:ring-2 focus:ring-[#38BDF8]/50 rounded-lg p-1"
-            aria-label="Cosmic Frontier Home"
+            aria-label="Cosmic Frontier Mission Control"
           >
             <div className="relative w-10 h-10 rounded-xl bg-linear-to-br from-[#0B1630] to-[#1E293B] border border-[#38BDF8]/30 flex items-center justify-center shadow-lg group-hover:border-[#38BDF8] transition-all">
               <Compass className="w-5 h-5 text-[#38BDF8] group-hover:rotate-45 transition-transform duration-500" />
@@ -75,7 +73,9 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-1 lg:gap-2" aria-label="Main Navigation">
             {navItems.map((item) => {
-              const isActive = currentPage === item.page || (item.page === 'ai-guide' && currentPage === 'guide');
+              const isActive = currentPage === item.page || 
+                (item.page === 'mission-control' && currentPage === 'home') ||
+                (item.page === 'ai-guide' && currentPage === 'guide');
               return (
                 <button
                   key={item.page}
@@ -123,7 +123,9 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
       {mobileMenuOpen && (
         <div className="md:hidden bg-[#0B1630] border-b border-[#1E293B] px-4 pt-2 pb-4 space-y-1 animate-fadeIn">
           {navItems.map((item) => {
-            const isActive = currentPage === item.page || (item.page === 'ai-guide' && currentPage === 'guide');
+            const isActive = currentPage === item.page || 
+              (item.page === 'mission-control' && currentPage === 'home') ||
+              (item.page === 'ai-guide' && currentPage === 'guide');
             return (
               <button
                 key={item.page}

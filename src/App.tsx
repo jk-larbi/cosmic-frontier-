@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import type { AppPage } from './types';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { HomePage } from './components/HomePage';
+import { MissionControlDashboard } from './components/MissionControlDashboard';
 import { Universe3DExplorer } from './components/Universe3DExplorer';
-import { LiveSpaceObservatory } from './components/LiveSpaceObservatory';
 import { AsteroidWatch } from './components/AsteroidWatch';
 import { ExoplanetDiscoveryLab } from './components/ExoplanetDiscoveryLab';
 import { GalaxyExplorer } from './components/GalaxyExplorer';
@@ -15,11 +14,16 @@ import { AIGuide } from './components/AIGuide';
 import { AboutPage } from './components/AboutPage';
 
 export function App() {
-  const [currentPage, setCurrentPage] = useState<AppPage>('home');
+  const [currentPage, setCurrentPage] = useState<AppPage>('mission-control');
 
   // Handle URL hash routing or direct navigation
   const handleNavigate = (page: AppPage) => {
-    const targetPage = (page === 'guide' || page === 'ai-guide') ? 'ai-guide' : page;
+    let targetPage: AppPage = page;
+    if (page === 'guide' || page === 'ai-guide') {
+      targetPage = 'ai-guide';
+    } else if (page === 'home' || page === 'mission-control' || (page as string) === 'live-space') {
+      targetPage = 'mission-control';
+    }
     setCurrentPage(targetPage);
     window.location.hash = targetPage;
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -33,14 +37,17 @@ export function App() {
       const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
       const candidate = (rawHash || rawPath).toLowerCase();
 
-      if (candidate === 'ai-guide' || candidate === 'guide') {
+      if (candidate === 'live-space') {
+        setCurrentPage('mission-control');
+        window.location.hash = 'mission-control';
+      } else if (candidate === 'ai-guide' || candidate === 'guide') {
         setCurrentPage('ai-guide');
       } else if (candidate === 'spherex' || candidate === 'image-lab') {
         setCurrentPage('spherex');
-      } else if (['home', 'universe', 'live-space', 'asteroid-watch', 'exoplanets', 'galaxies', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
+      } else if (candidate === 'mission-control' || candidate === 'home' || !candidate) {
+        setCurrentPage('mission-control');
+      } else if (['universe', 'asteroid-watch', 'exoplanets', 'galaxies', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
         setCurrentPage(candidate as AppPage);
-      } else if (!candidate) {
-        setCurrentPage('home');
       }
     };
 
@@ -60,9 +67,10 @@ export function App() {
 
       {/* Main Content Area */}
       <main className="flex-1">
-        {currentPage === 'home' && <HomePage onNavigate={handleNavigate} />}
+        {(currentPage === 'mission-control' || currentPage === 'home') && (
+          <MissionControlDashboard onNavigate={handleNavigate} />
+        )}
         {currentPage === 'universe' && <Universe3DExplorer onNavigate={handleNavigate} />}
-        {currentPage === 'live-space' && <LiveSpaceObservatory onNavigate={handleNavigate} />}
         {currentPage === 'asteroid-watch' && <AsteroidWatch onNavigate={handleNavigate} />}
         {currentPage === 'exoplanets' && <ExoplanetDiscoveryLab onNavigate={handleNavigate} />}
         {currentPage === 'galaxies' && <GalaxyExplorer onNavigate={handleNavigate} />}

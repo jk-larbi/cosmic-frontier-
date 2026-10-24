@@ -189,7 +189,7 @@ async function runTests() {
   }
 
   // 8. Navigation Routes & SPA Fallback
-  const appRoutes = ['/', '/universe', '/live-space', '/asteroid-watch', '/exoplanets', '/galaxies', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
+  const appRoutes = ['/', '/mission-control', '/universe', '/live-space', '/asteroid-watch', '/exoplanets', '/galaxies', '/spherex', '/planet-x', '/data-centre', '/ai-guide', '/about'];
   for (const route of appRoutes) {
     try {
       const resRoute = await fetch(`${BASE_URL}${route}`);
@@ -457,8 +457,8 @@ async function runTests() {
     assert(sampleApp.impactRisk && sampleApp.impactRisk.sentryUrl.includes('cneos.jpl.nasa.gov/sentry'), 'Test 15.15: Close approaches state impact risk separately and link to NASA CNEOS Sentry');
 
     // 15.16 - 15.18: Static Component & Science Integrity Audit
-    const liveSpaceFile = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveSpaceObservatory.tsx'), 'utf8');
-    assert(liveSpaceFile.includes('THREE.WebGLRenderer') && liveSpaceFile.includes('canvas2DRef'), 'Test 15.16: LiveSpaceObservatory supports 3D Three.js renderer and smooth 2D canvas fallback');
+    const missionControlFile = fs.readFileSync(path.resolve(__dirname, '../src/components/MissionControlDashboard.tsx'), 'utf8');
+    assert(missionControlFile.includes('canvasRef') && missionControlFile.includes('canvas.getContext'), 'Test 15.16: Celestial monitoring integrated into MissionControlDashboard with interactive Solar System orbital map');
 
     const asteroidWatchFile = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidWatch.tsx'), 'utf8');
     assert(asteroidWatchFile.includes('An asteroid passing near Earth does not automatically mean it will hit Earth'), 'Test 15.17: AsteroidWatch displays mandatory scientific distinction quote regarding close approach vs impact');
@@ -469,9 +469,58 @@ async function runTests() {
       body: JSON.stringify({ message: 'What is a near-Earth asteroid close approach and what is impact risk?' })
     });
     const chatLiveData = await resChatLive.json();
-    assert(chatLiveData.links && chatLiveData.links.some(l => l.page === 'asteroid-watch' || l.page === 'live-space'), 'Test 15.18: AI Guide provides contextual link to Asteroid Watch or Live Space');
+    assert(chatLiveData.links && chatLiveData.links.some(l => l.page === 'asteroid-watch' || l.page === 'live-space' || l.page === 'mission-control'), 'Test 15.18: AI Guide provides contextual link to Asteroid Watch or Mission Control');
   } catch (err) {
     assert(false, `Test 15: Live Space Observatory & Earth Approach Tracker test failed: ${err.message}`);
+  }
+
+  // 16. Central Mission Control Dashboard Tests (Stage 9)
+  try {
+    const mcFile = fs.readFileSync(path.resolve(__dirname, '../src/components/MissionControlDashboard.tsx'), 'utf8');
+    
+    // 16.1 Section A: Space Activity Overview
+    assert(mcFile.includes('timeZoneMode') && mcFile.includes('Universal Time (UTC)'), 'Test 16.1: Mission Control displays live telemetry clocks (UTC & Local)');
+    assert(mcFile.includes('ICRF / J2000 Ecliptic') && mcFile.includes('Epoch'), 'Test 16.2: Space Activity Overview displays ICRF frame and calculation epoch');
+    assert(mcFile.includes('LIVE DATA') && mcFile.includes('PREDICTED'), 'Test 16.3: Space Activity Overview displays authoritative data freshness badges');
+    assert(mcFile.includes('Orbital Velocity') && mcFile.includes('Earth Distance'), 'Test 16.4: Overview presents real-time planetary velocity and distance telemetry');
+    assert(mcFile.includes('Upcoming Close-Approach Event') && mcFile.includes('NASA Astronomy Picture of the Day'), 'Test 16.5: Overview features next close encounter ticker and APOD summary highlight');
+
+    // 16.2 Section B: Interactive Solar System Preview
+    assert(mcFile.includes('Solar System Planetary Ephemeris Preview') && mcFile.includes('scaleMode'), 'Test 16.6: Features interactive Solar System preview with scale mode toggle (Inner vs Outer)');
+    assert(mcFile.includes('isSimulating') && mcFile.includes('setIsSimulating'), 'Test 16.7: Solar System preview includes live orbital simulation motion toggle');
+    assert(mcFile.includes('selectedObject') && mcFile.includes('Open Full 3D Universe'), 'Test 16.8: Preview includes celestial object inspector and direct gateway to Full 3D Universe');
+
+    // 16.3 Section C: Earth Approach Monitor Summary
+    assert(mcFile.includes('CNEOS CAD Feed') && mcFile.includes('Near-Earth Asteroid'), 'Test 16.9: Earth Approach Monitor integrates NASA/JPL CNEOS live CAD telemetry');
+    assert(mcFile.includes('An asteroid passing near Earth does not automatically mean it will hit Earth'), 'Test 16.10: Earth Approach Monitor contains mandatory scientific distinction quote');
+    assert(mcFile.includes("onNavigate('asteroid-watch')") && mcFile.includes('cadTimeframe'), 'Test 16.11: Monitor includes timeframe filtering and link to Asteroid Watch');
+
+    // 16.4 Section D: Explore the Universe Gateway
+    const gatewayPages = ['universe', 'exoplanets', 'spherex', 'galaxies', 'planet-x', 'asteroid-watch', 'data-centre', 'ai-guide'];
+    const hasAllGateways = gatewayPages.every(p => mcFile.includes(`onNavigate('${p}')`));
+    assert(hasAllGateways, 'Test 16.12: Mission Control gateway includes navigation cards to all 8 core modules');
+
+    // 16.5 Section E: Mission & Discovery Highlights
+    assert(mcFile.includes('SPHEREx All-Sky Infrared Spectral Survey') && mcFile.includes('102'), 'Test 16.13: Highlights section presents NASA SPHEREx 102-channel infrared spectroscopy mission');
+    assert(mcFile.includes('NASA Astronomy Picture of the Day') && mcFile.includes('apod.nasa.gov'), 'Test 16.14: Highlights section links to official APOD archive');
+
+    // 16.6 Navigation & Hash Routing
+    const navbarFile = fs.readFileSync(path.resolve(__dirname, '../src/components/Navbar.tsx'), 'utf8');
+    assert(navbarFile.includes("page: 'mission-control', label: 'Mission Control'") && !navbarFile.includes("label: 'Live Space'"), 'Test 16.15: Navbar features Mission Control as primary item and removes standalone Live Space link');
+
+    const appFile = fs.readFileSync(path.resolve(__dirname, '../src/App.tsx'), 'utf8');
+    assert(appFile.includes("candidate === 'live-space'") && appFile.includes("setCurrentPage('mission-control')"), 'Test 16.16: App.tsx gracefully redirects legacy /live-space routes to /mission-control');
+
+    // 16.7 AI Guide Mission Control Knowledge Integration
+    const resChatMC = await fetch(`${BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'What is Mission Control and how do I track celestial motion in real time?' })
+    });
+    const chatMCData = await resChatMC.json();
+    assert(chatMCData.links && chatMCData.links.some(l => l.page === 'mission-control'), 'Test 16.17: AI Space Guide provides contextual link to Mission Control Dashboard');
+  } catch (err) {
+    assert(false, `Test 16: Unified Mission Control Dashboard test failed: ${err.message}`);
   }
 
   console.log('\n====================================================');

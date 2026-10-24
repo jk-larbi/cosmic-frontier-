@@ -65,3 +65,4 @@ export async function fetchLiveCloseApproaches(
 
   return res.json();
 }
+

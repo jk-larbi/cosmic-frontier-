@@ -374,12 +374,12 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
         {/* Cross-navigation links */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           <button
-            onClick={() => onNavigate('live-space')}
+            onClick={() => onNavigate('mission-control')}
             className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] hover:border-[#38BDF8] text-xs font-mono text-[#F8FAFC] flex items-center justify-between group transition-all"
           >
             <span className="flex items-center gap-2">
               <Globe className="w-4 h-4 text-[#38BDF8]" />
-              <span>Inspect Real-Time 3D Solar System Ephemerides</span>
+              <span>Inspect Real-Time Ephemerides in Mission Control</span>
             </span>
             <ArrowRight className="w-4 h-4 text-[#38BDF8] group-hover:translate-x-1 transition-transform" />
           </button>
@@ -557,7 +557,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
             </span>
           </div>
 
-          <div className="relative rounded-3xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-2xl h-[400px] flex items-center justify-center">
+          <div className="relative rounded-3xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-2xl h-100 flex items-center justify-center">
             {selectedApproach ? (
               <canvas ref={canvasRef} className="w-full h-full" />
             ) : (

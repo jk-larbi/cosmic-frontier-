@@ -490,13 +490,13 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
         {onNavigate && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
             <div 
-              onClick={() => onNavigate('live-space')}
+              onClick={() => onNavigate('mission-control')}
               className="p-3.5 rounded-xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] cursor-pointer transition-all flex items-center justify-between group"
             >
               <div className="flex items-center gap-2.5">
                 <Globe className="w-4 h-4 text-[#38BDF8]" />
                 <span className="text-xs font-mono font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
-                  Explore Live Planetary Ephemerides
+                  Explore Planetary Ephemerides in Mission Control
                 </span>
               </div>
               <ArrowRight className="w-4 h-4 text-[#A7B4CC] group-hover:translate-x-1 group-hover:text-[#38BDF8] transition-all" />

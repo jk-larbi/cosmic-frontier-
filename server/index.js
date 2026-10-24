@@ -154,9 +154,9 @@ function getExplorerLinks(text) {
 
   if (mentionsLiveSpace) {
     links.push({
-      label: 'Explore in Live Space Observatory',
-      page: 'live-space',
-      reason: 'Track real-time celestial positions, orbital velocities, and J2000 state vectors from NASA JPL Horizons.'
+      label: 'Open Mission Control Dashboard',
+      page: 'mission-control',
+      reason: 'Track real-time celestial positions, telemetry clocks, and orbital velocities in Mission Control.'
     });
   }
 

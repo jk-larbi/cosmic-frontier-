@@ -13,7 +13,6 @@ import {
   ShieldAlert, 
   ArrowRight,
   Database,
-  Globe,
   Compass,
   Disc,
   Radio
@@ -46,29 +45,29 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Card: Live Space Observatory (Stage 7 Upgrade) */}
+          {/* Card: Mission Control Dashboard (Stage 9) */}
           <div 
-            onClick={() => onNavigate('live-space')}
+            onClick={() => onNavigate('mission-control')}
             className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#38BDF8]/15 transition-all cursor-pointer flex flex-col justify-between"
           >
             <div className="space-y-4">
               <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-                <Globe className="w-6 h-6" />
+                <Radio className="w-6 h-6" />
               </div>
               <div>
                 <span className="text-[10px] font-mono text-[#38BDF8] font-bold uppercase tracking-wider">
-                  NASA JPL Horizons Ephemeris
+                  Unified Telemetry & Overview
                 </span>
                 <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors mt-0.5">
-                  Live Space Observatory
+                  Mission Control Dashboard
                 </h3>
               </div>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Monitor real-time planetary motion, J2000 state vectors, orbital velocities, and distances for 18 Solar System objects in 3D and 2D.
+                Real-time telemetry clocks, planetary velocities, interactive Solar System preview, and Earth close approach monitoring in one command center.
               </p>
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
-              <span>Real-Time Ephemerides</span>
+              <span>Launch Mission Control</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
             </div>
           </div>
