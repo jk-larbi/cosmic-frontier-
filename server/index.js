@@ -306,6 +306,10 @@ app.get('/api/nasa/apod', async (req, res) => {
       service_version: 'v1'
     };
 
+    // Cache fallback APOD to prevent hammering failing upstream NASA endpoint
+    cachedApod = fallbackApod;
+    cachedApodTimestamp = Date.now();
+
     return res.json({
       success: true,
       source: 'verified-archive',
@@ -1762,6 +1766,15 @@ app.use((err, req, res, _next) => {
   }
   console.error('[COSMIC FRONTIER Backend] Unhandled error:', err.message || 'Error');
   res.status(500).json({ error: 'An unexpected server error occurred.' });
+});
+
+// Process-level resilience against unhandled async errors
+process.on('uncaughtException', (err) => {
+  console.error('[COSMIC FRONTIER Backend] Uncaught Exception:', err.message || err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[COSMIC FRONTIER Backend] Unhandled Rejection:', reason?.message || reason);
 });
 
 app.listen(PORT, () => {
