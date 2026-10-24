@@ -69,7 +69,7 @@ export const NasaLiveDispatch: FC<NasaLiveDispatchProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="rounded-3xl bg-gradient-to-b from-[#0B1630] via-[#070D1E] to-[#040814] border border-[#1E293B] hover:border-[#38BDF8]/40 p-6 sm:p-8 space-y-6 shadow-2xl transition-all relative overflow-hidden">
+    <div className="rounded-2xl bg-gradient-to-b from-[#0B1630] via-[#070D1E] to-[#040814] border border-[#1E293B] hover:border-[#38BDF8]/40 p-6 sm:p-8 space-y-6 shadow-2xl transition-all relative overflow-hidden">
       {/* Background glow accent */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-[#38BDF8]/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#8B5CF6]/5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />

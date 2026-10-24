@@ -692,7 +692,7 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold uppercase bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
               <Compass className="w-3.5 h-3.5" />
-              Stage 3: 3D Universe Explorer
+              Planetary Mechanics • 3D Universe Explorer
             </span>
             <span className="text-xs text-[#94A3B8]">JPL Horizons Reference Ephemerides</span>
           </div>
@@ -945,7 +945,7 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
               <h4 className="text-[11px] font-mono uppercase text-[#64748B] font-semibold">
                 Verified Astronomical Parameters
               </h4>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-2 gap-2 text-xs tabular-nums">
                 <div className="p-2 rounded-lg bg-[#0B1630] border border-[#1E293B]">
                   <span className="text-[10px] text-[#64748B] block">Semi-Major Axis</span>
                   <span className="font-semibold text-white font-mono">{activeObjectData.semiMajorAxisAU}</span>

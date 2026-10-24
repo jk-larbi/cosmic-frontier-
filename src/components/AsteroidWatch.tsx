@@ -282,19 +282,19 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* 1. Header & Live NASA CNEOS Badge */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-linear-to-b from-[#0B1630] to-[#050B1A] border border-[#1E293B] shadow-2xl space-y-6">
+      <div className="p-6 sm:p-8 rounded-2xl bg-linear-to-b from-[#0B1630] to-[#070E22] border border-[#1E293B] shadow-xl space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold tracking-wider uppercase bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
                 NASA/JPL CNEOS Close-Approach Data (CAD)
               </span>
               {cadResponse && renderBadge(cadResponse.statusLabel)}
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#F8FAFC] font-mono">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#F8FAFC]">
               Live Asteroid & Comet Approach Monitor
             </h1>
-            <p className="text-sm text-[#A7B4CC] max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#A7B4CC] max-w-2xl leading-relaxed">
               Real-time radar and optical tracking of natural near-Earth objects (NEOs) passing within the inner Solar System. Direct telemetry from NASA/JPL Center for Near Earth Object Studies.
             </p>
           </div>
@@ -305,7 +305,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
               href="https://cneos.jpl.nasa.gov/ca/"
               target="_blank"
               rel="noreferrer"
-              className="px-4 py-3 rounded-2xl bg-[#050B1A] hover:bg-[#0E1B38] border border-[#1E293B] text-xs font-mono text-[#A7B4CC] hover:text-[#F8FAFC] transition-all flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-[#050B1A] hover:bg-[#0E1B38] border border-[#1E293B] text-xs font-mono text-[#A7B4CC] hover:text-[#F8FAFC] transition-all flex items-center gap-2"
             >
               <span>JPL CNEOS Portal</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -314,7 +314,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
             <button
               onClick={loadApproaches}
               disabled={isLoading}
-              className="px-4 py-3 rounded-2xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8]/50 text-xs font-mono font-bold text-[#F8FAFC] transition-all flex items-center gap-2 group"
+              className="px-4 py-2.5 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8]/50 text-xs font-mono font-semibold text-[#F8FAFC] transition-all flex items-center gap-2 group cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 text-[#38BDF8] ${isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
               <span>Refresh Feed</span>
@@ -557,7 +557,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
             </span>
           </div>
 
-          <div className="relative rounded-3xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-2xl h-100 flex items-center justify-center">
+          <div className="relative rounded-2xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-2xl h-100 flex items-center justify-center">
             {selectedApproach ? (
               <canvas ref={canvasRef} className="w-full h-full" />
             ) : (
@@ -576,7 +576,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
         {/* Selected Asteroid Details Inspector (Col Span 1) */}
         <div className="space-y-4">
           {selectedApproach ? (
-            <div className="p-6 rounded-3xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
+            <div className="p-6 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
               <div className="space-y-2 border-b border-[#1E293B] pb-4">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-mono uppercase tracking-wider text-[#38BDF8] font-bold">
@@ -679,7 +679,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
               </div>
             </div>
           ) : (
-            <div className="p-8 rounded-3xl bg-[#0B1630] border border-[#1E293B] text-center text-xs font-mono text-[#A7B4CC]">
+            <div className="p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] text-center text-xs font-mono text-[#A7B4CC]">
               Select an encounter from the table below to inspect its trajectory.
             </div>
           )}
@@ -687,7 +687,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
       </div>
 
       {/* 5. Close Approaches Feed Table */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1E293B] pb-4">
           <div>
             <h3 className="text-xl font-bold font-mono text-[#F8FAFC]">
@@ -729,16 +729,16 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                       <td className="py-3.5 px-4 font-bold text-[#F8FAFC]">
                         {item.designation}
                       </td>
-                      <td className="py-3.5 px-4 text-[#A7B4CC]">
+                      <td className="py-3.5 px-4 text-[#A7B4CC] tabular-nums">
                         {item.closeApproachDate}
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-[#38BDF8]">
+                      <td className="py-3.5 px-4 font-bold text-[#38BDF8] tabular-nums">
                         {formatDistance(item)}
                       </td>
-                      <td className="py-3.5 px-4 text-[#F5C451]">
+                      <td className="py-3.5 px-4 text-[#F5C451] tabular-nums">
                         {item.relativeVelocityKmS} km/s
                       </td>
-                      <td className="py-3.5 px-4 text-[#F8FAFC]">
+                      <td className="py-3.5 px-4 text-[#F8FAFC] tabular-nums">
                         ~{item.estimatedDiameterMeters.avg} m ({item.estimatedDiameterMeters.min}–{item.estimatedDiameterMeters.max} m)
                       </td>
                       <td className="py-3.5 px-4">
@@ -773,7 +773,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
       </div>
 
       {/* 6. Scientific Distinction: Close Approach vs PHA vs Impact Risk (Section 7) */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0B1630] border border-[#1E293B] space-y-6">
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] space-y-6">
         <div className="space-y-2">
           <span className="text-xs font-mono uppercase tracking-wider text-[#38BDF8] font-bold">
             Scientific Data Integrity

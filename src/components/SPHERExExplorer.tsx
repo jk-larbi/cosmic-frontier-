@@ -850,7 +850,7 @@ export const SPHERExExplorer: FC = () => {
                   <Sun className="w-3.5 h-3.5 text-[#F5C451]" />
                   <span>Brightness:</span>
                 </span>
-                <span className="font-mono text-[#F8FAFC]">{brightness}%</span>
+                <span className="font-mono tabular-nums text-[#F8FAFC]">{brightness}%</span>
               </div>
               <input
                 type="range"
@@ -870,7 +870,7 @@ export const SPHERExExplorer: FC = () => {
                   <Sliders className="w-3.5 h-3.5 text-[#38BDF8]" />
                   <span>Contrast:</span>
                 </span>
-                <span className="font-mono text-[#F8FAFC]">{contrast}%</span>
+                <span className="font-mono tabular-nums text-[#F8FAFC]">{contrast}%</span>
               </div>
               <input
                 type="range"
@@ -911,7 +911,7 @@ export const SPHERExExplorer: FC = () => {
               </span>
             </div>
 
-            <div className="space-y-2.5 text-xs font-mono">
+            <div className="space-y-2.5 text-xs font-mono tabular-nums">
               <div className="flex justify-between">
                 <span className="text-[#A7B4CC]">Product / Target:</span>
                 <span className="font-semibold text-[#F8FAFC] text-right truncate max-w-45">
@@ -999,7 +999,7 @@ export const SPHERExExplorer: FC = () => {
                 </span>
               </div>
 
-              <div className="space-y-2 text-xs font-mono">
+              <div className="space-y-2 text-xs font-mono tabular-nums">
                 <div className="flex justify-between">
                   <span className="text-[#A7B4CC]">Target Name:</span>
                   <span className="font-semibold text-[#F8FAFC]">{compareTarget.name}</span>
@@ -1084,7 +1084,7 @@ export const SPHERExExplorer: FC = () => {
       </div>
 
       {/* 6. EDUCATIONAL EXPLANATION SECTION */}
-      <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-8">
+      <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/10 text-[#38BDF8] flex items-center justify-center">
             <Info className="w-5 h-5" />

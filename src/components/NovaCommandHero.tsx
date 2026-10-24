@@ -8,7 +8,8 @@ import {
   Sparkles,
   Telescope,
   Orbit,
-  ArrowDown
+  ArrowDown,
+  Radio
 } from 'lucide-react';
 
 interface NovaCommandHeroProps {
@@ -19,7 +20,7 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
   const [activeTarget, setActiveTarget] = useState<'planet-x' | 'spherex' | 'saturn'>('planet-x');
 
   return (
-    <section className="relative w-full min-h-[95vh] bg-[#050811] text-[#F8FAFC] overflow-hidden rounded-3xl border border-[#1E293B]/80 shadow-2xl p-4 sm:p-8 lg:p-10 flex flex-col justify-between">
+    <section className="relative w-full min-h-[95vh] bg-[#050811] text-[#F8FAFC] overflow-hidden rounded-2xl border border-[#1E293B]/80 shadow-2xl p-4 sm:p-8 lg:p-10 flex flex-col justify-between">
       {/* Background Starfield & Subtle Nebular Gradients */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Soft radial glow under planet */}
@@ -51,61 +52,61 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
         {/* Center Pill Nav Bar (Exact NOVA Pill Style) */}
         <nav className="hidden md:flex items-center gap-1 p-1 rounded-full bg-[#0B1329]/80 border border-[#1E293B] backdrop-blur-md text-xs font-medium">
           <button
-            onClick={() => onNavigate('home')}
-            className="px-4 py-1.5 rounded-full bg-[#1E293B] text-[#F8FAFC] shadow-sm font-semibold"
+            onClick={() => onNavigate('mission-control')}
+            className="px-3.5 py-1.5 rounded-full bg-[#1E293B] text-[#38BDF8] shadow-sm font-semibold hover:text-[#FFFFFF] transition-colors"
           >
-            Dashboard
+            Mission Control
+          </button>
+          <button
+            onClick={() => onNavigate('observatory')}
+            className="px-3.5 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
+          >
+            Observatory
           </button>
           <button
             onClick={() => onNavigate('universe')}
-            className="px-4 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
+            className="px-3.5 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
           >
             3D Universe
           </button>
           <button
             onClick={() => onNavigate('exoplanets')}
-            className="px-4 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
+            className="px-3.5 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
           >
             Exoplanets
           </button>
           <button
             onClick={() => onNavigate('spherex')}
-            className="px-4 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
+            className="px-3.5 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
           >
             SPHEREx
           </button>
           <button
             onClick={() => onNavigate('planet-x')}
-            className="px-4 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
+            className="px-3.5 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
           >
             Planet X
           </button>
           <button
             onClick={() => onNavigate('data-centre')}
-            className="px-4 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
+            className="px-3.5 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
           >
             Data Centre
           </button>
           <button
             onClick={() => onNavigate('ai-guide')}
-            className="px-4 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors flex items-center gap-1.5"
+            className="px-3.5 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors flex items-center gap-1.5"
           >
             <Sparkles className="w-3 h-3 text-[#F5C451]" />
             <span>AI Guide</span>
-          </button>
-          <button
-            onClick={() => onNavigate('about')}
-            className="px-4 py-1.5 rounded-full text-[#A7B4CC] hover:text-[#F8FAFC] transition-colors"
-          >
-            Science Docs
           </button>
         </nav>
 
         {/* Right Status Badge */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0B1329] border border-[#1E293B] text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
-            <span className="text-[#34D399] font-semibold">LIVE HUD</span>
+            <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+            <span className="text-[#34D399] font-semibold">TELEMETRY LIVE</span>
           </div>
         </div>
       </div>
@@ -116,45 +117,42 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
         <div className="lg:col-span-6 space-y-6">
           {/* Status Chip */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0B1329] border border-[#1E293B] text-xs font-mono text-[#A7B4CC]">
-            <span>SYSTEM STATUS</span>
-            <span className="text-[#10B981] font-bold">● NOMINAL</span>
+            <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+            <span>NASA SPACE APPS • ASTRONOMICAL PLATFORM</span>
           </div>
 
-          {/* Three-Word Monumental Headline (NOVA style) */}
-          <div className="space-y-1">
-            <h1 className="text-4xl sm:text-6xl xl:text-7xl font-black tracking-tight text-[#F8FAFC] leading-[1.02]">
-              EXPLORE.
-              <br />
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-[#FFFFFF] via-[#E2E8F0] to-[#94A3B8]">
-                DISCOVER.
-              </span>
+          {/* Clean Editorial Headline */}
+          <div className="space-y-2">
+            <h1 className="text-3xl sm:text-5xl xl:text-6xl font-extrabold tracking-tight text-[#F8FAFC] leading-[1.08]">
+              Explore the Universe.
               <br />
               <span className="text-transparent bg-clip-text bg-linear-to-r from-[#38BDF8] via-[#8B5CF6] to-[#F5C451]">
-                ENDURE.
+                Discover the Unknown.
               </span>
             </h1>
           </div>
 
           <p className="max-w-xl text-sm sm:text-base text-[#94A3B8] leading-relaxed">
-            Navigate the infrared universe with SPHEREx, catalog distant worlds beyond Neptune, and investigate the gravitational clues of the hypothetical Planet X.
+            A beginner-friendly astronomical workspace powered by real NASA open data, JPL Standish analytical ephemerides, 102-channel infrared spectroscopy, and interactive celestial motion across our Solar System and beyond.
           </p>
 
-          {/* Two Prominent Action Buttons (White primary + Dark secondary with icon) */}
+          {/* Two Prominent Action Buttons */}
           <div className="flex flex-wrap items-center gap-4 pt-2">
             <button
-              onClick={() => onNavigate('spherex')}
-              className="px-7 py-3.5 rounded-full bg-[#FFFFFF] hover:bg-[#F1F5F9] text-[#050811] font-black text-sm tracking-wide shadow-2xl hover:shadow-[#FFFFFF]/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer"
+              onClick={() => onNavigate('observatory')}
+              className="px-7 py-3.5 rounded-full bg-[#FFFFFF] hover:bg-[#F1F5F9] text-[#050811] font-bold text-sm tracking-wide shadow-xl hover:shadow-[#FFFFFF]/20 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-2 cursor-pointer"
             >
-              <span>LAUNCH SPHEREx</span>
+              <Telescope className="w-4 h-4 text-[#0284C7]" />
+              <span>LIVE OBSERVATORY</span>
               <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
             </button>
 
             <button
-              onClick={() => onNavigate('planet-x')}
-              className="px-6 py-3.5 rounded-full bg-[#0B1329]/90 hover:bg-[#131D38] text-[#F8FAFC] border border-[#38BDF8]/40 hover:border-[#38BDF8] font-bold text-sm shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer backdrop-blur-sm"
+              onClick={() => onNavigate('mission-control')}
+              className="px-6 py-3.5 rounded-full bg-[#0B1329]/90 hover:bg-[#131D38] text-[#F8FAFC] border border-[#38BDF8]/40 hover:border-[#38BDF8] font-semibold text-sm shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-2 cursor-pointer backdrop-blur-sm"
             >
-              <span>VIEW ORBIT MAP</span>
-              <span className="text-[#38BDF8] text-base font-bold">+</span>
+              <Radio className="w-4 h-4 text-[#38BDF8]" />
+              <span>MISSION CONTROL</span>
             </button>
           </div>
         </div>

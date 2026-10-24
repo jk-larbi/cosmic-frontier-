@@ -306,7 +306,7 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
                       {item.properties.slice(0, 4).map((prop, idx) => (
                         <div key={idx} className="bg-[#050B1A]/60 rounded-lg p-2 border border-[#1E293B]/60">
                           <span className="text-[10px] text-[#64748B] block truncate">{prop.label}</span>
-                          <span className="font-semibold text-[#F8FAFC] truncate block mt-0.5">
+                          <span className="font-semibold text-[#F8FAFC] truncate block mt-0.5 font-mono tabular-nums">
                             {prop.value} {prop.unit && <span className="text-[10px] text-[#94A3B8] font-normal">{prop.unit}</span>}
                           </span>
                         </div>
@@ -392,7 +392,7 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
                         <th className="py-2.5 px-4 font-medium">Standard Unit</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#1E293B]">
+                    <tbody className="divide-y divide-[#1E293B] tabular-nums">
                       {activeModalItem.properties.map((prop, idx) => (
                         <tr key={idx} className="hover:bg-[#0B1630]/60">
                           <td className="py-2.5 px-4 text-[#94A3B8] font-medium">{prop.label}</td>

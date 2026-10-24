@@ -418,7 +418,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
 
       {/* 3. COMPARISON WORKSPACE (If active) */}
       {showCompareWorkspace && compareList.length > 0 && (
-        <div className="p-6 rounded-3xl bg-[#0B1630] border border-[#8B5CF6]/40 shadow-2xl space-y-6 animate-fadeIn">
+        <div className="p-6 rounded-2xl bg-[#0B1630] border border-[#8B5CF6]/40 shadow-2xl space-y-6 animate-fadeIn">
           <div className="flex items-center justify-between border-b border-[#1E293B] pb-4">
             <div className="flex items-center gap-2.5">
               <Scale className="w-5 h-5 text-[#8B5CF6]" />
@@ -470,7 +470,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
                   </p>
                 </div>
 
-                <div className="space-y-1.5 text-xs font-mono pt-2 border-t border-[#1E293B]">
+                <div className="space-y-1.5 text-xs font-mono tabular-nums pt-2 border-t border-[#1E293B]">
                   <div className="flex justify-between">
                     <span className="text-[#A7B4CC]">Morphology:</span>
                     <span className="text-[#F8FAFC] font-semibold">{g.morphologicalType.split(' ')[0]}</span>
@@ -542,14 +542,14 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
 
       {/* 4. MAIN LAYOUT: CATALOG DISPLAY (GRID / TABLE) */}
       {isLoading ? (
-        <div className="p-16 rounded-3xl bg-[#0B1630] border border-[#1E293B] flex flex-col items-center justify-center space-y-4">
+        <div className="p-16 rounded-2xl bg-[#0B1630] border border-[#1E293B] flex flex-col items-center justify-center space-y-4">
           <Loader2 className="w-10 h-10 text-[#8B5CF6] animate-spin" />
           <p className="text-xs font-mono uppercase tracking-wider text-[#A7B4CC]">
             Querying NASA/IPAC Extragalactic Database & CDS SIMBAD...
           </p>
         </div>
       ) : error ? (
-        <div className="p-12 rounded-3xl bg-[#0B1630] border border-[#F5C451]/30 text-center space-y-4">
+        <div className="p-12 rounded-2xl bg-[#0B1630] border border-[#F5C451]/30 text-center space-y-4">
           <ShieldAlert className="w-12 h-12 text-[#F5C451] mx-auto" />
           <h3 className="text-lg font-bold text-[#F8FAFC]">Catalog Service Warning</h3>
           <p className="text-xs text-[#A7B4CC] max-w-md mx-auto">{error}</p>
@@ -561,7 +561,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
           </button>
         </div>
       ) : filteredGalaxies.length === 0 ? (
-        <div className="p-16 rounded-3xl bg-[#0B1630] border border-[#1E293B] text-center space-y-4">
+        <div className="p-16 rounded-2xl bg-[#0B1630] border border-[#1E293B] text-center space-y-4">
           <Disc className="w-12 h-12 text-[#A7B4CC]/40 mx-auto" />
           <h3 className="text-base font-bold text-[#F8FAFC]">No galaxies match your criteria</h3>
           <p className="text-xs text-[#A7B4CC] max-w-sm mx-auto">
@@ -645,7 +645,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
                   </div>
 
                   {/* Key Metrics Chips */}
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#1E293B] text-xs font-mono">
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#1E293B] text-xs font-mono tabular-nums">
                     <div className="p-2 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                       <span className="text-[10px] text-[#A7B4CC] block">Redshift:</span>
                       <span className="text-[#38BDF8] font-bold">{galaxy.redshift}</span>
@@ -687,7 +687,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
       ) : (
         /* TABLE VIEW */
         <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] overflow-x-auto shadow-xl">
-          <table className="w-full text-left text-xs font-mono">
+          <table className="w-full text-left text-xs font-mono tabular-nums">
             <thead className="bg-[#050B1A] border-b border-[#1E293B] text-[#A7B4CC] uppercase text-[10px] tracking-wider">
               <tr>
                 <th className="py-3 px-4">Object Name</th>
@@ -753,7 +753,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
 
       {/* 5. SELECTED GALAXY DETAILS INSPECTOR PANEL */}
       {selectedGalaxy && (
-        <div className="rounded-3xl bg-[#0B1630] border border-[#8B5CF6]/40 p-6 sm:p-8 space-y-6 shadow-2xl">
+        <div className="rounded-2xl bg-[#0B1630] border border-[#8B5CF6]/40 p-6 sm:p-8 space-y-6 shadow-2xl">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-[#1E293B] pb-6">
             <div className="space-y-1.5">
@@ -835,7 +835,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Left Column: Properties Table */}
               <div className="lg:col-span-7 space-y-4">
-                <div className="p-5 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-3 font-mono text-xs">
+                <div className="p-5 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-3 font-mono tabular-nums text-xs">
                   <div className="flex justify-between border-b border-[#1E293B] pb-2">
                     <span className="text-[#A7B4CC]">Morphological Type:</span>
                     <span className="text-[#F8FAFC] font-bold text-right">{selectedGalaxy.morphologicalType}</span>
@@ -1034,7 +1034,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
       )}
 
       {/* 6. DISTANCE & REDSHIFT EXPLORER VISUALIZATION */}
-      <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 space-y-6">
+      <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-8 space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#F5C451]/10 text-[#F5C451] flex items-center justify-center">
             <Compass className="w-5 h-5" />
@@ -1098,7 +1098,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
       </div>
 
       {/* 7. EDUCATIONAL SECTION */}
-      <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-8">
+      <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6] flex items-center justify-center">
             <BookOpen className="w-5 h-5" />

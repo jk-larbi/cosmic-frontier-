@@ -244,7 +244,7 @@ You can explore any of our core educational questions or inspect our interactive
             <span>Educational Astronomy Assistant</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#F8FAFC] tracking-tight">
-            COSMIC AI GUIDE
+            Cosmic AI Guide
           </h1>
           <p className="text-sm sm:text-base text-[#A7B4CC] mt-1">
             Your friendly guide to the universe.

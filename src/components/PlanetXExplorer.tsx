@@ -757,7 +757,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
             </div>
 
             {/* Approximate Orbital Properties Only When Verified */}
-            <div className="grid grid-cols-2 gap-2.5 text-xs font-mono">
+            <div className="grid grid-cols-2 gap-2.5 text-xs font-mono tabular-nums">
               <div className="p-2.5 rounded-xl bg-[#050B1A] border border-[#1E293B]">
                 <span className="text-[10px] text-[#A7B4CC] block">Semi-Major Axis:</span>
                 <span className="text-[#F8FAFC] font-bold text-sm">
@@ -821,7 +821,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
       </div>
 
       {/* 5. THE EVIDENCE INVESTIGATION PANEL (SECTION 6) */}
-      <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-8">
+      <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-8">
         <div className="max-w-2xl space-y-2">
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#38BDF8] font-mono">
             <Compass className="w-4 h-4" />
@@ -862,7 +862,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
       </div>
 
       {/* 6. EVIDENCE AND UNCERTAINTY SECTION (SECTION 7) */}
-      <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-6">
+      <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-6">
         <div className="max-w-3xl space-y-2">
           <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC]">
             What Does the Evidence Tell Us?
@@ -934,7 +934,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
       </div>
 
       {/* 7. CANDIDATE INVESTIGATION EDUCATIONAL WORKFLOW (SECTION 8) */}
-      <div className="rounded-3xl bg-gradient-to-r from-[#0B1630] to-[#0E1B38] border border-[#8B5CF6]/30 p-8 sm:p-10 space-y-8 shadow-2xl">
+      <div className="rounded-2xl bg-gradient-to-r from-[#0B1630] to-[#0E1B38] border border-[#8B5CF6]/30 p-8 sm:p-10 space-y-8 shadow-2xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 text-xs font-mono text-[#8B5CF6] uppercase tracking-wider font-bold">

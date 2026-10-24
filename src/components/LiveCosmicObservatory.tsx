@@ -826,11 +826,11 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       aria-label="Live Cosmic Observatory Workspace"
     >
       {/* 1. OBSERVATORY HEADER */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
+      <div className="p-6 sm:p-8 rounded-2xl bg-linear-to-b from-[#0B1630] to-[#070E22] border border-[#1E293B] shadow-xl space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-xs font-mono font-bold uppercase tracking-wider">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-xs font-mono font-semibold uppercase tracking-wider">
                 <Telescope className="w-3.5 h-3.5" />
                 <span>Live Cosmic Observatory</span>
               </div>
@@ -839,24 +839,24 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                 {filteredObjects.length} Objects Loaded
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#F8FAFC] font-mono">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#F8FAFC]">
               Live Cosmic Observatory
             </h1>
-            <p className="text-sm text-[#A7B4CC] max-w-3xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#A7B4CC] max-w-3xl leading-relaxed">
               Explore the Universe. Discover the Unknown. An interactive motion viewer for all supported astronomical objects across NASA, JPL, IPAC, and international catalogs.
             </p>
           </div>
 
           {/* Telemetry Clock & Last Retrieval Timestamp */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="p-4 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-1">
+            <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-1 min-w-60">
               <div className="flex items-center justify-between gap-4 text-xs text-[#A7B4CC] font-mono">
                 <span className="flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-[#38BDF8]" />
                   <span>Simulated Observation Epoch</span>
                 </span>
               </div>
-              <div className="text-base font-mono font-bold text-[#F8FAFC]">
+              <div className="text-base font-mono font-bold text-[#F8FAFC] tabular-nums">
                 {simulatedDate.toUTCString().slice(0, 25)}
               </div>
               <div className="text-[10px] font-mono text-[#64748B]">
@@ -866,7 +866,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
             <button
               onClick={() => onNavigate('mission-control')}
-              className="px-4 py-3 rounded-2xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8]/50 text-xs font-mono font-bold text-[#F8FAFC] transition-all flex items-center justify-center gap-2 group cursor-pointer"
+              className="px-4 py-3 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8]/50 text-xs font-mono font-semibold text-[#F8FAFC] transition-all flex items-center justify-center gap-2 group cursor-pointer"
             >
               <Radio className="w-4 h-4 text-[#38BDF8]" />
               <span>Mission Control</span>
@@ -875,7 +875,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         </div>
 
         {/* Category Filter Chips */}
-        <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-[#1E293B]">
+        <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-[#1E293B]/70">
           {[
             { id: 'all', label: 'All Supported', count: observatoryData?.allAvailableCount || 63 },
             { id: 'solar-system', label: 'Solar System', count: observatoryData?.categories['solar-system'] || 10 },
@@ -888,14 +888,14 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
             <button
               key={tab.id}
               onClick={() => setSelectedCategory(tab.id as ObservatoryCategory)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                 selectedCategory === tab.id
-                  ? 'bg-[#38BDF8] text-[#050B1A] font-bold shadow-md shadow-[#38BDF8]/20'
+                  ? 'bg-[#38BDF8] text-[#050B1A] font-bold shadow-xs'
                   : 'bg-[#050B1A] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#1E293B]'
               }`}
             >
               <span>{tab.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${selectedCategory === tab.id ? 'bg-[#050B1A]/20 text-[#050B1A]' : 'bg-[#1E293B] text-[#94A3B8]'}`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums ${selectedCategory === tab.id ? 'bg-[#050B1A]/20 text-[#050B1A]' : 'bg-[#1E293B] text-[#94A3B8]'}`}>
                 {tab.count}
               </span>
             </button>
@@ -907,23 +907,23 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* VIEWPORT & INTERACTIVE CANVAS (Col Span 2) */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="p-4 rounded-3xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-3">
+          <div className="p-4 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-3">
             {/* Viewport Control Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2.5">
               {/* Engine Toggle */}
-              <div className="flex rounded-xl bg-[#050B1A] p-0.5 border border-[#1E293B] text-xs font-mono">
+              <div className="flex rounded-lg bg-[#050B1A] p-0.5 border border-[#1E293B] text-xs font-mono">
                 <button
                   onClick={() => setRenderEngine('3d')}
-                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                    renderEngine === '3d' ? 'bg-[#38BDF8] text-[#050B1A] font-bold' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+                  className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                    renderEngine === '3d' ? 'bg-[#38BDF8] text-[#050B1A] font-bold shadow-xs' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                   }`}
                 >
                   3D WebGL
                 </button>
                 <button
                   onClick={() => setRenderEngine('2d')}
-                  className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                    renderEngine === '2d' ? 'bg-[#38BDF8] text-[#050B1A] font-bold' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+                  className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                    renderEngine === '2d' ? 'bg-[#38BDF8] text-[#050B1A] font-bold shadow-xs' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                   }`}
                 >
                   2D Radar
@@ -931,43 +931,43 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               </div>
 
               {/* Scale Mode Selector */}
-              <div className="flex rounded-xl bg-[#050B1A] p-0.5 border border-[#1E293B] text-xs font-mono">
+              <div className="flex flex-wrap rounded-lg bg-[#050B1A] p-0.5 border border-[#1E293B] text-xs font-mono">
                 <button
                   onClick={() => setScaleMode('inner')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                    scaleMode === 'inner' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8]'
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    scaleMode === 'inner' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                   }`}
                 >
                   Inner (0-5 AU)
                 </button>
                 <button
                   onClick={() => setScaleMode('full')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                    scaleMode === 'full' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8]'
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    scaleMode === 'full' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                   }`}
                 >
                   Full (0-35 AU)
                 </button>
                 <button
                   onClick={() => setScaleMode('outer')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                    scaleMode === 'outer' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8]'
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    scaleMode === 'outer' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                   }`}
                 >
                   Outer (1200 AU)
                 </button>
                 <button
                   onClick={() => setScaleMode('exoplanet')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                    scaleMode === 'exoplanet' ? 'bg-[#0E1B38] text-[#C084FC] font-bold border border-[#8B5CF6]/40' : 'text-[#94A3B8]'
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    scaleMode === 'exoplanet' ? 'bg-[#0E1B38] text-[#C084FC] font-bold border border-[#8B5CF6]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                   }`}
                 >
                   Exo Orbit
                 </button>
                 <button
                   onClick={() => setScaleMode('sky')}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                    scaleMode === 'sky' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8]'
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    scaleMode === 'sky' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
                   }`}
                 >
                   Sky View (RA/Dec)
@@ -978,7 +978,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setShowOrbits(!showOrbits)}
-                  className={`px-2.5 py-1 rounded-lg border text-xs font-mono cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg border text-xs font-mono transition-all cursor-pointer ${
                     showOrbits ? 'bg-[#0E1B38] text-[#38BDF8] border-[#38BDF8]/40' : 'bg-[#050B1A] text-[#94A3B8] border-[#1E293B]'
                   }`}
                 >
@@ -987,7 +987,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
                 <button
                   onClick={() => setShowLabels(!showLabels)}
-                  className={`px-2.5 py-1 rounded-lg border text-xs font-mono cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg border text-xs font-mono transition-all cursor-pointer ${
                     showLabels ? 'bg-[#0E1B38] text-[#38BDF8] border-[#38BDF8]/40' : 'bg-[#050B1A] text-[#94A3B8] border-[#1E293B]'
                   }`}
                 >
@@ -996,7 +996,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
                 <button
                   onClick={handleFocusSelected}
-                  className="px-2.5 py-1 rounded-lg bg-[#050B1A] hover:bg-[#1E293B] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] flex items-center gap-1 cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-[#050B1A] hover:bg-[#1E293B] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] flex items-center gap-1 transition-all cursor-pointer"
                   title="Focus camera on selected object"
                 >
                   <Eye className="w-3.5 h-3.5 text-[#38BDF8]" />
@@ -1006,7 +1006,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
             </div>
 
             {/* Canvas Container */}
-            <div className="relative rounded-2xl bg-[#030712] border border-[#1E293B] overflow-hidden shadow-inner h-[520px] flex items-center justify-center">
+            <div className="relative rounded-xl bg-[#030712] border border-[#1E293B] overflow-hidden shadow-inner h-130 lg:h-145 flex items-center justify-center">
               {renderEngine === '3d' ? (
                 <div ref={mount3DRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
               ) : (
@@ -1015,10 +1015,10 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
               {/* Viewport Info Overlay (Top Left) */}
               <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
-                <div className="px-3 py-1.5 rounded-xl bg-[#050B1A]/85 backdrop-blur-md border border-[#1E293B] text-[11px] font-mono text-[#F8FAFC] space-y-0.5 shadow-lg">
+                <div className="px-3 py-1.5 rounded-lg bg-[#050B1A]/90 backdrop-blur-md border border-[#1E293B] text-[11px] font-mono text-[#F8FAFC] space-y-0.5 shadow-md">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#38BDF8] animate-pulse" />
-                    <span className="font-bold uppercase tracking-wider text-[#38BDF8]">
+                    <span className="w-2 h-2 rounded-full bg-[#38BDF8]" />
+                    <span className="font-semibold uppercase tracking-wider text-[#38BDF8]">
                       {scaleMode === 'sky' ? 'Celestial Sphere Projection' : 'Interactive Heliocentric View'}
                     </span>
                   </div>
@@ -1049,13 +1049,13 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
             </div>
 
             {/* 3. INTERACTIVE PLAYBACK TIMELINE CONTROLS */}
-            <div className="p-4 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-4">
+            <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 {/* Play, Pause, Step Buttons */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setIsPlaying(!isPlaying)}
-                    className={`px-4 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2 transition-all cursor-pointer shadow-md ${
+                    className={`px-4 py-2 rounded-lg text-xs font-mono font-bold flex items-center gap-2 transition-all cursor-pointer shadow-sm ${
                       isPlaying
                         ? 'bg-amber-500 text-[#050B1A] hover:bg-amber-400'
                         : 'bg-[#38BDF8] text-[#050B1A] hover:bg-[#0284C7]'
@@ -1067,7 +1067,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
                   <button
                     onClick={() => handleStepDays(-1)}
-                    className="p-2 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] text-[#94A3B8] hover:text-[#F8FAFC] transition-all cursor-pointer"
+                    className="p-2 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] text-[#94A3B8] hover:text-[#F8FAFC] transition-all cursor-pointer"
                     title="Step backward 1 day"
                   >
                     <Rewind className="w-4 h-4" />
@@ -1075,7 +1075,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
                   <button
                     onClick={() => handleStepDays(1)}
-                    className="p-2 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] text-[#94A3B8] hover:text-[#F8FAFC] transition-all cursor-pointer"
+                    className="p-2 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] text-[#94A3B8] hover:text-[#F8FAFC] transition-all cursor-pointer"
                     title="Step forward 1 day"
                   >
                     <FastForward className="w-4 h-4" />
@@ -1083,7 +1083,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
                   <button
                     onClick={() => handleSelectPreset(new Date().toISOString())}
-                    className="p-2 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] text-[#94A3B8] hover:text-[#F8FAFC] transition-all cursor-pointer"
+                    className="p-2 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] text-[#94A3B8] hover:text-[#F8FAFC] transition-all cursor-pointer"
                     title="Reset to Present (Current UTC)"
                   >
                     <RotateCcw className="w-4 h-4" />
@@ -1103,7 +1103,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                     <button
                       key={s.label}
                       onClick={() => setPlaybackSpeed(s.val)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all cursor-pointer tabular-nums ${
                         playbackSpeed === s.val
                           ? 'bg-[#0E1B38] text-[#38BDF8] border border-[#38BDF8]/40 font-bold'
                           : 'bg-[#050B1A] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#1E293B]'
@@ -1121,7 +1121,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                     type="datetime-local"
                     value={dateInputVal}
                     onChange={handleDateInputChange}
-                    className="px-2.5 py-1.5 rounded-xl bg-[#030712] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] focus:outline-none focus:border-[#38BDF8]"
+                    className="px-2.5 py-1.5 rounded-lg bg-[#030712] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] focus:outline-none focus:border-[#38BDF8]"
                   />
                 </div>
               </div>
@@ -1133,7 +1133,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                   <button
                     key={preset.label}
                     onClick={() => handleSelectPreset(preset.iso)}
-                    className="px-2.5 py-1 rounded-lg bg-[#0E1B38]/60 hover:bg-[#1E293B] border border-[#1E293B] text-[11px] font-mono text-[#94A3B8] hover:text-[#38BDF8] transition-all cursor-pointer"
+                    className="px-2.5 py-1 rounded-md bg-[#0E1B38]/60 hover:bg-[#1E293B] border border-[#1E293B] text-[11px] font-mono text-[#94A3B8] hover:text-[#38BDF8] transition-all cursor-pointer"
                     title={preset.note}
                   >
                     {preset.label}
@@ -1154,22 +1154,22 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               placeholder="Search 63 supported astronomical objects..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[#0B1630] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] placeholder-[#64748B] focus:outline-none focus:border-[#38BDF8]"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0B1630] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] placeholder-[#64748B] focus:outline-none focus:border-[#38BDF8]"
             />
           </div>
 
           {/* Quick Carousel Selector */}
-          <div className="p-3 rounded-2xl bg-[#0B1630] border border-[#1E293B] space-y-2">
+          <div className="p-3 rounded-xl bg-[#0B1630] border border-[#1E293B] space-y-2">
             <div className="flex items-center justify-between text-xs font-mono text-[#94A3B8] px-1">
               <span>Quick Object Selector</span>
-              <span>{filteredObjects.length} Available</span>
+              <span className="tabular-nums">{filteredObjects.length} Available</span>
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
               {filteredObjects.slice(0, 15).map(o => (
                 <button
                   key={o.id}
                   onClick={() => setSelectedObjectId(o.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-mono shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                     selectedObjectId === o.id
                       ? 'bg-[#38BDF8] text-[#050B1A] font-bold'
                       : 'bg-[#050B1A] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#1E293B]'
@@ -1184,7 +1184,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
           {/* Detailed Inspector Card */}
           {selectedObject ? (
-            <div className="p-6 rounded-3xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-5">
+            <div className="p-6 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-5">
               {/* Header */}
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1206,35 +1206,35 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               </div>
 
               {/* Real-Time / Calculated Telemetry Grid */}
-              <div className="grid grid-cols-2 gap-2.5 text-xs font-mono">
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono">
                 {selectedObject.distSunAU !== undefined && (
-                  <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B]">
+                  <div className="p-2.5 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                     <span className="text-[10px] text-[#64748B]">Dist. to Sun:</span>
-                    <div className="font-bold text-[#F8FAFC] mt-0.5">{selectedObject.distSunAU} AU</div>
+                    <div className="font-bold text-[#F8FAFC] mt-0.5 tabular-nums">{selectedObject.distSunAU} AU</div>
                     <div className="text-[10px] text-[#94A3B8]">{selectedObject.distSunMillionKm}M km</div>
                   </div>
                 )}
 
                 {selectedObject.distEarthAU !== undefined && (
-                  <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B]">
+                  <div className="p-2.5 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                     <span className="text-[10px] text-[#64748B]">Dist. to Earth:</span>
-                    <div className="font-bold text-[#38BDF8] mt-0.5">{selectedObject.distEarthAU} AU</div>
+                    <div className="font-bold text-[#38BDF8] mt-0.5 tabular-nums">{selectedObject.distEarthAU} AU</div>
                     <div className="text-[10px] text-[#94A3B8]">{selectedObject.distEarthLunar} LD</div>
                   </div>
                 )}
 
                 {selectedObject.orbitalSpeedKmS !== undefined && (
-                  <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B]">
+                  <div className="p-2.5 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                     <span className="text-[10px] text-[#64748B]">Orbital Speed:</span>
-                    <div className="font-bold text-[#F5C451] mt-0.5">{selectedObject.orbitalSpeedKmS} km/s</div>
+                    <div className="font-bold text-[#F5C451] mt-0.5 tabular-nums">{selectedObject.orbitalSpeedKmS} km/s</div>
                     <div className="text-[10px] text-[#94A3B8]">~{Math.round(selectedObject.orbitalSpeedKmS * 3600).toLocaleString()} km/h</div>
                   </div>
                 )}
 
                 {selectedObject.orbitalElements && (
-                  <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B]">
+                  <div className="p-2.5 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                     <span className="text-[10px] text-[#64748B]">Period:</span>
-                    <div className="font-bold text-[#F8FAFC] mt-0.5">
+                    <div className="font-bold text-[#F8FAFC] mt-0.5 tabular-nums">
                       {selectedObject.orbitalElements.orbitalPeriodYears} yrs
                     </div>
                     <div className="text-[10px] text-[#94A3B8]">
@@ -1244,9 +1244,9 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                 )}
 
                 {selectedObject.celestialCoords?.distanceLightYears && (
-                  <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B]">
+                  <div className="p-2.5 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                     <span className="text-[10px] text-[#64748B]">Distance:</span>
-                    <div className="font-bold text-[#38BDF8] mt-0.5">
+                    <div className="font-bold text-[#38BDF8] mt-0.5 tabular-nums">
                       {selectedObject.celestialCoords.distanceLightYears.toLocaleString()} ly
                     </div>
                     <div className="text-[10px] text-[#94A3B8]">
@@ -1256,9 +1256,9 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                 )}
 
                 {selectedObject.celestialCoords?.distanceMly && (
-                  <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B]">
+                  <div className="p-2.5 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                     <span className="text-[10px] text-[#64748B]">Extragalactic Dist:</span>
-                    <div className="font-bold text-[#38BDF8] mt-0.5">
+                    <div className="font-bold text-[#38BDF8] mt-0.5 tabular-nums">
                       {selectedObject.celestialCoords.distanceMly} Mly
                     </div>
                     <div className="text-[10px] text-[#94A3B8]">
@@ -1270,7 +1270,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
               {/* Sky Coordinates (RA / Dec) */}
               {(selectedObject.rightAscension || selectedObject.celestialCoords?.rightAscension) && (
-                <div className="p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-1 text-xs font-mono">
+                <div className="p-3 rounded-lg bg-[#050B1A] border border-[#1E293B] space-y-1 text-xs font-mono">
                   <div className="text-[10px] text-[#64748B] flex items-center justify-between">
                     <span>Equatorial Coordinates (J2000):</span>
                     <span>{selectedObject.coordinateFrame}</span>
@@ -1283,12 +1283,12 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               )}
 
               {/* Educational Description */}
-              <p className="text-xs text-[#A7B4CC] leading-relaxed p-3.5 rounded-xl bg-[#050B1A] border border-[#1E293B]">
+              <p className="text-xs text-[#A7B4CC] leading-relaxed p-3 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                 {selectedObject.description}
               </p>
 
               {/* Mandatory Scientific Transparency Disclaimer */}
-              <div className="p-3.5 rounded-xl bg-linear-to-r from-[#050B1A] to-[#0E1B38] border border-[#38BDF8]/30 space-y-1.5">
+              <div className="p-3 rounded-lg bg-linear-to-r from-[#050B1A] to-[#0E1B38] border border-[#38BDF8]/30 space-y-1.5">
                 <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-[#38BDF8]">
                   <Info className="w-3.5 h-3.5 shrink-0" />
                   <span>Scientific Modeling Notice</span>
@@ -1316,7 +1316,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <button
                   onClick={() => onNavigate('universe')}
-                  className="py-2.5 px-3 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8] text-xs font-mono font-bold text-[#38BDF8] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="py-2.5 px-3 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8] text-xs font-mono font-semibold text-[#38BDF8] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Globe className="w-3.5 h-3.5" />
                   <span>3D Universe</span>
@@ -1324,7 +1324,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
                 <button
                   onClick={() => onNavigate('ai-guide')}
-                  className="py-2.5 px-3 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-amber-400 text-xs font-mono font-bold text-amber-300 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="py-2.5 px-3 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-amber-400 text-xs font-mono font-semibold text-amber-300 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Ask AI Guide</span>
@@ -1332,7 +1332,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               </div>
             </div>
           ) : (
-            <div className="p-8 text-center rounded-3xl bg-[#0B1630] border border-[#1E293B] text-xs font-mono text-[#94A3B8]">
+            <div className="p-8 text-center rounded-2xl bg-[#0B1630] border border-[#1E293B] text-xs font-mono text-[#94A3B8]">
               Select an astronomical object to inspect its orbital telemetry.
             </div>
           )}
@@ -1340,7 +1340,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       </div>
 
       {/* 5. SCIENTIFIC TRANSPARENCY & ORBITAL LEGEND DRAWER */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h3 className="text-xl font-bold font-mono text-[#F8FAFC]">
@@ -1360,7 +1360,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
         {showLegend && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-4 border-t border-[#1E293B] text-xs font-mono text-[#A7B4CC]">
-            <div className="p-4 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-2">
+            <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-2">
               <span className="font-bold text-[#F8FAFC]">Orbital Path Conventions</span>
               <ul className="space-y-1.5 text-[11px]">
                 <li className="flex items-center gap-2">
@@ -1378,7 +1378,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               </ul>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-2">
+            <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-2">
               <span className="font-bold text-[#F8FAFC]">Distance Scale Conversions</span>
               <ul className="space-y-1.5 text-[11px]">
                 <li>• 1 AU (Astronomical Unit) = 149,597,870.7 km (Earth-Sun mean)</li>
@@ -1388,7 +1388,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               </ul>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-2">
+            <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-2">
               <span className="font-bold text-[#F8FAFC]">Visual Magnification Notice</span>
               <p className="text-[11px] leading-relaxed">
                 Celestial body radii are enlarged for visibility against interplanetary distances. Orbital radii, eccentricities, speeds, and simulation timing strictly maintain astronomical Keplerian ratios.

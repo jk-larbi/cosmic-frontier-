@@ -15,7 +15,7 @@ export const CosmicOrbitalDiagram: FC<CosmicOrbitalDiagramProps> = ({ onNavigate
   const hoveredObj = SOLAR_SYSTEM_OBJECTS.find(o => o.id === hoveredId) || SOLAR_SYSTEM_OBJECTS.find(o => o.id === 'planet-x');
 
   return (
-    <div className="relative rounded-3xl bg-[#070D1E] border border-[#1E293B] overflow-hidden shadow-2xl">
+    <div className="relative rounded-2xl bg-[#070D1E] border border-[#1E293B] overflow-hidden shadow-2xl">
       {/* Background starlight & nebula gradients */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-[#38BDF8]/10 rounded-full blur-3xl" />

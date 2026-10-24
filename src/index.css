@@ -9,6 +9,8 @@
   --accent-gold: #F5C451;
   --text-primary: #F8FAFC;
   --text-secondary: #A7B4CC;
+  --border-subtle: #1E293B;
+  --border-muted: #152238;
 }
 
 body {
@@ -18,6 +20,20 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular numbers for non-jittering telemetry & coordinates */
+.tabular-nums, .font-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scientific code & coordinate font */
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-feature-settings: "tnum" 1;
 }
 
 /* Subtle starfield effect */
@@ -33,31 +49,37 @@ body {
   background-size: 1000px 600px;
 }
 
-/* Subtle glow utility classes */
+/* Refined scientific glow utility classes (restrained opacity) */
 .glow-blue {
-  box-shadow: 0 0 25px -5px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 0 20px -5px rgba(56, 189, 248, 0.18);
 }
 
 .glow-purple {
-  box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.25);
+  box-shadow: 0 0 20px -5px rgba(139, 92, 246, 0.18);
 }
 
 .glow-gold {
-  box-shadow: 0 0 25px -5px rgba(245, 196, 81, 0.3);
+  box-shadow: 0 0 20px -5px rgba(245, 196, 81, 0.2);
+}
+
+/* Accessible focus visible ring */
+:focus-visible {
+  outline: 2px solid #38BDF8;
+  outline-offset: 2px;
 }
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: #050B1A;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1A284A;
+  background: #1E293B;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #253866;
+  background: #334155;
 }

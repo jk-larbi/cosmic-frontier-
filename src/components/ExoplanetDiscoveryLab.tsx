@@ -366,7 +366,7 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1E293B]/70 font-mono">
+                <tbody className="divide-y divide-[#1E293B]/70 font-mono tabular-nums">
                   <tr>
                     <td className="py-2.5 px-4 text-[#94A3B8] font-sans">Host Star</td>
                     {compareList.map(p => (
@@ -541,28 +541,28 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
                     <div className="mt-4 pt-3 border-t border-[#1E293B] grid grid-cols-2 gap-2 text-xs">
                       <div className="p-2 rounded-lg bg-[#050B1A]/60 border border-[#1E293B]/60">
                         <span className="text-[10px] text-[#64748B] block">Radius</span>
-                        <span className="font-semibold text-white font-mono">
+                        <span className="font-semibold text-white font-mono tabular-nums">
                           {planet.radiusEarthRadii !== null ? `${planet.radiusEarthRadii} R⊕` : '—'}
                         </span>
                       </div>
 
                       <div className="p-2 rounded-lg bg-[#050B1A]/60 border border-[#1E293B]/60">
                         <span className="text-[10px] text-[#64748B] block">Mass</span>
-                        <span className="font-semibold text-white font-mono">
+                        <span className="font-semibold text-white font-mono tabular-nums">
                           {planet.massEarthMasses !== null ? `${planet.massEarthMasses} M⊕` : '—'}
                         </span>
                       </div>
 
                       <div className="p-2 rounded-lg bg-[#050B1A]/60 border border-[#1E293B]/60">
                         <span className="text-[10px] text-[#64748B] block">Orbital Period</span>
-                        <span className="font-semibold text-white font-mono">
+                        <span className="font-semibold text-white font-mono tabular-nums">
                           {planet.orbitalPeriodDays !== null ? `${planet.orbitalPeriodDays} d` : '—'}
                         </span>
                       </div>
 
                       <div className="p-2 rounded-lg bg-[#050B1A]/60 border border-[#1E293B]/60">
                         <span className="text-[10px] text-[#64748B] block">Distance</span>
-                        <span className="font-semibold text-white font-mono">
+                        <span className="font-semibold text-white font-mono tabular-nums">
                           {planet.distanceLightYears !== null ? `${planet.distanceLightYears} ly` : '—'}
                         </span>
                       </div>
@@ -596,7 +596,7 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
         )}
 
         {/* 4. HABITABILITY EXPLORER SECTION */}
-        <section className="bg-[#0B1630] border border-[#1E293B] rounded-3xl p-6 sm:p-10 shadow-xl space-y-6">
+        <section className="bg-[#0B1630] border border-[#1E293B] rounded-2xl p-6 sm:p-10 shadow-xl space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-[#10B981]/10 text-emerald-400 flex items-center justify-center shrink-0 border border-[#10B981]/20">
               <Droplets className="w-6 h-6" />
@@ -660,7 +660,7 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
         </section>
 
         {/* 5. DETECTION METHODS EDUCATIONAL SECTION */}
-        <section className="bg-[#0B1630] border border-[#1E293B] rounded-3xl p-6 sm:p-10 shadow-xl space-y-6">
+        <section className="bg-[#0B1630] border border-[#1E293B] rounded-2xl p-6 sm:p-10 shadow-xl space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6]/10 text-[#C084FC] flex items-center justify-center shrink-0 border border-[#8B5CF6]/20">
               <Activity className="w-6 h-6" />
@@ -874,7 +874,7 @@ export const ExoplanetDiscoveryLab: FC<ExoplanetDiscoveryLabProps> = ({ onNaviga
                         <th className="py-2.5 px-4 font-medium">Standard Scientific Unit</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#1E293B] font-mono">
+                    <tbody className="divide-y divide-[#1E293B] font-mono tabular-nums">
                       <tr>
                         <td className="py-2.5 px-4 text-[#94A3B8] font-sans">Planet Radius</td>
                         <td className="py-2.5 px-4 text-white font-semibold">

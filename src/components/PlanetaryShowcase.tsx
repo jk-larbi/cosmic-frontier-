@@ -42,7 +42,7 @@ export const PlanetaryShowcase: FC<PlanetaryShowcaseProps> = ({ onNavigate }) =>
   return (
     <div className="space-y-12">
       {/* 1. FEATURED WORLD SPOTLIGHT BANNER (Uzay Keşif & NOVA inspired) */}
-      <div className="relative rounded-3xl bg-gradient-to-br from-[#0B1630] via-[#070E22] to-[#050B1A] border border-[#1E293B] overflow-hidden p-6 sm:p-10 shadow-2xl">
+      <div className="relative rounded-2xl bg-gradient-to-br from-[#0B1630] via-[#070E22] to-[#050B1A] border border-[#1E293B] overflow-hidden p-6 sm:p-10 shadow-2xl">
         {/* Glow backdrop */}
         <div 
           className="absolute right-0 top-0 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none"
@@ -90,7 +90,7 @@ export const PlanetaryShowcase: FC<PlanetaryShowcaseProps> = ({ onNavigate }) =>
             </div>
 
             {/* Quick telemetry metrics */}
-            <div className="grid grid-cols-3 gap-2.5 pt-1 font-mono text-xs">
+            <div className="grid grid-cols-3 gap-2.5 pt-1 font-mono tabular-nums text-xs">
               <div className="p-2.5 rounded-xl bg-[#070E22] border border-[#1E293B]">
                 <span className="text-[10px] text-[#A7B4CC] block">Semi-Major Axis</span>
                 <span className="text-[#38BDF8] font-bold text-sm">{spotlightObject.semiMajorAxisAU} AU</span>
@@ -261,7 +261,7 @@ export const PlanetaryShowcase: FC<PlanetaryShowcaseProps> = ({ onNavigate }) =>
                   <h4 className="text-lg font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
                     {obj.name.split('(')[0].trim()}
                   </h4>
-                  <div className="text-xs font-mono text-[#F5C451] flex items-center justify-between mt-0.5">
+                  <div className="text-xs font-mono tabular-nums text-[#F5C451] flex items-center justify-between mt-0.5">
                     <span>Distance: {obj.semiMajorAxisAU} AU</span>
                     <span className="text-[#A7B4CC]">
                       {typeof obj.orbitalPeriodYears === 'number'
@@ -277,7 +277,7 @@ export const PlanetaryShowcase: FC<PlanetaryShowcaseProps> = ({ onNavigate }) =>
                 </p>
 
                 {/* Specs Pill Grid */}
-                <div className="grid grid-cols-2 gap-1.5 pt-1 text-[11px] font-mono text-[#A7B4CC]">
+                <div className="grid grid-cols-2 gap-1.5 pt-1 text-[11px] font-mono tabular-nums text-[#A7B4CC]">
                   <div className="p-1.5 rounded-lg bg-[#050B1A] border border-[#1E293B]/60">
                     <span className="text-[9px] block text-[#A7B4CC]/70">Radius</span>
                     <span className="text-[#F8FAFC]">

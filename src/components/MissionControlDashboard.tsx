@@ -339,31 +339,31 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
-      {/* 1. MISSION CONTROL COMMAND HEADER */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-linear-to-b from-[#0B1630] to-[#050B1A] border border-[#1E293B] shadow-2xl space-y-6">
+      {/* 1. MISSION CONTROL COMMAND HEADER & TELEMETRY STRIP */}
+      <div className="p-6 sm:p-8 rounded-2xl bg-linear-to-b from-[#0B1630] to-[#070E22] border border-[#1E293B] shadow-xl space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold tracking-wider uppercase bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
                 Unified Planetary Command
               </span>
               {ephemData && renderStatusBadge(ephemData.statusLabel)}
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#F8FAFC] font-mono">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#F8FAFC]">
               Mission Control Dashboard
             </h1>
-            <p className="text-sm text-[#A7B4CC] max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#A7B4CC] max-w-2xl leading-relaxed">
               Explore the Universe. Discover the Unknown. A unified operational workspace combining live celestial astrometry, near-Earth asteroid encounters, and multi-mission science observatories.
             </p>
           </div>
 
           {/* Real-Time Telemetry Clocks */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="p-4 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-1">
+            <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-1 min-w-55">
               <div className="flex items-center justify-between gap-4 text-xs text-[#A7B4CC] font-mono">
                 <span className="flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-[#38BDF8]" />
-                  {timeZoneMode === 'UTC' ? 'Universal Time (UTC)' : 'Local Station Time'}
+                  <span>{timeZoneMode === 'UTC' ? 'Universal Time (UTC)' : 'Local Station Time'}</span>
                 </span>
                 <button
                   onClick={() => setTimeZoneMode(prev => prev === 'UTC' ? 'LOCAL' : 'UTC')}
@@ -372,7 +372,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
                   Switch to {timeZoneMode === 'UTC' ? 'Local' : 'UTC'}
                 </button>
               </div>
-              <div className="text-lg font-mono font-bold text-[#F8FAFC]">
+              <div className="text-xl font-mono font-bold text-[#F8FAFC] tabular-nums tracking-wide">
                 {timeZoneMode === 'UTC'
                   ? currentTime.toUTCString().slice(17, 25) + ' UTC'
                   : currentTime.toLocaleTimeString()}
@@ -385,7 +385,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             <button
               onClick={handleRefreshAll}
               disabled={isEphemLoading || isCadLoading}
-              className="px-4 py-3 rounded-2xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8]/50 text-xs font-mono font-bold text-[#F8FAFC] transition-all flex items-center justify-center gap-2 group cursor-pointer"
+              className="px-4 py-3 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8]/50 text-xs font-mono font-semibold text-[#F8FAFC] transition-all flex items-center justify-center gap-2 group cursor-pointer"
               title="Refresh all real-time telemetry feeds"
             >
               <RefreshCw className={`w-4 h-4 text-[#38BDF8] ${(isEphemLoading || isCadLoading) ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
@@ -394,35 +394,35 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
           </div>
         </div>
 
-        {/* Real-Time Space Telemetry Metric Chips */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-[#1E293B] text-xs font-mono">
-          <div className="p-3 rounded-xl bg-[#050B1A]/60 border border-[#1E293B]/60">
+        {/* Real-Time Space Telemetry Metric Strip */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-[#1E293B]/70 text-xs font-mono">
+          <div className="p-3.5 rounded-xl bg-[#050B1A]/70 border border-[#1E293B]/60 space-y-0.5">
             <span className="text-[#A7B4CC] text-[11px]">Earth Orbital Velocity:</span>
-            <div className="text-base font-bold text-[#F5C451] mt-0.5">
+            <div className="text-base font-bold text-[#F5C451] tabular-nums">
               {ephemData?.earthReference.orbitalVelocityKmS ?? 29.78} km/s
             </div>
             <div className="text-[10px] text-[#A7B4CC]">~107,200 km/h in space</div>
           </div>
 
-          <div className="p-3 rounded-xl bg-[#050B1A]/60 border border-[#1E293B]/60">
+          <div className="p-3.5 rounded-xl bg-[#050B1A]/70 border border-[#1E293B]/60 space-y-0.5">
             <span className="text-[#A7B4CC] text-[11px]">Heliocentric Earth Distance:</span>
-            <div className="text-base font-bold text-[#38BDF8] mt-0.5">
+            <div className="text-base font-bold text-[#38BDF8] tabular-nums">
               {ephemData?.objects.find(o => o.id === 'earth')?.distSunAU ?? 0.995} AU
             </div>
             <div className="text-[10px] text-[#A7B4CC]">~148.8 million km</div>
           </div>
 
-          <div className="p-3 rounded-xl bg-[#050B1A]/60 border border-[#1E293B]/60">
+          <div className="p-3.5 rounded-xl bg-[#050B1A]/70 border border-[#1E293B]/60 space-y-0.5">
             <span className="text-[#A7B4CC] text-[11px]">Lunar Distance (Moon):</span>
-            <div className="text-base font-bold text-[#F8FAFC] mt-0.5">
+            <div className="text-base font-bold text-[#F8FAFC] tabular-nums">
               {ephemData?.objects.find(o => o.id === 'moon')?.distEarthLunar ?? 1.02} LD
             </div>
             <div className="text-[10px] text-[#A7B4CC]">~392,000 km from Earth</div>
           </div>
 
-          <div className="p-3 rounded-xl bg-[#050B1A]/60 border border-[#1E293B]/60">
+          <div className="p-3.5 rounded-xl bg-[#050B1A]/70 border border-[#1E293B]/60 space-y-0.5">
             <span className="text-[#A7B4CC] text-[11px]">Coordinate Frame:</span>
-            <div className="text-sm font-bold text-[#38BDF8] mt-0.5 truncate">
+            <div className="text-sm font-bold text-[#38BDF8] truncate">
               ICRF / J2000 Ecliptic
             </div>
             <div className="text-[10px] text-[#A7B4CC]">Epoch {ephemData ? ephemData.epoch.slice(0, 10) : 'J2000'}</div>
@@ -434,29 +434,29 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
       {nextAsteroid && (
         <div 
           onClick={() => onNavigate('asteroid-watch')}
-          className="p-4 sm:p-5 rounded-2xl bg-linear-to-r from-[#0B1630] via-[#101F42] to-[#0B1630] border border-[#38BDF8]/30 hover:border-[#38BDF8] shadow-lg transition-all cursor-pointer flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group"
+          className="p-4 sm:p-5 rounded-2xl bg-linear-to-r from-[#0B1630] via-[#0E1C38] to-[#0B1630] border border-[#38BDF8]/30 hover:border-[#38BDF8] shadow-md transition-all cursor-pointer flex flex-col md:flex-row items-start md:items-center justify-between gap-4 group"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-              <Radio className="w-5 h-5 animate-pulse" />
+            <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-105 transition-transform">
+              <Radio className="w-5 h-5 text-[#38BDF8]" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-mono font-bold text-[#38BDF8] uppercase tracking-wider">
                   Upcoming Close-Approach Event
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono font-bold">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-mono font-semibold border border-emerald-500/30">
                   NASA CNEOS Verified
                 </span>
                 {nextAsteroid.isPotentiallyHazardous && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-mono font-bold">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 font-mono font-semibold border border-rose-500/30">
                     PHA Flagged
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#F8FAFC] mt-0.5 font-medium">
+              <p className="text-xs text-[#F8FAFC] mt-0.5 font-medium leading-relaxed">
                 <strong>{nextAsteroid.designation}</strong> will pass safely at{' '}
-                <strong>{nextAsteroid.missDistanceLunar.toFixed(2)} Lunar Distances</strong> ({nextAsteroid.missDistanceKm.toLocaleString()} km) on{' '}
+                <strong className="text-[#38BDF8]">{nextAsteroid.missDistanceLunar.toFixed(2)} Lunar Distances</strong> ({nextAsteroid.missDistanceKm.toLocaleString()} km) on{' '}
                 <strong>{nextAsteroid.closeApproachDate}</strong> at {nextAsteroid.relativeVelocityKmS} km/s.
               </p>
             </div>
@@ -469,14 +469,14 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
       )}
 
       {/* 3. SECTION B: INTERACTIVE SOLAR SYSTEM PREVIEW */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-xs font-mono font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-xs font-mono font-semibold uppercase tracking-wider">
               <Orbit className="w-3.5 h-3.5" />
               <span>Real-Time Celestial Motion</span>
             </div>
-            <h2 className="text-2xl font-bold font-mono text-[#F8FAFC]">
+            <h2 className="text-2xl font-bold text-[#F8FAFC]">
               Solar System Planetary Ephemeris Preview
             </h2>
             <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -488,7 +488,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               onClick={() => onNavigate('observatory')}
-              className="px-4 py-2.5 rounded-xl bg-linear-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#0284C7] hover:to-[#0369A1] text-[#050B1A] font-mono font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-[#38BDF8]/20 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-linear-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#0284C7] hover:to-[#0369A1] text-[#050B1A] font-mono font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-[#38BDF8]/20 cursor-pointer"
             >
               <Telescope className="w-4 h-4" />
               <span>Live Cosmic Observatory</span>
@@ -497,7 +497,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
 
             <button
               onClick={() => onNavigate('universe')}
-              className="px-4 py-2.5 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8] text-[#F8FAFC] font-mono font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8] text-[#F8FAFC] font-mono font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
             >
               <Globe className="w-4 h-4 text-[#38BDF8]" />
               <span>Open Full 3D Universe</span>
@@ -509,7 +509,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Canvas Viewport (Col Span 2) */}
           <div className="lg:col-span-2 space-y-3">
-            <div className="relative rounded-2xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-inner h-110 flex items-center justify-center">
+            <div className="relative rounded-xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-inner h-110 flex items-center justify-center">
               <canvas
                 ref={canvasRef}
                 onMouseDown={handleMouseDown}
@@ -523,10 +523,10 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
               <div className="absolute top-3 left-3 flex items-center gap-2">
                 <button
                   onClick={() => setIsSimulating(!isSimulating)}
-                  className={`px-3 py-1 rounded-lg backdrop-blur-md border text-[11px] font-mono flex items-center gap-1.5 shadow ${
+                  className={`px-3 py-1 rounded-lg backdrop-blur-md border text-[11px] font-mono flex items-center gap-1.5 shadow-sm transition-all cursor-pointer ${
                     isSimulating
                       ? 'bg-[#F5C451]/20 text-[#F5C451] border-[#F5C451]/40'
-                      : 'bg-[#050B1A]/80 text-[#A7B4CC] border-[#1E293B]'
+                      : 'bg-[#050B1A]/85 text-[#A7B4CC] border-[#1E293B]'
                   }`}
                 >
                   {isSimulating ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
@@ -535,7 +535,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
 
                 <button
                   onClick={() => setScaleMode(prev => prev === 'inner' ? 'outer' : 'inner')}
-                  className="px-3 py-1 rounded-lg bg-[#050B1A]/80 backdrop-blur-md border border-[#1E293B] text-[#A7B4CC] hover:text-[#F8FAFC] text-[11px] font-mono flex items-center gap-1"
+                  className="px-3 py-1 rounded-lg bg-[#050B1A]/85 backdrop-blur-md border border-[#1E293B] text-[#A7B4CC] hover:text-[#F8FAFC] text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer"
                 >
                   <Sliders className="w-3 h-3 text-[#38BDF8]" />
                   <span>{scaleMode === 'inner' ? 'Inner (0–5.2 AU)' : 'Outer (0–50 AU)'}</span>
@@ -543,8 +543,8 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
 
                 <button
                   onClick={() => setShowOrbits(!showOrbits)}
-                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono ${
-                    showOrbits ? 'bg-[#0E1B38] text-[#38BDF8] border-[#38BDF8]/40' : 'bg-[#050B1A]/80 text-[#A7B4CC] border-[#1E293B]'
+                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-all cursor-pointer ${
+                    showOrbits ? 'bg-[#0E1B38] text-[#38BDF8] border-[#38BDF8]/40' : 'bg-[#050B1A]/85 text-[#A7B4CC] border-[#1E293B]'
                   }`}
                 >
                   Orbits: {showOrbits ? 'ON' : 'OFF'}
@@ -552,8 +552,8 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
 
                 <button
                   onClick={() => setShowLabels(!showLabels)}
-                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono ${
-                    showLabels ? 'bg-[#0E1B38] text-[#38BDF8] border-[#38BDF8]/40' : 'bg-[#050B1A]/80 text-[#A7B4CC] border-[#1E293B]'
+                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-all cursor-pointer ${
+                    showLabels ? 'bg-[#0E1B38] text-[#38BDF8] border-[#38BDF8]/40' : 'bg-[#050B1A]/85 text-[#A7B4CC] border-[#1E293B]'
                   }`}
                 >
                   Labels: {showLabels ? 'ON' : 'OFF'}
@@ -561,14 +561,14 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
 
                 <button
                   onClick={() => { setPan({ x: 0, y: 0 }); setZoom(1); }}
-                  className="p-1 rounded-lg bg-[#050B1A]/80 backdrop-blur-md border border-[#1E293B] text-[#A7B4CC] hover:text-[#F8FAFC]"
+                  className="p-1 rounded-lg bg-[#050B1A]/85 backdrop-blur-md border border-[#1E293B] text-[#A7B4CC] hover:text-[#F8FAFC] transition-all cursor-pointer"
                   title="Reset Pan & Zoom"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              <div className="absolute bottom-3 left-3 text-[10px] font-mono text-[#A7B4CC] bg-[#050B1A]/80 backdrop-blur-md px-2.5 py-0.5 rounded border border-[#1E293B]">
+              <div className="absolute bottom-3 left-3 text-[10px] font-mono text-[#A7B4CC] bg-[#050B1A]/85 backdrop-blur-md px-2.5 py-0.5 rounded border border-[#1E293B]">
                 Drag to Pan • Wheel to Zoom
               </div>
             </div>
@@ -581,14 +581,14 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
                   <button
                     key={obj.id}
                     onClick={() => setSelectedObjectId(obj.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-mono shrink-0 transition-all flex items-center gap-1.5 border cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono shrink-0 transition-all flex items-center gap-1.5 border cursor-pointer ${
                       isSelected
-                        ? 'bg-[#0E1B38] text-[#F8FAFC] border-[#38BDF8] shadow'
+                        ? 'bg-[#0E1B38] text-[#F8FAFC] border-[#38BDF8] shadow-xs'
                         : 'bg-[#050B1A] text-[#A7B4CC] hover:text-[#F8FAFC] border-[#1E293B]'
                     }`}
                   >
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: obj.color }} />
-                    <span className="font-bold">{obj.name.split(' ')[0]}</span>
+                    <span className="font-semibold">{obj.name.split(' ')[0]}</span>
                   </button>
                 );
               })}
@@ -596,7 +596,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
           </div>
 
           {/* Selected Object Detail Inspector (Col Span 1) */}
-          <div className="p-5 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-4">
+          <div className="p-5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-4">
             {selectedObject ? (
               <div className="space-y-4">
                 <div className="border-b border-[#1E293B] pb-3 space-y-1">
@@ -604,7 +604,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
                     {selectedObject.classification}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: selectedObject.color }} />
+                    <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: selectedObject.color }} />
                     <h3 className="text-xl font-bold font-mono text-[#F8FAFC]">
                       {selectedObject.name}
                     </h3>
@@ -615,41 +615,41 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
                 </div>
 
                 {/* Metrics Grid */}
-                <div className="grid grid-cols-2 gap-2.5 font-mono text-xs">
-                  <div className="p-2.5 rounded-xl bg-[#0B1630] border border-[#1E293B]">
+                <div className="grid grid-cols-2 gap-2 font-mono text-xs">
+                  <div className="p-2.5 rounded-lg bg-[#0B1630] border border-[#1E293B]">
                     <span className="text-[10px] text-[#A7B4CC]">Dist. to Sun:</span>
-                    <div className="font-bold text-[#F8FAFC] mt-0.5">{selectedObject.distSunAU} AU</div>
+                    <div className="font-bold text-[#F8FAFC] mt-0.5 tabular-nums">{selectedObject.distSunAU} AU</div>
                     <div className="text-[10px] text-[#A7B4CC]">{selectedObject.distSunMillionKm}M km</div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-[#0B1630] border border-[#1E293B]">
+                  <div className="p-2.5 rounded-lg bg-[#0B1630] border border-[#1E293B]">
                     <span className="text-[10px] text-[#A7B4CC]">Dist. to Earth:</span>
-                    <div className="font-bold text-[#38BDF8] mt-0.5">{selectedObject.distEarthAU} AU</div>
+                    <div className="font-bold text-[#38BDF8] mt-0.5 tabular-nums">{selectedObject.distEarthAU} AU</div>
                     <div className="text-[10px] text-[#A7B4CC]">{selectedObject.distEarthLunar} LD</div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-[#0B1630] border border-[#1E293B]">
+                  <div className="p-2.5 rounded-lg bg-[#0B1630] border border-[#1E293B]">
                     <span className="text-[10px] text-[#A7B4CC]">Orbital Speed:</span>
-                    <div className="font-bold text-[#F5C451] mt-0.5">{selectedObject.orbitalSpeedKmS} km/s</div>
+                    <div className="font-bold text-[#F5C451] mt-0.5 tabular-nums">{selectedObject.orbitalSpeedKmS} km/s</div>
                     <div className="text-[10px] text-[#A7B4CC]">~{Math.round(selectedObject.orbitalSpeedKmS * 3600).toLocaleString()} km/h</div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-[#0B1630] border border-[#1E293B]">
+                  <div className="p-2.5 rounded-lg bg-[#0B1630] border border-[#1E293B]">
                     <span className="text-[10px] text-[#A7B4CC]">Period:</span>
-                    <div className="font-bold text-[#F8FAFC] mt-0.5">{selectedObject.orbitalElements.orbitalPeriodYears} yrs</div>
+                    <div className="font-bold text-[#F8FAFC] mt-0.5 tabular-nums">{selectedObject.orbitalElements.orbitalPeriodYears} yrs</div>
                     <div className="text-[10px] text-[#A7B4CC]">~{Math.round(selectedObject.orbitalElements.orbitalPeriodYears * 365.25)} days</div>
                   </div>
                 </div>
 
                 {/* Plain-Language Description */}
-                <p className="text-xs text-[#A7B4CC] leading-relaxed p-3 rounded-xl bg-[#0B1630] border border-[#1E293B]">
+                <p className="text-xs text-[#A7B4CC] leading-relaxed p-3 rounded-lg bg-[#0B1630] border border-[#1E293B]">
                   {selectedObject.educationalSummary}
                 </p>
 
                 {/* Link to 3D Universe */}
                 <button
                   onClick={() => onNavigate('universe')}
-                  className="w-full py-2.5 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8] text-xs font-mono font-bold text-[#38BDF8] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full py-2.5 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8] text-xs font-mono font-semibold text-[#38BDF8] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Maximize2 className="w-3.5 h-3.5" />
                   <span>Explore {selectedObject.name.split(' ')[0]} in 3D</span>
@@ -665,7 +665,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
       </div>
 
       {/* 4. SECTION C: EARTH APPROACH MONITOR SUMMARY */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold uppercase tracking-wider">
@@ -821,17 +821,17 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: 3D Universe */}
           <div
             onClick={() => onNavigate('universe')}
-            className="p-6 rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] transition-all cursor-pointer flex flex-col justify-between shadow-xl group space-y-4"
+            className="p-5 rounded-2xl bg-[#0B1630]/80 border border-[#1E293B] hover:border-[#38BDF8]/60 transition-all cursor-pointer flex flex-col justify-between shadow-md group space-y-4"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-                <Globe className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8]">
+                <Globe className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold font-mono text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
+              <h3 className="text-base font-bold font-mono text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
                 3D Solar System
               </h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -840,20 +840,20 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
               <span>Three.js Engine</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
 
           {/* Card 2: Exoplanet Discovery Lab */}
           <div
             onClick={() => onNavigate('exoplanets')}
-            className="p-6 rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#8B5CF6] transition-all cursor-pointer flex flex-col justify-between shadow-xl group space-y-4"
+            className="p-5 rounded-2xl bg-[#0B1630]/80 border border-[#1E293B] hover:border-[#8B5CF6]/60 transition-all cursor-pointer flex flex-col justify-between shadow-md group space-y-4"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#C084FC] group-hover:scale-110 transition-transform">
-                <Compass className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#C084FC]">
+                <Compass className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold font-mono text-[#F8FAFC] group-hover:text-[#C084FC] transition-colors">
+              <h3 className="text-base font-bold font-mono text-[#F8FAFC] group-hover:text-[#C084FC] transition-colors">
                 Exoplanet Lab
               </h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -862,20 +862,20 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#C084FC]">
               <span>NASA TAP & ADQL</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
 
           {/* Card 3: Cosmic Image Lab & SPHEREx */}
           <div
             onClick={() => onNavigate('spherex')}
-            className="p-6 rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] transition-all cursor-pointer flex flex-col justify-between shadow-xl group space-y-4"
+            className="p-5 rounded-2xl bg-[#0B1630]/80 border border-[#1E293B] hover:border-[#38BDF8]/60 transition-all cursor-pointer flex flex-col justify-between shadow-md group space-y-4"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-                <Telescope className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8]">
+                <Telescope className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold font-mono text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
+              <h3 className="text-base font-bold font-mono text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
                 Cosmic Image Lab
               </h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -884,20 +884,20 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
               <span>102 Spectral Bands</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
 
           {/* Card 4: Galaxy Explorer */}
           <div
             onClick={() => onNavigate('galaxies')}
-            className="p-6 rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#8B5CF6] transition-all cursor-pointer flex flex-col justify-between shadow-xl group space-y-4"
+            className="p-5 rounded-2xl bg-[#0B1630]/80 border border-[#1E293B] hover:border-[#8B5CF6]/60 transition-all cursor-pointer flex flex-col justify-between shadow-md group space-y-4"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#C084FC] group-hover:scale-110 transition-transform">
-                <Disc className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#C084FC]">
+                <Disc className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold font-mono text-[#F8FAFC] group-hover:text-[#C084FC] transition-colors">
+              <h3 className="text-base font-bold font-mono text-[#F8FAFC] group-hover:text-[#C084FC] transition-colors">
                 Galaxy Explorer
               </h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -906,20 +906,20 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#C084FC]">
               <span>Live NASA/IPAC NED</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
 
           {/* Card 5: Planet X Investigation */}
           <div
             onClick={() => onNavigate('planet-x')}
-            className="p-6 rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#F5C451] transition-all cursor-pointer flex flex-col justify-between shadow-xl group space-y-4"
+            className="p-5 rounded-2xl bg-[#0B1630]/80 border border-[#1E293B] hover:border-[#F5C451]/60 transition-all cursor-pointer flex flex-col justify-between shadow-md group space-y-4"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#F5C451]/10 border border-[#F5C451]/30 flex items-center justify-center text-[#F5C451] group-hover:scale-110 transition-transform">
-                <Orbit className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-xl bg-[#F5C451]/10 border border-[#F5C451]/30 flex items-center justify-center text-[#F5C451]">
+                <Orbit className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold font-mono text-[#F8FAFC] group-hover:text-[#F5C451] transition-colors">
+              <h3 className="text-base font-bold font-mono text-[#F8FAFC] group-hover:text-[#F5C451] transition-colors">
                 Planet X Explorer
               </h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -928,20 +928,20 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#F5C451]">
               <span>Theoretical Science</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
 
           {/* Card 6: Near-Earth Asteroid Watch */}
           <div
             onClick={() => onNavigate('asteroid-watch')}
-            className="p-6 rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-emerald-500 transition-all cursor-pointer flex flex-col justify-between shadow-xl group space-y-4"
+            className="p-5 rounded-2xl bg-[#0B1630]/80 border border-[#1E293B] hover:border-emerald-500/60 transition-all cursor-pointer flex flex-col justify-between shadow-md group space-y-4"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-                <Radio className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <Radio className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold font-mono text-[#F8FAFC] group-hover:text-emerald-400 transition-colors">
+              <h3 className="text-base font-bold font-mono text-[#F8FAFC] group-hover:text-emerald-400 transition-colors">
                 Asteroid Watch
               </h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -950,20 +950,20 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-emerald-400">
               <span>CNEOS Radar Feed</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
 
           {/* Card 7: NASA Data Centre */}
           <div
             onClick={() => onNavigate('data-centre')}
-            className="p-6 rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] transition-all cursor-pointer flex flex-col justify-between shadow-xl group space-y-4"
+            className="p-5 rounded-2xl bg-[#0B1630]/80 border border-[#1E293B] hover:border-[#38BDF8]/60 transition-all cursor-pointer flex flex-col justify-between shadow-md group space-y-4"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-                <Database className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8]">
+                <Database className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold font-mono text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
+              <h3 className="text-base font-bold font-mono text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
                 NASA Data Centre
               </h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -972,20 +972,20 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
               <span>7 Scientific Catalogs</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
 
           {/* Card 8: COSMIC AI GUIDE */}
           <div
             onClick={() => onNavigate('ai-guide')}
-            className="p-6 rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#10B981] transition-all cursor-pointer flex flex-col justify-between shadow-xl group space-y-4"
+            className="p-5 rounded-2xl bg-[#0B1630]/80 border border-[#1E293B] hover:border-[#10B981]/60 transition-all cursor-pointer flex flex-col justify-between shadow-md group space-y-4"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#10B981]/10 border border-[#10B981]/30 flex items-center justify-center text-[#10B981] group-hover:scale-110 transition-transform">
-                <Sparkles className="w-6 h-6" />
+              <div className="w-10 h-10 rounded-xl bg-[#10B981]/10 border border-[#10B981]/30 flex items-center justify-center text-[#10B981]">
+                <Sparkles className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold font-mono text-[#F8FAFC] group-hover:text-[#10B981] transition-colors">
+              <h3 className="text-base font-bold font-mono text-[#F8FAFC] group-hover:text-[#10B981] transition-colors">
                 COSMIC AI GUIDE
               </h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -994,19 +994,19 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#10B981]">
               <span>Pedagogical Assistant</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
         </div>
       </div>
 
       {/* 6. SECTION E: MISSION & DISCOVERY HIGHLIGHTS */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-6">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-xs font-mono font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-xs font-mono font-semibold uppercase tracking-wider">
             NASA Mission Highlights & Observational Data
           </div>
-          <h2 className="text-2xl font-bold font-mono text-[#F8FAFC]">
+          <h2 className="text-2xl font-bold text-[#F8FAFC]">
             Authoritative Astronomy Highlights
           </h2>
           <p className="text-xs text-[#A7B4CC]">
@@ -1017,7 +1017,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
           {/* APOD Highlight */}
           {apodData ? (
-            <div className="p-5 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-3">
+            <div className="p-5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono uppercase text-[#38BDF8] font-bold">
                   NASA Astronomy Picture of the Day
@@ -1026,11 +1026,11 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
                   {apodData.date}
                 </span>
               </div>
-              <div className="relative rounded-xl overflow-hidden bg-black max-h-48 flex items-center justify-center">
+              <div className="relative rounded-lg overflow-hidden bg-black max-h-48 flex items-center justify-center">
                 <img
                   src={apodData.url}
                   alt={apodData.title}
-                  className="w-full h-48 object-cover rounded-xl"
+                  className="w-full h-48 object-cover rounded-lg"
                 />
               </div>
               <h4 className="font-mono font-bold text-sm text-[#F8FAFC] truncate">
@@ -1052,13 +1052,13 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
               </div>
             </div>
           ) : (
-            <div className="p-8 text-center rounded-2xl bg-[#050B1A] border border-[#1E293B] text-xs font-mono text-[#A7B4CC]">
+            <div className="p-8 text-center rounded-xl bg-[#050B1A] border border-[#1E293B] text-xs font-mono text-[#A7B4CC]">
               Connecting to NASA APOD Open Data feed...
             </div>
           )}
 
           {/* SPHEREx Mission Infrared Benchmark */}
-          <div className="p-5 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-4">
+          <div className="p-5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono uppercase text-[#8B5CF6] font-bold">
                 NASA Astrophysics Explorer Mission
@@ -1077,11 +1077,11 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-              <div className="p-3 rounded-xl bg-[#0B1630] border border-[#1E293B]">
+              <div className="p-3 rounded-lg bg-[#0B1630] border border-[#1E293B]">
                 <span className="text-[10px] text-[#A7B4CC]">Spectral Coverage:</span>
                 <div className="font-bold text-[#F8FAFC] mt-0.5">0.75 – 5.0 µm</div>
               </div>
-              <div className="p-3 rounded-xl bg-[#0B1630] border border-[#1E293B]">
+              <div className="p-3 rounded-lg bg-[#0B1630] border border-[#1E293B]">
                 <span className="text-[10px] text-[#A7B4CC]">Water Ice Tracer:</span>
                 <div className="font-bold text-[#38BDF8] mt-0.5">3.05 µm Band</div>
               </div>
@@ -1089,7 +1089,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
 
             <button
               onClick={() => onNavigate('spherex')}
-              className="w-full py-2.5 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#8B5CF6] text-xs font-mono font-bold text-[#C084FC] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              className="w-full py-2.5 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#8B5CF6] text-xs font-mono font-semibold text-[#C084FC] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Telescope className="w-3.5 h-3.5" />
               <span>Explore SPHEREx Spectral Workbench</span>

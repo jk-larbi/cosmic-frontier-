@@ -31,287 +31,233 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
       </div>
 
       {/* 2. DISCOVERY CATEGORIES GATEWAY */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center max-w-3xl mx-auto space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-xs font-mono font-bold uppercase tracking-wider">
-            Exploration Gateways
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        <div className="max-w-3xl space-y-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30 text-xs font-mono font-semibold uppercase tracking-wider">
+            Astronomy Observatories & Research Consoles
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#F8FAFC] tracking-tight">
-            Discover the Cosmic Frontier
+            Explore the Cosmic Frontier
           </h2>
-          <p className="text-sm sm:text-base text-[#A7B4CC]">
-            Interactive tools and scientific visualizers engineered for beginners, students, and astronomy explorers.
+          <p className="text-sm sm:text-base text-[#A7B4CC] leading-relaxed">
+            Begin with interactive observational workstations designed for clear understanding, backed by verified NASA open data archives and Standish analytical ephemerides.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Card: Live Cosmic Observatory (New Motion Viewer) */}
+        {/* PRIMARY FLAGSHIPS: Live Observatory & Mission Control */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Flagship 1: Live Cosmic Observatory (7 Cols) */}
           <div 
             onClick={() => onNavigate('observatory')}
-            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#38BDF8]/15 transition-all cursor-pointer flex flex-col justify-between"
+            className="lg:col-span-7 group rounded-2xl bg-linear-to-br from-[#0B1630] via-[#0D1B3E] to-[#071126] border border-[#1E293B] hover:border-[#38BDF8] p-6 sm:p-8 space-y-6 shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
             <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-                <Telescope className="w-6 h-6" />
+              <div className="flex items-center justify-between">
+                <div className="w-11 h-11 rounded-xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8]">
+                  <Telescope className="w-5 h-5" />
+                </div>
+                <span className="text-[11px] font-mono font-semibold text-[#38BDF8] px-2.5 py-0.5 rounded-full bg-[#050B1A] border border-[#1E293B]">
+                  63 Verified Bodies • 6 Catalogs
+                </span>
               </div>
-              <div>
-                <span className="text-[10px] font-mono text-[#38BDF8] font-bold uppercase tracking-wider">
+              <div className="space-y-1">
+                <span className="text-xs font-mono text-[#38BDF8] uppercase tracking-wider font-semibold">
                   Cross-Catalog Motion Viewer & Timeline
                 </span>
-                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors mt-0.5">
+                <h3 className="text-2xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
                   Live Cosmic Observatory
                 </h3>
               </div>
-              <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Visually explore real-time and predicted celestial motion through time for 60+ objects across Solar System, asteroids, TNOs, exoplanets, and deep sky.
+              <p className="text-xs sm:text-sm text-[#A7B4CC] leading-relaxed">
+                Step through simulated time to inspect orbital mechanics across the inner planets, gas giants, Kuiper Belt objects, exoplanets, and deep-sky constellations. Features dual 3D WebGL and 2D radar projections.
               </p>
+              
+              <div className="grid grid-cols-3 gap-2.5 pt-2 text-xs font-mono">
+                <div className="p-2.5 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
+                  <div className="text-[10px] text-[#A7B4CC]">Rendering</div>
+                  <div className="font-bold text-[#F8FAFC]">3D & 2D Radar</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
+                  <div className="text-[10px] text-[#A7B4CC]">Time Travel</div>
+                  <div className="font-bold text-[#38BDF8]">1x to 1yr/s</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
+                  <div className="text-[10px] text-[#A7B4CC]">Ephemeris</div>
+                  <div className="font-bold text-emerald-400">JPL Standish</div>
+                </div>
+              </div>
             </div>
+
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
-              <span>Launch Observatory</span>
+              <span>Launch Live Cosmic Observatory</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
             </div>
           </div>
 
-          {/* Card: Mission Control Dashboard (Stage 9) */}
+          {/* Flagship 2: Unified Mission Control Dashboard (5 Cols) */}
           <div 
             onClick={() => onNavigate('mission-control')}
-            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#38BDF8]/15 transition-all cursor-pointer flex flex-col justify-between"
+            className="lg:col-span-5 group rounded-2xl bg-linear-to-br from-[#0B1630] via-[#09142B] to-[#050B1A] border border-[#1E293B] hover:border-[#38BDF8] p-6 sm:p-8 space-y-6 shadow-xl transition-all cursor-pointer flex flex-col justify-between"
           >
             <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-                <Radio className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-[10px] font-mono text-[#38BDF8] font-bold uppercase tracking-wider">
-                  Unified Telemetry & Overview
+              <div className="flex items-center justify-between">
+                <div className="w-11 h-11 rounded-xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8]">
+                  <Radio className="w-5 h-5" />
+                </div>
+                <span className="text-[11px] font-mono font-semibold text-emerald-400 px-2.5 py-0.5 rounded-full bg-[#050B1A] border border-[#1E293B]">
+                  UTC Telemetry Online
                 </span>
-                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors mt-0.5">
+              </div>
+              <div className="space-y-1">
+                <span className="text-xs font-mono text-[#38BDF8] uppercase tracking-wider font-semibold">
+                  Aerospace Flight Deck
+                </span>
+                <h3 className="text-2xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
                   Mission Control Dashboard
                 </h3>
               </div>
-              <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Real-time telemetry clocks, planetary velocities, interactive Solar System preview, and Earth close approach monitoring in one command center.
+              <p className="text-xs sm:text-sm text-[#A7B4CC] leading-relaxed">
+                A single command center combining synchronized UTC clocks, ICRF / J2000 celestial coordinates, live planetary velocities, and NASA/JPL CNEOS Earth approach telemetry.
               </p>
+
+              <div className="space-y-2 pt-2 text-xs font-mono">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
+                  <span className="text-[#A7B4CC]">Earth Orbital Speed:</span>
+                  <span className="font-bold text-[#F5C451]">29.78 km/s</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
+                  <span className="text-[#A7B4CC]">Coordinate Frame:</span>
+                  <span className="font-bold text-[#38BDF8]">ICRF / J2000</span>
+                </div>
+              </div>
             </div>
+
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
-              <span>Launch Mission Control</span>
+              <span>Enter Mission Control</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
             </div>
           </div>
+        </div>
 
-          {/* Card: Asteroid Watch (Stage 7 Upgrade) */}
-          <div 
-            onClick={() => onNavigate('asteroid-watch')}
-            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-emerald-500 p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/15 transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-                <Radio className="w-6 h-6" />
+        {/* STRUCTURED EXPLORATION DOMAINS (4 Thematic Clusters) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Domain 1: Solar System & Orbits */}
+          <div className="p-5 rounded-2xl bg-[#0B1630]/60 border border-[#1E293B] space-y-4 flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs font-mono text-[#38BDF8] font-semibold">
+                <span>01. SOLAR SYSTEM</span>
+                <Orbit className="w-4 h-4" />
               </div>
-              <div>
-                <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
-                  NASA JPL CNEOS CAD Feed
-                </span>
-                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-emerald-400 transition-colors mt-0.5">
-                  Earth Approach Monitor
-                </h3>
-              </div>
+              <h4 className="text-base font-bold text-[#F8FAFC]">Planets & Distant Orbits</h4>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Track upcoming near-Earth asteroid close passes in Lunar Distances, inspect encounter geometry, and learn how NASA assesses impact risk.
+                Explore Keplerian mechanics from Mercury out to Sedna and investigate mathematical models for Planet X.
               </p>
             </div>
-            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-emerald-400">
-              <span>CNEOS Close Approaches</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+            <div className="space-y-2 pt-2 border-t border-[#1E293B]/70">
+              <button
+                onClick={() => onNavigate('universe')}
+                className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-[#050B1A] text-xs font-mono text-[#F8FAFC] hover:text-[#38BDF8] flex items-center justify-between transition-colors cursor-pointer"
+              >
+                <span>3D Solar System</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onNavigate('planet-x')}
+                className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-[#050B1A] text-xs font-mono text-[#F8FAFC] hover:text-[#8B5CF6] flex items-center justify-between transition-colors cursor-pointer"
+              >
+                <span>Planet X Explorer</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
-          {/* Card 1: 3D Solar System Explorer */}
-          <div 
-            onClick={() => onNavigate('universe')}
-            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#38BDF8]/15 transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-                <Orbit className="w-6 h-6" />
+          {/* Domain 2: Deep Space & Exoplanets */}
+          <div className="p-5 rounded-2xl bg-[#0B1630]/60 border border-[#1E293B] space-y-4 flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs font-mono text-[#C084FC] font-semibold">
+                <span>02. DEEP UNIVERSE</span>
+                <Disc className="w-4 h-4" />
               </div>
-              <div>
-                <span className="text-[10px] font-mono text-[#38BDF8] font-bold uppercase tracking-wider">
-                  Interactive 3D WebGL
-                </span>
-                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors mt-0.5">
-                  3D Solar System
-                </h3>
-              </div>
+              <h4 className="text-base font-bold text-[#F8FAFC]">Exoplanets & Galaxies</h4>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Explore a live 3D planetary system with full camera rotation, smooth object zoom, animated Keplerian orbits, and Saturn's rings.
+                Filter 5,500+ confirmed worlds from NASA Exoplanet Archive and inspect extragalactic redshift catalogs.
               </p>
             </div>
-            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
-              <span>Three.js Visualizer</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+            <div className="space-y-2 pt-2 border-t border-[#1E293B]/70">
+              <button
+                onClick={() => onNavigate('exoplanets')}
+                className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-[#050B1A] text-xs font-mono text-[#F8FAFC] hover:text-[#C084FC] flex items-center justify-between transition-colors cursor-pointer"
+              >
+                <span>Exoplanet Lab</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onNavigate('galaxies')}
+                className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-[#050B1A] text-xs font-mono text-[#F8FAFC] hover:text-[#C084FC] flex items-center justify-between transition-colors cursor-pointer"
+              >
+                <span>Galaxy Explorer</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
-          {/* Card 2: Exoplanet Discovery Lab */}
-          <div 
-            onClick={() => onNavigate('exoplanets')}
-            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#8B5CF6] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#8B5CF6]/15 transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#C084FC] group-hover:scale-110 transition-transform">
-                <Compass className="w-6 h-6" />
+          {/* Domain 3: Missions & Spectral Science */}
+          <div className="p-5 rounded-2xl bg-[#0B1630]/60 border border-[#1E293B] space-y-4 flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs font-mono text-[#F5C451] font-semibold">
+                <span>03. MISSIONS & DEFENSE</span>
+                <Compass className="w-4 h-4" />
               </div>
-              <div>
-                <span className="text-[10px] font-mono text-[#C084FC] font-bold uppercase tracking-wider">
-                  NASA Exoplanet Archive
-                </span>
-                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#C084FC] transition-colors mt-0.5">
-                  Exoplanet Lab
-                </h3>
-              </div>
+              <h4 className="text-base font-bold text-[#F8FAFC]">Infrared & Asteroid Watch</h4>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Discover worlds beyond our Solar System. Filter by transit, radial velocity, or direct imaging, and compare physical parameters.
+                Peel back dust clouds across 102 infrared channels with SPHEREx and monitor near-Earth asteroid approaches.
               </p>
             </div>
-            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#C084FC]">
-              <span>Comparative Lab</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+            <div className="space-y-2 pt-2 border-t border-[#1E293B]/70">
+              <button
+                onClick={() => onNavigate('spherex')}
+                className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-[#050B1A] text-xs font-mono text-[#F8FAFC] hover:text-[#38BDF8] flex items-center justify-between transition-colors cursor-pointer"
+              >
+                <span>Cosmic Image Lab</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onNavigate('asteroid-watch')}
+                className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-[#050B1A] text-xs font-mono text-[#F8FAFC] hover:text-emerald-400 flex items-center justify-between transition-colors cursor-pointer"
+              >
+                <span>Asteroid Watch (CNEOS)</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
-          {/* Card 2: Infrared Spectroscopy */}
-          <div 
-            onClick={() => onNavigate('spherex')}
-            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#38BDF8]/15 transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-                <Telescope className="w-6 h-6" />
+          {/* Domain 4: Data Centre & AI Assistant */}
+          <div className="p-5 rounded-2xl bg-[#0B1630]/60 border border-[#1E293B] space-y-4 flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs font-mono text-emerald-400 font-semibold">
+                <span>04. DATA & PEDAGOGY</span>
+                <Database className="w-4 h-4" />
               </div>
-              <div>
-                <span className="text-[10px] font-mono text-[#38BDF8] font-bold uppercase tracking-wider">
-                  SPHEREx Mission
-                </span>
-                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors mt-0.5">
-                  Cosmic Image Lab
-                </h3>
-              </div>
+              <h4 className="text-base font-bold text-[#F8FAFC]">Open Archives & AI Guide</h4>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Peel back dense dust clouds with multi-spectral infrared bands, study cosmic inflation, and examine water ice signatures.
+                Search across multi-mission catalogs or ask questions in plain language with verified scientific backing.
               </p>
             </div>
-            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
-              <span>102 Spectral Channels</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-            </div>
-          </div>
-
-          {/* Card 2: Planet X & Distant Worlds */}
-          <div 
-            onClick={() => onNavigate('planet-x')}
-            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#8B5CF6] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#8B5CF6]/15 transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#8B5CF6] group-hover:scale-110 transition-transform">
-                <Orbit className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-[10px] font-mono text-[#8B5CF6] font-bold uppercase tracking-wider">
-                  Orbital Mechanics
-                </span>
-                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#8B5CF6] transition-colors mt-0.5">
-                  Planet X Explorer
-                </h3>
-              </div>
-              <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Simulate 2D orbits of 8 planets, extreme trans-Neptunian objects like Sedna, and investigate the mathematical clues for a 9th world.
-              </p>
-            </div>
-            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#8B5CF6]">
-              <span>2D Canvas Simulator</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-            </div>
-          </div>
-
-          {/* Card: Galaxy Explorer */}
-          <div 
-            onClick={() => onNavigate('galaxies')}
-            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#8B5CF6] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#8B5CF6]/15 transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#8B5CF6] group-hover:scale-110 transition-transform">
-                <Disc className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-[10px] font-mono text-[#8B5CF6] font-bold uppercase tracking-wider">
-                  NASA/IPAC Extragalactic
-                </span>
-                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#8B5CF6] transition-colors mt-0.5">
-                  Galaxy Explorer
-                </h3>
-              </div>
-              <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Discover 24+ deep-sky galaxies, active galactic nuclei (AGN), and galaxy clusters from NASA/IPAC NED and CDS SIMBAD.
-              </p>
-            </div>
-            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#8B5CF6]">
-              <span>24+ Catalogs & Live NED</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-            </div>
-          </div>
-
-          {/* Card 4: NASA Data Centre */}
-          <div 
-            onClick={() => onNavigate('data-centre')}
-            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#38BDF8]/15 transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] group-hover:scale-110 transition-transform">
-                <Database className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-[10px] font-mono text-[#38BDF8] font-bold uppercase tracking-wider">
-                  Multi-Mission Archive
-                </span>
-                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors mt-0.5">
-                  NASA Data Centre
-                </h3>
-              </div>
-              <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Query confirmed exoplanets, JPL Horizons planetary ephemerides, small body orbits, and CDS SIMBAD stellar benchmarks.
-              </p>
-            </div>
-            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#38BDF8]">
-              <span>Live TAP & SBDB</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-            </div>
-          </div>
-
-          {/* Card 5: AI Space Guide */}
-          <div 
-            onClick={() => onNavigate('ai-guide')}
-            className="group rounded-3xl bg-[#0B1630] border border-[#1E293B] hover:border-[#10B981] p-6 space-y-4 shadow-xl hover:shadow-2xl hover:shadow-[#10B981]/15 transition-all cursor-pointer flex flex-col justify-between"
-          >
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#10B981]/10 border border-[#10B981]/30 flex items-center justify-center text-[#10B981] group-hover:scale-110 transition-transform">
-                <Sparkles className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-[10px] font-mono text-[#10B981] font-bold uppercase tracking-wider">
-                  Interactive Assistant
-                </span>
-                <h3 className="text-xl font-bold text-[#F8FAFC] group-hover:text-[#10B981] transition-colors mt-0.5">
-                  COSMIC AI GUIDE
-                </h3>
-              </div>
-              <p className="text-xs text-[#A7B4CC] leading-relaxed">
-                Ask questions in plain language without unnecessary jargon. Verified science answers with zero fabricated observations.
-              </p>
-            </div>
-            <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#10B981]">
-              <span>Beginner Friendly</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+            <div className="space-y-2 pt-2 border-t border-[#1E293B]/70">
+              <button
+                onClick={() => onNavigate('data-centre')}
+                className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-[#050B1A] text-xs font-mono text-[#F8FAFC] hover:text-[#38BDF8] flex items-center justify-between transition-colors cursor-pointer"
+              >
+                <span>NASA Data Centre</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => onNavigate('ai-guide')}
+                className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-[#050B1A] text-xs font-mono text-[#F8FAFC] hover:text-[#10B981] flex items-center justify-between transition-colors cursor-pointer"
+              >
+                <span>COSMIC AI Guide</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </div>
@@ -339,45 +285,45 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* 6. HOW COSMIC FRONTIER WORKS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-[#0B1630]/70 border border-[#1E293B] p-8 sm:p-12 space-y-10 shadow-xl">
-          <div className="text-center max-w-2xl mx-auto">
-            <span className="text-xs uppercase tracking-widest text-[#38BDF8] font-bold">
-              Simple Step-by-Step Exploration
+        <div className="rounded-2xl bg-[#0B1630]/60 border border-[#1E293B] p-8 sm:p-10 space-y-8 shadow-lg">
+          <div className="max-w-2xl space-y-2">
+            <span className="text-xs uppercase tracking-widest text-[#38BDF8] font-mono font-semibold">
+              Exploration Methodology
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] mt-2">
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC]">
               How COSMIC FRONTIER Works
             </h2>
-            <p className="text-sm text-[#A7B4CC] mt-2">
-              You do not need an astrophysics degree. Our tools translate complex astronomical observations into accessible, interactive knowledge.
+            <p className="text-sm text-[#A7B4CC] leading-relaxed">
+              Designed for intuitive discovery. Our tools translate raw observational datasets into interactive, scientifically grounded knowledge.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-[#050B1A]/80 border border-[#1E293B] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] font-bold font-mono">
-                01
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 border-t border-[#1E293B]/70">
+            <div className="space-y-3">
+              <div className="text-xs font-mono font-bold text-[#38BDF8] tracking-widest">
+                STEP 01
               </div>
-              <h3 className="text-lg font-semibold text-[#F8FAFC]">Select a Target or Realm</h3>
+              <h3 className="text-base font-semibold text-[#F8FAFC]">Select a Target or Realm</h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
                 Choose from star-forming nebulae, early galaxies, protoplanetary disks, or scale out to the remote Kuiper Belt and Sedna’s distant trajectory.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#050B1A]/80 border border-[#1E293B] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#8B5CF6] font-bold font-mono">
-                02
+            <div className="space-y-3">
+              <div className="text-xs font-mono font-bold text-[#C084FC] tracking-widest">
+                STEP 02
               </div>
-              <h3 className="text-lg font-semibold text-[#F8FAFC]">Adjust Filters & Scales</h3>
+              <h3 className="text-base font-semibold text-[#F8FAFC]">Adjust Filters & Scales</h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
                 Slide across infrared bands from 0.75 µm to 5.0 µm, compare optical versus infrared with the split slider, or zoom from 1 AU out to 1,000 AU.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-[#050B1A]/80 border border-[#1E293B] space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-[#F5C451]/10 border border-[#F5C451]/30 flex items-center justify-center text-[#F5C451] font-bold font-mono">
-                03
+            <div className="space-y-3">
+              <div className="text-xs font-mono font-bold text-[#F5C451] tracking-widest">
+                STEP 03
               </div>
-              <h3 className="text-lg font-semibold text-[#F8FAFC]">Inspect Scientific Clues</h3>
+              <h3 className="text-base font-semibold text-[#F8FAFC]">Inspect Scientific Clues</h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
                 Read concise verified explanations of water ice signatures, orbital clustering probabilities, and survey limits without any fabricated jargon.
               </p>
@@ -417,7 +363,7 @@ export const HomePage: FC<HomePageProps> = ({ onNavigate }) => {
 
       {/* 8. AI ASSISTANT CALL TO ACTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-linear-to-b from-[#0B1630] to-[#050B1A] border border-[#1E293B] p-8 sm:p-12 text-center space-y-6 shadow-2xl">
+        <div className="rounded-2xl bg-linear-to-b from-[#0B1630] to-[#050B1A] border border-[#1E293B] p-8 sm:p-12 text-center space-y-6 shadow-2xl">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 text-[#8B5CF6]">
             <Sparkles className="w-7 h-7" />
           </div>

@@ -27,10 +27,10 @@ export const AboutPage: FC = () => {
       </div>
 
       {/* 2. THE SPHEREx MISSION DEEP DIVE */}
-      <section className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-6 shadow-xl">
+      <section className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-6 shadow-xl">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#38BDF8]/10 text-[#38BDF8] flex items-center justify-center shrink-0">
-            <Telescope className="w-6 h-6" />
+          <div className="w-11 h-11 rounded-xl bg-[#38BDF8]/10 text-[#38BDF8] flex items-center justify-center shrink-0">
+            <Telescope className="w-5 h-5" />
           </div>
           <div>
             <span className="text-xs font-mono uppercase tracking-wider text-[#38BDF8] font-bold">
@@ -46,8 +46,8 @@ export const AboutPage: FC = () => {
           <strong>SPHEREx</strong> stands for the <em>Spectro-Photometer for the History of the Universe, Epoch of Reionization and Ices Explorer</em>. Managed by NASA's Jet Propulsion Laboratory (JPL) and Caltech, SPHEREx is an astrophysics observatory designed to map the entire sky every six months in 102 individual near-infrared colors spanning from 0.75 µm to 5.0 µm.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-          <div className="p-5 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+          <div className="p-5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-2">
             <span className="text-xs font-mono font-bold text-[#38BDF8] block">Pillar I</span>
             <h3 className="text-base font-semibold text-[#F8FAFC]">Cosmic Inflation</h3>
             <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -55,7 +55,7 @@ export const AboutPage: FC = () => {
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-2">
+          <div className="p-5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-2">
             <span className="text-xs font-mono font-bold text-[#8B5CF6] block">Pillar II</span>
             <h3 className="text-base font-semibold text-[#F8FAFC]">First Stars & Galaxies</h3>
             <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -63,7 +63,7 @@ export const AboutPage: FC = () => {
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#050B1A] border border-[#1E293B] space-y-2">
+          <div className="p-5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-2">
             <span className="text-xs font-mono font-bold text-[#F5C451] block">Pillar III</span>
             <h3 className="text-base font-semibold text-[#F8FAFC]">Origins of Water</h3>
             <p className="text-xs text-[#A7B4CC] leading-relaxed">
@@ -87,10 +87,10 @@ export const AboutPage: FC = () => {
       </section>
 
       {/* 3. THE PLANET X HYPOTHESIS OVERVIEW */}
-      <section className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-6 shadow-xl">
+      <section className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-6 shadow-xl">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#8B5CF6]/10 text-[#8B5CF6] flex items-center justify-center shrink-0">
-            <Orbit className="w-6 h-6" />
+          <div className="w-11 h-11 rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6] flex items-center justify-center shrink-0">
+            <Orbit className="w-5 h-5" />
           </div>
           <div>
             <span className="text-xs font-mono uppercase tracking-wider text-[#8B5CF6] font-bold">
@@ -124,10 +124,10 @@ export const AboutPage: FC = () => {
       </section>
 
       {/* 4. SCIENTIFIC INTEGRITY MANIFESTO */}
-      <section className="rounded-3xl bg-linear-to-r from-[#0B1630] to-[#0E1B38] border border-[#F5C451]/30 p-8 sm:p-10 space-y-6 shadow-xl">
+      <section className="rounded-2xl bg-linear-to-r from-[#0B1630] to-[#0E1B38] border border-[#F5C451]/30 p-8 sm:p-10 space-y-6 shadow-xl">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#F5C451]/10 text-[#F5C451] flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-6 h-6" />
+          <div className="w-11 h-11 rounded-xl bg-[#F5C451]/10 text-[#F5C451] flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
             <span className="text-xs font-mono uppercase tracking-wider text-[#F5C451] font-bold">
@@ -187,7 +187,7 @@ export const AboutPage: FC = () => {
       </section>
 
       {/* 5. DATA SOURCES & ACKNOWLEDGMENTS */}
-      <section className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-4">
+      <section className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-4">
         <h3 className="text-xl font-bold text-[#F8FAFC] flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-[#38BDF8]" />
           <span>Data Sources & Literature Citations</span>

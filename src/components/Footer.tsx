@@ -34,11 +34,29 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#F8FAFC] mb-4">
               Exploration Modules
             </h4>
-            <ul className="space-y-2.5 text-xs">
+            <ul className="space-y-2 text-xs">
+              <li>
+                <button
+                  onClick={() => onNavigate('mission-control')}
+                  className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Compass className="w-3.5 h-3.5 text-[#38BDF8]" />
+                  <span>Mission Control Dashboard</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('observatory')}
+                  className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Telescope className="w-3.5 h-3.5 text-[#38BDF8]" />
+                  <span>Live Cosmic Observatory</span>
+                </button>
+              </li>
               <li>
                 <button
                   onClick={() => onNavigate('universe')}
-                  className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors"
+                  className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Globe className="w-3.5 h-3.5 text-[#38BDF8]" />
                   <span>3D Interactive Solar System</span>
@@ -47,7 +65,7 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   onClick={() => onNavigate('exoplanets')}
-                  className="hover:text-[#8B5CF6] flex items-center gap-1.5 transition-colors"
+                  className="hover:text-[#8B5CF6] flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Compass className="w-3.5 h-3.5 text-[#8B5CF6]" />
                   <span>Exoplanet Discovery Lab</span>
@@ -56,16 +74,25 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   onClick={() => onNavigate('spherex')}
-                  className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors"
+                  className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Telescope className="w-3.5 h-3.5 text-[#38BDF8]" />
-                  <span>SPHEREx Infrared Explorer</span>
+                  <span>SPHEREx Cosmic Image Lab</span>
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('asteroid-watch')}
+                  className="hover:text-emerald-400 flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Orbit className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Near-Earth Asteroid Watch</span>
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onNavigate('planet-x')}
-                  className="hover:text-[#8B5CF6] flex items-center gap-1.5 transition-colors"
+                  className="hover:text-[#8B5CF6] flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Orbit className="w-3.5 h-3.5 text-[#8B5CF6]" />
                   <span>Planet X Outer System Map</span>
@@ -74,7 +101,7 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   onClick={() => onNavigate('data-centre')}
-                  className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors"
+                  className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Database className="w-3.5 h-3.5 text-[#38BDF8]" />
                   <span>NASA Astronomical Data Centre</span>
@@ -83,7 +110,7 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   onClick={() => onNavigate('ai-guide')}
-                  className="hover:text-[#F5C451] flex items-center gap-1.5 transition-colors"
+                  className="hover:text-[#F5C451] flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[#F5C451]" />
                   <span>COSMIC AI GUIDE</span>
@@ -92,7 +119,7 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   onClick={() => onNavigate('about')}
-                  className="hover:text-[#F8FAFC] transition-colors"
+                  className="hover:text-[#F8FAFC] transition-colors cursor-pointer"
                 >
                   About & Science Documentation
                 </button>

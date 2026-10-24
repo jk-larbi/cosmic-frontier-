@@ -10,7 +10,7 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* 1. SYSTEM SCAN RADAR HUD (NOVA Command Center inspired) */}
-      <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-2xl relative overflow-hidden">
+      <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-2xl relative overflow-hidden">
         {/* Subtle grid pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(#38BDF8_1px,transparent_1px)] [background-size:16px_16px] opacity-5 pointer-events-none" />
 
@@ -125,7 +125,7 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
       </div>
 
       {/* 2. GLOWING NEUTRON STAR / COSMIC FACT BANNER (Uzay Keşif inspired) */}
-      <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-2xl relative overflow-hidden">
+      <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-6 sm:p-8 flex flex-col justify-between space-y-6 shadow-2xl relative overflow-hidden">
         {/* Radiant blue nebula background */}
         <div className="absolute right-0 bottom-0 w-80 h-80 bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
 
