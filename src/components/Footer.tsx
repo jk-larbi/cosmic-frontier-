@@ -73,6 +73,15 @@ export const Footer: FC<FooterProps> = ({ onNavigate }) => {
               </li>
               <li>
                 <button
+                  onClick={() => onNavigate('galaxies')}
+                  className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#38BDF8]" />
+                  <span>Deep-Sky Galaxy Explorer</span>
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => onNavigate('spherex')}
                   className="hover:text-[#38BDF8] flex items-center gap-1.5 transition-colors cursor-pointer"
                 >

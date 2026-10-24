@@ -405,7 +405,7 @@ function generateOrbitPath(elements, steps = 120) {
  */
 function normalizeDes(str) {
   if (!str) return '99942';
-  return String(str).trim().replace(/^[(]|[\)]$/g, '').replace(/\s+/g, ' ');
+  return String(str).trim().replace(/^[(]|[)]$/g, '').replace(/\s+/g, ' ');
 }
 
 /**

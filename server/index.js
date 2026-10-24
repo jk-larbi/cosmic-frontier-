@@ -7,8 +7,8 @@ import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { findVerifiedAnswer, VERIFIED_KNOWLEDGE_BASE } from './knowledge.js';
 import { getCompleteEphemeris, AU_KM, LD_KM } from './ephemerisEngine.js';
-import { getAsteroidOrbitData, VERIFIED_NEO_PRESETS } from './asteroidMotionEngine.js';
-import { VERIFIED_IMAGES, getVerifiedServerImage, searchNasaImagesApi } from './verifiedImages.js';
+import { getAsteroidOrbitData } from './asteroidMotionEngine.js';
+import { getVerifiedServerImage, searchNasaImagesApi } from './verifiedImages.js';
 
 dotenv.config();
 

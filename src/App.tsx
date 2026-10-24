@@ -27,7 +27,16 @@ export function App() {
       targetPage = 'mission-control';
     }
     setCurrentPage(targetPage);
-    window.location.hash = targetPage === 'home' ? '' : targetPage;
+    if (targetPage === 'home') {
+      if (window.location.hash) {
+        window.location.hash = '';
+      }
+      if (window.location.pathname !== '/' && window.history?.pushState) {
+        window.history.pushState(null, '', '/');
+      }
+    } else {
+      window.location.hash = targetPage;
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -51,6 +60,9 @@ export function App() {
         setCurrentPage('home');
       } else if (['mission-control', 'observatory', 'universe', 'asteroid-watch', 'exoplanets', 'galaxies', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
         setCurrentPage(candidate as AppPage);
+      } else {
+        // Fallback for any unknown route/hash to guarantee the app never stays blank
+        setCurrentPage('home');
       }
     };
 
