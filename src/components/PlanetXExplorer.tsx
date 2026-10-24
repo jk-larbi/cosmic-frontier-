@@ -813,6 +813,37 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
               {selectedObject.description}
             </p>
 
+            {/* If Planet X, show explicit Nominal Simulation vs. Published Median comparison */}
+            {selectedObject.id === 'planet-x' && (
+              <div className="p-3.5 rounded-xl bg-[#050B1A] border border-[#8B5CF6]/40 space-y-2 text-xs">
+                <div className="flex items-center justify-between border-b border-[#1E293B] pb-1.5">
+                  <span className="text-[10px] font-mono text-[#8B5CF6] uppercase font-bold">
+                    Dynamical Model Parameter Tiers
+                  </span>
+                  <span className="text-[10px] font-mono text-[#A7B4CC]">
+                    Batygin & Brown (2021)
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-[11px] font-mono">
+                  <div className="flex justify-between items-start">
+                    <span className="text-[#A7B4CC]">Simulation Nominal:</span>
+                    <span className="text-[#F8FAFC] text-right font-medium">a = 420 AU, e = 0.43, q = 240 AU, i = 18°</span>
+                  </div>
+                  <div className="flex justify-between items-start">
+                    <span className="text-[#8B5CF6]">Published Median (1-σ):</span>
+                    <span className="text-[#38BDF8] text-right font-medium">a = 380⁺¹⁴⁰₋₈₀ AU, q = 300⁺⁸⁵₋₆₀ AU, i = 16°±5°</span>
+                  </div>
+                  <div className="flex justify-between items-start">
+                    <span className="text-[#A7B4CC]">Predicted Mass (1-σ):</span>
+                    <span className="text-[#F5C451] text-right font-medium">6.2⁺²˙²₋₁˙³ M⊕ (Model: 5–8 M⊕)</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-[#A7B4CC] leading-relaxed pt-1 border-t border-[#1E293B]">
+                  Academic Distinction: The simulation displays an illustrative nominal configuration drawn from within the 1-σ posterior distribution, rather than the single median value. Citation: Batygin, K. & Brown, M. E. (2021), <em>The Astronomical Journal</em>, 162:219 (DOI: 10.3847/1538-3881/ac2056).
+                </p>
+              </div>
+            )}
+
             <div className="p-3 rounded-xl bg-[#050B1A]/80 border border-[#1E293B] space-y-1 text-xs">
               <span className="text-[10px] font-bold uppercase font-mono text-[#F5C451]">
                 Why this object is relevant:

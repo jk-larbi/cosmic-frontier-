@@ -360,6 +360,40 @@ export const SPHERExExplorer: FC = () => {
         <p className="text-sm text-[#A7B4CC] leading-relaxed max-w-4xl">
           Infrared light is a form of light invisible to human eyes with longer wavelengths than optical light. While dense cosmic dust clouds completely block visible light, infrared waves pass straight through to unveil newborn protostars, distant early galaxies, and frozen chemical compounds like water and carbon dioxide ice.
         </p>
+
+        {/* Mission Operational Status Banner (Quick Release 3) */}
+        <div className="p-4 rounded-xl bg-[#050B1A] border border-[#10B981]/40 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse shrink-0" />
+            <div>
+              <span className="font-bold text-[#F8FAFC]">Mission Status: Operational in Orbit (Launched March 2025)</span>
+              <span className="text-[#A7B4CC] block sm:inline sm:ml-2">
+                IRSA Quick Release 3 (QR3) active since September 2026 • DOI: <span className="font-mono text-[#38BDF8]">10.26131/IRSA662</span>
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 font-mono text-[11px] text-[#A7B4CC]">
+            <a 
+              href="https://irsa.ipac.caltech.edu/data/SPHEREx/docs/overview_qr.html" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-[#38BDF8] hover:underline flex items-center gap-1"
+            >
+              <span>IRSA QR3 Docs</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+            <span className="text-[#1E293B]">|</span>
+            <a 
+              href="https://irsa.ipac.caltech.edu/cloud_access/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-[#38BDF8] hover:underline flex items-center gap-1"
+            >
+              <span>AWS S3 Open Data</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Target Selector Tabs */}
@@ -394,13 +428,21 @@ export const SPHERExExplorer: FC = () => {
                     {target.category}
                   </span>
                   <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${
-                    target.dataStatus === 'Real Archival Data'
+                    target.dataStatus === 'Operational In-Flight Data'
+                      ? 'bg-[#10B981]/20 text-[#10B981]'
+                      : target.dataStatus === 'Real Archival Data'
                       ? 'bg-[#38BDF8]/10 text-[#38BDF8]'
                       : target.dataStatus === 'Synthetic Mission Demonstration'
                       ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]'
                       : 'bg-[#F5C451]/10 text-[#F5C451]'
                   }`}>
-                    {target.dataStatus === 'Real Archival Data' ? 'Real' : target.dataStatus === 'Synthetic Mission Demonstration' ? 'Synthetic' : 'Model'}
+                    {target.dataStatus === 'Operational In-Flight Data'
+                      ? 'In-Flight QR3'
+                      : target.dataStatus === 'Real Archival Data'
+                      ? 'Archival Analog'
+                      : target.dataStatus === 'Synthetic Mission Demonstration'
+                      ? 'Synthetic'
+                      : 'Model'}
                   </span>
                 </div>
                 <div className="font-semibold text-xs text-[#F8FAFC] truncate mt-1">
@@ -427,7 +469,9 @@ export const SPHERExExplorer: FC = () => {
                 <span className="text-[#1E293B]">|</span>
                 <span className="text-[#38BDF8] font-semibold">{selectedBand.wavelength.toFixed(1)} μm</span>
                 <span className={`text-[10px] px-2 py-0.5 rounded border hidden sm:inline ${
-                  selectedTarget.dataStatus === 'Real Archival Data'
+                  selectedTarget.dataStatus === 'Operational In-Flight Data'
+                    ? 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/30'
+                    : selectedTarget.dataStatus === 'Real Archival Data'
                     ? 'bg-[#38BDF8]/10 text-[#38BDF8] border-[#38BDF8]/30'
                     : selectedTarget.dataStatus === 'Synthetic Mission Demonstration'
                     ? 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/30'
@@ -933,7 +977,9 @@ export const SPHERExExplorer: FC = () => {
               <div className="flex justify-between">
                 <span className="text-[#A7B4CC]">Data Status:</span>
                 <span className={`font-bold ${
-                  selectedTarget.dataStatus === 'Real Archival Data' 
+                  selectedTarget.dataStatus === 'Operational In-Flight Data'
+                    ? 'text-[#10B981]'
+                    : selectedTarget.dataStatus === 'Real Archival Data' 
                     ? 'text-[#38BDF8]' 
                     : selectedTarget.dataStatus === 'Illustrative Astronomical Model'
                     ? 'text-[#F5C451]'
@@ -1048,7 +1094,9 @@ export const SPHERExExplorer: FC = () => {
                   <span>Spectral Profile (0.75 – 5.0 μm)</span>
                 </span>
                 <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                  selectedTarget.spectralProfile.spectrumType === 'Archival Reference Spectroscopy'
+                  selectedTarget.spectralProfile.spectrumType === 'In-Flight Calibrated Spectroscopy'
+                    ? 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/30'
+                    : selectedTarget.spectralProfile.spectrumType === 'Archival Reference Spectroscopy'
                     ? 'bg-[#38BDF8]/10 text-[#38BDF8] border-[#38BDF8]/30'
                     : selectedTarget.spectralProfile.spectrumType === 'Theoretical Radiative Model'
                     ? 'bg-[#F5C451]/10 text-[#F5C451] border-[#F5C451]/30'
@@ -1141,7 +1189,7 @@ export const SPHERExExplorer: FC = () => {
                   <span className="text-[#F5C451] font-bold">{selectedBand.wavelength.toFixed(1)} μm ({selectedBand.name.split('—')[1]?.trim() || selectedBand.name})</span>
                 </div>
                 <p className="text-[10px] text-[#A7B4CC]/80 pt-1 leading-snug">
-                  Notice: Plotted curve uses documented infrared reference spectroscopy & physical models matched to SPHEREx's 102 LVF channels. Calibrated in-flight all-sky survey data cubes will be released via IRSA post-commissioning.
+                  Scientific Provenance: SPHEREx is operational in orbit (launched March 2025; Quick Release 3 active since September 2026, DOI: 10.26131/IRSA662). Plotted curves distinguish authentic in-flight QR3 calibrated spectra (NEP Deep Field), archival multi-mission comparison spectra (Carina, Orion, Sculptor from JWST and Spitzer), and theoretical simulations (HL Tau disk model).
                 </p>
               </div>
             </div>

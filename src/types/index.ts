@@ -156,7 +156,8 @@ export interface InfraredBand {
 export type DataStatusType = 
   | 'Real Archival Data'
   | 'Illustrative Astronomical Model'
-  | 'Synthetic Mission Demonstration';
+  | 'Synthetic Mission Demonstration'
+  | 'Operational In-Flight Data';
 
 export interface CelestialTarget {
   id: string;
@@ -187,7 +188,11 @@ export interface CelestialTarget {
     };
   };
   spectralProfile?: {
-    spectrumType: 'Archival Reference Spectroscopy' | 'Theoretical Radiative Model' | 'Synthetic Instrument Simulation';
+    spectrumType: 
+      | 'Archival Reference Spectroscopy' 
+      | 'Theoretical Radiative Model' 
+      | 'Synthetic Instrument Simulation'
+      | 'In-Flight Calibrated Spectroscopy';
     provenance: string;
     points: { wavelength: number; relativeFlux: number }[];
   };
