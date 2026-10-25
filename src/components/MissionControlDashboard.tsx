@@ -11,6 +11,7 @@ import type {
 import { fetchLiveEphemeris, fetchLiveCloseApproaches } from '../services/liveSpaceService';
 import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { useReducedMotion, useDocumentVisibility } from '../utils/motion';
+import { getApiUrl } from '../config/api';
 import { 
   Globe, 
   Orbit, 
@@ -109,7 +110,7 @@ export const MissionControlDashboard: FC<MissionControlDashboardProps> = ({ onNa
   // Fetch APOD Highlight
   const loadApod = async () => {
     try {
-      const res = await fetch('/api/nasa/apod');
+      const res = await fetch(getApiUrl('/api/nasa/apod'));
       if (res.ok) {
         const json = await res.json();
         if (json.data) setApodData(json.data);

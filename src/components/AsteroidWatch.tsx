@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, type FC } from 'react';
 import type { AppPage, LiveCloseApproach, LiveCloseApproachesResponse, LiveDataBadgeStatus } from '../types';
 import { fetchLiveCloseApproaches } from '../services/liveSpaceService';
+import { buildFallbackCloseApproachesResponse } from '../data/verifiedAsteroidPresets';
 import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { AsteroidMotionViewer } from './AsteroidMotionViewer';
 import { 
@@ -41,16 +42,36 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
     new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10)
   );
 
-  // Check URL hash/query on mount for initial deep-linking
+  // Check URL hash/query on mount & on hashchange for deep-linking
   useEffect(() => {
-    const raw = window.location.hash || window.location.search;
-    if (raw.includes('mode=motion')) {
-      setViewMode('motion');
-    }
-    const targetMatch = raw.match(/target=([^&]+)/);
-    if (targetMatch && targetMatch[1]) {
-      setMotionTargetDes(decodeURIComponent(targetMatch[1]));
-    }
+    const syncFromUrl = () => {
+      const raw = (window.location.hash || window.location.search || '').toLowerCase();
+      if (
+        raw.includes('mode=motion') || 
+        raw === '#motion' || 
+        raw.startsWith('#motion?') ||
+        raw === '#asteroid-motion' || 
+        raw.startsWith('#asteroid-motion?') ||
+        raw.includes('motion')
+      ) {
+        setViewMode('motion');
+      } else if (raw.includes('mode=list') || raw === '#asteroid-watch') {
+        setViewMode('list');
+      }
+
+      const targetMatch = (window.location.hash || window.location.search).match(/target=([^&]+)/i);
+      if (targetMatch && targetMatch[1]) {
+        setMotionTargetDes(decodeURIComponent(targetMatch[1]));
+      }
+    };
+
+    syncFromUrl();
+    window.addEventListener('hashchange', syncFromUrl);
+    window.addEventListener('popstate', syncFromUrl);
+    return () => {
+      window.removeEventListener('hashchange', syncFromUrl);
+      window.removeEventListener('popstate', syncFromUrl);
+    };
   }, []);
 
   // Canvas Ref for Approach Visualizer
@@ -81,7 +102,12 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
       }
     } catch (err: any) {
       console.error('Error fetching close approaches:', err);
-      setError('Failed to retrieve close approach data from JPL CNEOS. Showing verified cached records.');
+      setError('Failed to retrieve live close approach data from JPL CNEOS. Showing verified cached records.');
+      const fallback = buildFallbackCloseApproachesResponse();
+      setCadResponse(fallback);
+      if (fallback.approaches.length > 0) {
+        setSelectedApproach(fallback.approaches[0]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -460,10 +486,14 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
         <AsteroidMotionViewer
           initialDesignation={motionTargetDes || selectedApproach?.designation || '99942'}
           allApproaches={cadResponse?.approaches || []}
-          onSwitchToListMode={() => setViewMode('list')}
+          onSwitchToListMode={() => {
+            setViewMode('list');
+            window.location.hash = 'asteroid-watch';
+          }}
           onSelectApproach={(app: LiveCloseApproach) => {
             setSelectedApproach(app);
             setMotionTargetDes(app.designation);
+            window.location.hash = `asteroid-watch?mode=motion&target=${encodeURIComponent(app.designation)}`;
           }}
         />
       ) : (
@@ -756,6 +786,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                 onClick={() => {
                   setMotionTargetDes(selectedApproach.designation);
                   setViewMode('motion');
+                  window.location.hash = `asteroid-watch?mode=motion&target=${encodeURIComponent(selectedApproach.designation)}`;
                 }}
                 className="w-full py-3 px-4 rounded-xl bg-linear-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#38BDF8]/90 hover:to-[#0284C7]/90 text-[#050B1A] font-bold text-xs font-mono transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
               >
@@ -859,6 +890,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                             setSelectedApproach(item);
                             setMotionTargetDes(item.designation);
                             setViewMode('motion');
+                            window.location.hash = `asteroid-watch?mode=motion&target=${encodeURIComponent(item.designation)}`;
                           }}
                           className="px-2.5 py-1 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] text-[#38BDF8] border border-[#38BDF8]/40 hover:border-[#38BDF8] text-[11px] font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer"
                         >

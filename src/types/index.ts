@@ -1,4 +1,21 @@
-export type AppPage = 'home' | 'mission-control' | 'observatory' | 'universe' | 'live-space' | 'asteroid-watch' | 'exoplanets' | 'galaxies' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
+export type AppPage = 
+  | 'home' 
+  | 'mission-control' 
+  | 'observatory' 
+  | 'universe' 
+  | 'live-space' 
+  | 'asteroid-watch' 
+  | 'motion' 
+  | 'asteroid-motion' 
+  | 'exoplanets' 
+  | 'galaxies' 
+  | 'spherex' 
+  | 'planet-x' 
+  | 'data-centre' 
+  | 'data-center' 
+  | 'guide' 
+  | 'ai-guide' 
+  | 'about';
 
 export type AstronomicalAssetClassification = 
   | 'observation'
@@ -526,7 +543,7 @@ export interface ObservatoryObject {
   categoryLabel: string;
   classification: string;
   color: string;
-  radiusKm: number | string;
+  radiusKm?: number | string;
   motionType: ObservatoryMotionType;
   dataStatus: string;
   isHypothetical: boolean;
@@ -551,6 +568,8 @@ export interface ObservatoryObject {
     meanAnomalyDeg: number;
     trueAnomalyDeg: number;
     orbitalPeriodYears: number;
+    epochJd?: number;
+    meanMotionDegDay?: number;
   };
   exoplanetParams?: {
     hostStar: string;
@@ -634,6 +653,28 @@ export interface AsteroidMotionStateVector {
   trueAnomalyDeg: number;
 }
 
+export type AsteroidRetrievalStatus = 'live' | 'cached' | 'archive' | 'local_propagation' | 'unavailable';
+
+export interface AsteroidMotionProvenance {
+  source: string;
+  isLive: boolean;
+  retrievalStatus: AsteroidRetrievalStatus;
+  statusExplanation?: string;
+  retrievalTimestamp: string | null;
+  lastSuccessfulRetrieval: string | null;
+  lastRefreshAttempt: {
+    timestamp: string;
+    success: boolean;
+    error?: string;
+  } | null;
+  calculationEpoch: string;
+  epochReference?: string | null;
+  calculationMethod: string;
+  coordinateFrame: string;
+  sourceUrl: string;
+  sentryUrl: string;
+}
+
 export interface AsteroidMotionResponse {
   success: boolean;
   asteroid: {
@@ -661,14 +702,5 @@ export interface AsteroidMotionResponse {
     asteroidOrbitPath: Array<{ x: number; y: number; z: number }>;
     earthOrbitPath: Array<{ x: number; y: number; z: number }>;
   };
-  provenance: {
-    source: string;
-    isLive: boolean;
-    calculationEpoch: string;
-    calculationMethod: string;
-    coordinateFrame: string;
-    retrievalTimestamp: string;
-    sourceUrl: string;
-    sentryUrl: string;
-  };
+  provenance: AsteroidMotionProvenance;
 }

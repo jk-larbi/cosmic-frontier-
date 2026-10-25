@@ -7,6 +7,7 @@ import type {
   CatalogCategory,
   NasaImageRecord
 } from '../types';
+import { getApiUrl } from '../config/api';
 
 const REQUEST_TIMEOUT_MS = 8000;
 
@@ -22,7 +23,8 @@ export interface FetchResult<T> {
   lastUpdatedUtc?: string;
 }
 
-async function safeFetch<T>(url: string, fallbackData: T): Promise<FetchResult<T>> {
+async function safeFetch<T>(endpoint: string, fallbackData: T): Promise<FetchResult<T>> {
+  const url = getApiUrl(endpoint);
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
@@ -143,7 +145,7 @@ export async function fetchCatalogItems(
   if (category && category !== 'all') params.append('category', category);
   if (searchQuery) params.append('q', searchQuery);
 
-  const url = `/api/data/catalog?${params.toString()}`;
+  const url = getApiUrl(`/api/data/catalog?${params.toString()}`);
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)

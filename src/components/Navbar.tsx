@@ -76,7 +76,9 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
           <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1" aria-label="Main Navigation">
             {navItems.map((item) => {
               const isActive = currentPage === item.page || 
-                (item.page === 'ai-guide' && currentPage === 'guide');
+                (item.page === 'ai-guide' && currentPage === 'guide') ||
+                (item.page === 'asteroid-watch' && (currentPage === 'motion' || (currentPage as string) === 'asteroid-motion')) ||
+                (item.page === 'data-centre' && (currentPage as string) === 'data-center');
               return (
                 <button
                   key={item.page}
@@ -125,7 +127,9 @@ export const Navbar: FC<NavbarProps> = ({ currentPage, onNavigate }) => {
         <div className="lg:hidden bg-[#0B1630] border-b border-[#1E293B] px-4 pt-2 pb-4 space-y-1 animate-fadeIn">
           {navItems.map((item) => {
             const isActive = currentPage === item.page || 
-              (item.page === 'ai-guide' && currentPage === 'guide');
+              (item.page === 'ai-guide' && currentPage === 'guide') ||
+              (item.page === 'asteroid-watch' && (currentPage === 'motion' || (currentPage as string) === 'asteroid-motion')) ||
+              (item.page === 'data-centre' && (currentPage as string) === 'data-center');
             return (
               <button
                 key={item.page}

@@ -525,6 +525,7 @@ export const NASA_JPL_TEXTURE_MAPS: Record<string, PlanetTextureMeta> = {
 
 let textureLoader: THREE.TextureLoader | null = null;
 const loadedTextureCache = new Map<string, THREE.Texture>();
+const fallbackTextureCache = new Map<string, THREE.Texture>();
 
 /**
  * Loads an authentic NASA/JPL planetary map texture asynchronously.
@@ -541,21 +542,27 @@ export function loadPlanetTexture(
     return loadedTextureCache.get(normId)!;
   }
 
-  const proceduralMap: Record<string, () => THREE.CanvasTexture> = {
-    sun: createSunTexture,
-    mercury: createMercuryTexture,
-    venus: createVenusTexture,
-    earth: createEarthTexture,
-    moon: createMoonTexture,
-    mars: createMarsTexture,
-    jupiter: createJupiterTexture,
-    saturn: createSaturnTexture,
-    uranus: createUranusTexture,
-    neptune: createNeptuneTexture
-  };
+  let initialTexture: THREE.Texture;
+  if (fallbackTextureCache.has(normId)) {
+    initialTexture = fallbackTextureCache.get(normId)!;
+  } else {
+    const proceduralMap: Record<string, () => THREE.CanvasTexture> = {
+      sun: createSunTexture,
+      mercury: createMercuryTexture,
+      venus: createVenusTexture,
+      earth: createEarthTexture,
+      moon: createMoonTexture,
+      mars: createMarsTexture,
+      jupiter: createJupiterTexture,
+      saturn: createSaturnTexture,
+      uranus: createUranusTexture,
+      neptune: createNeptuneTexture
+    };
 
-  const fallbackFn = proceduralMap[normId] || createMercuryTexture;
-  const initialTexture = fallbackFn();
+    const fallbackFn = proceduralMap[normId] || createMercuryTexture;
+    initialTexture = fallbackFn();
+    fallbackTextureCache.set(normId, initialTexture);
+  }
 
   const meta = NASA_JPL_TEXTURE_MAPS[normId];
   if (meta && typeof window !== 'undefined') {

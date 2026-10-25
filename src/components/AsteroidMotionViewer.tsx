@@ -6,16 +6,27 @@ import type {
   AsteroidMotionStateVector
 } from '../types';
 import { fetchAsteroidOrbit } from '../services/liveSpaceService';
+import { buildFallbackAsteroidMotionResponse } from '../data/verifiedAsteroidPresets';
 import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import {
   propagateElementsClient,
-  type KeplerianElements
+  type KeplerianElements,
+  calculateMajorPlanetPosition,
+  generateMajorPlanetOrbitPath,
+  type MajorPlanetKey
 } from '../utils/orbitalMotion';
 import {
   useReducedMotion,
   useDocumentVisibility,
   Easing
 } from '../utils/motion';
+import { loadPlanetTexture } from '../utils/planetTextureGenerator';
+import {
+  createAsteroidGeometry,
+  createAsteroidMaterial,
+  updateAsteroidTumble,
+  getAsteroidPhysicalInfo
+} from '../utils/asteroidMeshGenerator';
 import {
   Play,
   Pause,
@@ -25,7 +36,14 @@ import {
   CheckCircle2,
   Orbit,
   ArrowRight,
-  Clock
+  Clock,
+  Eye,
+  RefreshCw,
+  Search,
+  ShieldAlert,
+  Info,
+  Database,
+  AlertCircle
 } from 'lucide-react';
 
 interface AsteroidMotionViewerProps {
@@ -37,6 +55,7 @@ interface AsteroidMotionViewerProps {
 
 type RenderEngine = '3d' | '2d';
 type ViewPerspective = 'encounter' | 'heliocentric';
+type FocusedBody = 'sun' | 'earth' | 'mars' | 'asteroid';
 
 const SPEED_PRESETS = [
   { label: '-1 d/s', factor: -24 * 3600 },
@@ -58,6 +77,48 @@ const FAMOUS_NEO_PRESETS = [
   { des: '2024 YR4', label: '2024 YR4', note: 'Recently Cataloged Apollo' }
 ];
 
+// Cached procedural cloud texture to avoid recreating canvas on every mount
+let cachedCloudTexture: THREE.CanvasTexture | null = null;
+function getCloudTexture(): THREE.CanvasTexture {
+  if (cachedCloudTexture) return cachedCloudTexture;
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d')!;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+  for (let i = 0; i < 70; i++) {
+    const x = Math.random() * canvas.width;
+    const y = Math.random() * (canvas.height * 0.8) + canvas.height * 0.1;
+    const rx = Math.random() * 160 + 50;
+    const ry = Math.random() * 25 + 6;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, Math.sin(x * 0.02) * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Major cyclonic storm vortex systems
+  for (let s = 0; s < 6; s++) {
+    const sx = Math.random() * canvas.width;
+    const sy = Math.random() * (canvas.height * 0.6) + canvas.height * 0.2;
+    const grad = ctx.createRadialGradient(sx, sy, 5, sx, sy, 40);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.65)');
+    grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.35)');
+    grad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 40, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  cachedCloudTexture = texture;
+  return texture;
+}
+
 export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
   initialDesignation = '99942',
   allApproaches = [],
@@ -67,15 +128,25 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
   const isReducedMotion = useReducedMotion();
   const isDocumentVisible = useDocumentVisibility();
 
-  // Target designation & base data
+  // Target designation & base data (instant mount with verified preset archive)
   const [selectedDes, setSelectedDes] = useState<string>(initialDesignation);
-  const [motionData, setMotionData] = useState<AsteroidMotionResponse | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [searchInput, setSearchInput] = useState<string>('');
+  const [motionData, setMotionData] = useState<AsteroidMotionResponse | null>(() => {
+    try {
+      return buildFallbackAsteroidMotionResponse(initialDesignation);
+    } catch {
+      return null;
+    }
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [webGlNotice, setWebGlNotice] = useState<string | null>(null);
 
-  // View Controls
+  // View & Camera Controls
   const [renderEngine, setRenderEngine] = useState<RenderEngine>('3d');
-  const [viewPerspective, setViewPerspective] = useState<ViewPerspective>('encounter');
+  const [viewPerspective, setViewPerspective] = useState<ViewPerspective>('heliocentric');
+  const [focusedBody, setFocusedBody] = useState<FocusedBody>('asteroid');
   const [distanceUnit, setDistanceUnit] = useState<'lunar' | 'km' | 'au'>('lunar');
 
   // Display Toggles
@@ -83,6 +154,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
   const [showLabels, setShowLabels] = useState<boolean>(true);
   const [showVectors, setShowVectors] = useState<boolean>(true);
   const [showMoon, setShowMoon] = useState<boolean>(true);
+  const [showPlanets, setShowPlanets] = useState<boolean>(true);
 
   // Time & Playback Controls
   const [simulatedDate, setSimulatedDate] = useState<Date>(new Date());
@@ -91,32 +163,86 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
   const [baseEpoch, setBaseEpoch] = useState<Date>(new Date());
 
   // Real-time telemetry state (updated at throttled intervals for React rendering)
-  const [realtimeDistLD, setRealtimeDistLD] = useState<number>(0);
-  const [realtimeDistAU, setRealtimeDistAU] = useState<number>(0);
-  const [realtimeSpeedKmS, setRealtimeSpeedKmS] = useState<number>(0);
+  const [realtimeDistLD, setRealtimeDistLD] = useState<number>(() => {
+    try {
+      const fb = buildFallbackAsteroidMotionResponse(initialDesignation);
+      return fb.stateVector.distEarthLunar;
+    } catch {
+      return 0;
+    }
+  });
+  const [realtimeDistAU, setRealtimeDistAU] = useState<number>(() => {
+    try {
+      const fb = buildFallbackAsteroidMotionResponse(initialDesignation);
+      return fb.stateVector.distEarthAU;
+    } catch {
+      return 0;
+    }
+  });
+  const [realtimeSpeedKmS, setRealtimeSpeedKmS] = useState<number>(() => {
+    try {
+      const fb = buildFallbackAsteroidMotionResponse(initialDesignation);
+      return fb.stateVector.orbitalSpeedKmS;
+    } catch {
+      return 0;
+    }
+  });
 
-  // Canvas Refs
-  const webglCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const canvas2dRef = useRef<HTMLCanvasElement | null>(null);
+  // Container & 2D Canvas Refs
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const canvas2dRef = useRef<HTMLCanvasElement | null>(null);
 
   // Simulated Time Ref for 60fps loop
   const simTimeRef = useRef<number>(Date.now());
-  const lastTickRef = useRef<number>(performance.now());
-  const lastHudUpdateRef = useRef<number>(0);
   const transitAnimRef = useRef<number | null>(null);
+
+  // State refs accessed by 60fps render loop without triggering effect restarts
+  const viewPerspectiveRef = useRef<ViewPerspective>(viewPerspective);
+  viewPerspectiveRef.current = viewPerspective;
+
+  const focusedBodyRef = useRef<FocusedBody>(focusedBody);
+  focusedBodyRef.current = focusedBody;
+
+  const showOrbitsRef = useRef<boolean>(showOrbits);
+  showOrbitsRef.current = showOrbits;
+
+  const showVectorsRef = useRef<boolean>(showVectors);
+  showVectorsRef.current = showVectors;
+
+  const showMoonRef = useRef<boolean>(showMoon);
+  showMoonRef.current = showMoon;
+
+  const showPlanetsRef = useRef<boolean>(showPlanets);
+  showPlanetsRef.current = showPlanets;
+
+  const motionDataRef = useRef<AsteroidMotionResponse | null>(motionData);
+  motionDataRef.current = motionData;
+
+  const selectedDesRef = useRef<string>(selectedDes);
+  selectedDesRef.current = selectedDes;
+
+  const isPlayingRef = useRef<boolean>(isPlaying);
+  isPlayingRef.current = isPlaying;
+
+  const speedFactorRef = useRef<number>(speedFactor);
+  speedFactorRef.current = speedFactor;
 
   // 3D Three.js State
   const threeRef = useRef<{
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
     renderer: THREE.WebGLRenderer;
+    sunGroup: THREE.Group;
     earthGroup: THREE.Group;
-    asteroidMesh: THREE.Mesh;
+    earthCloudMesh: THREE.Mesh;
     moonMesh: THREE.Mesh;
-    sunMesh: THREE.Mesh;
-    orbitLine: THREE.Line;
-    earthOrbitLine: THREE.Line;
+    marsGroup: THREE.Group;
+    mercuryMesh: THREE.Mesh;
+    venusMesh: THREE.Mesh;
+    jupiterMesh: THREE.Mesh;
+    asteroidMesh: THREE.Mesh;
+    asteroidOrbitLine: THREE.Line;
+    planetOrbitLines: Record<string, THREE.Line>;
     distanceLine: THREE.Line;
     velocityVector: THREE.ArrowHelper;
     isDragging: boolean;
@@ -127,11 +253,15 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     targetZoom: number;
     cameraTarget: THREE.Vector3;
     currentTarget: THREE.Vector3;
+    currentAsteroidDes: string;
+    lastOrbitPerspective?: ViewPerspective;
+    lastOrbitDes?: string;
   } | null>(null);
 
   // Handle target selection
   const handleSelectTarget = (des: string) => {
     setSelectedDes(des);
+    setSearchInput('');
     const matched = allApproaches.find(a => a.designation.toLowerCase().includes(des.toLowerCase()));
     if (matched && onSelectApproach) {
       onSelectApproach(matched);
@@ -155,17 +285,27 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     };
   }, [motionData]);
 
-  // Load Asteroid Orbit Data
-  const loadOrbitData = useCallback(async (desToLoad: string, targetEpoch?: Date) => {
-    try {
+  // Load Asteroid Orbit Data (supports genuine network refresh)
+  const loadOrbitData = useCallback(async (desToLoad: string, targetEpoch?: Date, isRefresh = false) => {
+    const epochIso = targetEpoch ? targetEpoch.toISOString() : undefined;
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else {
       setIsLoading(true);
-      setError(null);
-      const epochIso = targetEpoch ? targetEpoch.toISOString() : undefined;
-      const res = await fetchAsteroidOrbit({ des: desToLoad, date: epochIso });
+    }
+    setError(null);
+
+    try {
+      const res = await fetchAsteroidOrbit({ des: desToLoad, date: epochIso, refresh: isRefresh });
       setMotionData(res);
       setRealtimeDistLD(res.stateVector.distEarthLunar);
       setRealtimeDistAU(res.stateVector.distEarthAU);
       setRealtimeSpeedKmS(res.stateVector.orbitalSpeedKmS);
+
+      // If refresh attempt failed upstream, explain why existing data is retained
+      if (isRefresh && res.provenance.lastRefreshAttempt && !res.provenance.lastRefreshAttempt.success) {
+        setError(res.provenance.statusExplanation || res.provenance.lastRefreshAttempt.error || 'Live refresh query to NASA/JPL SBDB was unreachable. Existing data is preserved.');
+      }
 
       // If target epoch was not explicitly provided and the asteroid has a close-approach record, set base epoch to that date
       if (!targetEpoch && res.asteroid.closeApproach) {
@@ -175,12 +315,26 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
         }
       }
     } catch (err: any) {
-      console.error('[AsteroidMotionViewer] Failed to load asteroid orbit:', err);
-      setError('Unable to load orbital data from JPL SBDB. Displaying verified local archive.');
+      console.warn('[AsteroidMotionViewer] Live JPL SBDB orbit fetch failed, using verified fallback:', err);
+      // Ensure existing motionData is preserved if we had any!
+      if (!motionData) {
+        const fallback = buildFallbackAsteroidMotionResponse(desToLoad, epochIso);
+        setMotionData(fallback);
+      }
+      setError(isRefresh 
+        ? 'Live refresh query to NASA/JPL SBDB failed. Preserving current orbital data.' 
+        : 'Live JPL SBDB query unavailable. Displaying verified NASA/JPL archive.');
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
-  }, []);
+  }, [motionData]);
+
+  // Genuine network refresh trigger
+  const handleRetryLive = async () => {
+    if (isRefreshing || isLoading) return;
+    await loadOrbitData(selectedDes, simulatedDate, true);
+  };
 
   // Initial and designation change fetch
   useEffect(() => {
@@ -192,189 +346,869 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     simTimeRef.current = simulatedDate.getTime();
   }, [simulatedDate]);
 
-  // Synchronize 3D meshes for a given epoch (called at 60fps in Three loop)
+  // Synchronize 3D meshes for a given epoch (called inside 60fps Three loop)
   const sync3DPositionForEpoch = useCallback((epochMs: number) => {
-    if (!threeRef.current || !motionData) return;
+    if (!threeRef.current) return;
     const { 
+      sunGroup,
       earthGroup, 
       asteroidMesh, 
       moonMesh, 
-      sunMesh, 
-      orbitLine, 
-      earthOrbitLine, 
+      marsGroup,
+      mercuryMesh,
+      venusMesh,
+      jupiterMesh,
+      asteroidOrbitLine, 
+      planetOrbitLines,
       distanceLine, 
-      velocityVector 
+      velocityVector,
+      currentTarget
     } = threeRef.current;
 
-    const keplerian = getKeplerianElements();
-    const currentDate = new Date(epochMs);
-    let state: AsteroidMotionStateVector | any;
+    const data = motionDataRef.current;
+    const currentPerspective = viewPerspectiveRef.current;
+    const currentFocus = focusedBodyRef.current;
+    const orbitsVisible = showOrbitsRef.current;
+    const vectorsVisible = showVectorsRef.current;
+    const moonVisible = showMoonRef.current;
+    const planetsVisible = showPlanetsRef.current;
 
-    if (keplerian) {
-      state = propagateElementsClient(keplerian, currentDate);
-    } else {
-      state = motionData.stateVector;
+    const currentDate = new Date(epochMs);
+
+    // Compute planetary positions via Standish JPL analytical ephemeris
+    const earthPos = calculateMajorPlanetPosition('earth', currentDate);
+    const marsPos = calculateMajorPlanetPosition('mars', currentDate);
+    const mercuryPos = calculateMajorPlanetPosition('mercury', currentDate);
+    const venusPos = calculateMajorPlanetPosition('venus', currentDate);
+    const jupiterPos = calculateMajorPlanetPosition('jupiter', currentDate);
+
+    // Propagate Asteroid
+    let astState: AsteroidMotionStateVector | any = null;
+    if (data?.asteroid?.orbitalElements) {
+      const el = data.asteroid.orbitalElements;
+      const keplerian: KeplerianElements = {
+        a: el.semiMajorAxisAU,
+        e: el.eccentricity,
+        i: el.inclinationDeg,
+        node: el.longitudeOfAscendingNodeDeg,
+        peri: el.argumentOfPerihelionDeg,
+        M0: el.meanAnomalyDeg,
+        epochJd: el.epochJd,
+        periodYears: el.orbitalPeriodYears,
+        meanMotionDegDay: el.meanMotionDegDay
+      };
+      astState = propagateElementsClient(keplerian, currentDate);
+    } else if (data?.stateVector) {
+      astState = data.stateVector;
     }
 
-    const isPha = motionData.asteroid.isPotentiallyHazardous;
+    const isPha = data?.asteroid?.isPotentiallyHazardous ?? false;
 
-    if (viewPerspective === 'encounter') {
-      // Earth at center
+    // Dynamically sync Asteroid Procedural Topography & PBR Rocky Textures if target changes
+    const targetDes = selectedDesRef.current;
+    if (threeRef.current.currentAsteroidDes !== targetDes) {
+      threeRef.current.currentAsteroidDes = targetDes;
+      asteroidMesh.geometry.dispose();
+      asteroidMesh.geometry = createAsteroidGeometry(targetDes, 1.5);
+      (asteroidMesh.material as THREE.Material).dispose();
+      asteroidMesh.material = createAsteroidMaterial(targetDes, isPha);
+    } else {
+      const mat = asteroidMesh.material as THREE.MeshStandardMaterial;
+      if (mat.emissive) {
+        mat.emissive.set(isPha ? 0x3B1010 : 0x060606);
+        mat.emissiveIntensity = isPha ? 0.35 : 0.1;
+      }
+    }
+
+    if (currentPerspective === 'encounter') {
+      // -------------------------------------------------------------------
+      // 1. EARTH FLYBY RADAR PERSPECTIVE (Geocentric Lunar Distance scale)
+      // -------------------------------------------------------------------
       earthGroup.position.set(0, 0, 0);
       earthGroup.visible = true;
-      sunMesh.visible = false;
-      earthOrbitLine.visible = false;
+      sunGroup.visible = false;
+      marsGroup.visible = false;
+      mercuryMesh.visible = false;
+      venusMesh.visible = false;
+      jupiterMesh.visible = false;
 
-      const scaleLD = 18.0;
-      const missLD = state.distEarthLunar;
-      const relNorm = Math.hypot(state.earthRelativeAU.x, state.earthRelativeAU.y, state.earthRelativeAU.z) || 1;
-      const clampedVisualDist = Math.max(5.5, Math.min(75, missLD * scaleLD));
-      const astX = (state.earthRelativeAU.x / relNorm) * clampedVisualDist;
-      const astY = (state.earthRelativeAU.z / relNorm) * clampedVisualDist;
-      const astZ = (state.earthRelativeAU.y / relNorm) * clampedVisualDist;
+      // Hide planet orbit lines in encounter mode
+      Object.values(planetOrbitLines).forEach(line => {
+        line.visible = false;
+      });
+
+      const scaleLD = 18.0; // 18 Three.js units = 1 Lunar Distance (384,400 km)
+      const missLD = astState ? astState.distEarthLunar : 1.0;
+      const relX = astState ? astState.earthRelativeAU.x : 0.002;
+      const relY = astState ? astState.earthRelativeAU.y : 0.001;
+      const relZ = astState ? astState.earthRelativeAU.z : 0.0005;
+      const relNorm = Math.hypot(relX, relY, relZ) || 1;
+
+      const visualDist = Math.max(5.5, Math.min(85, missLD * scaleLD));
+      const astX = (relX / relNorm) * visualDist;
+      const astY = (relZ / relNorm) * visualDist;
+      const astZ = (relY / relNorm) * visualDist;
 
       asteroidMesh.position.set(astX, astY, astZ);
-      (asteroidMesh.material as THREE.MeshStandardMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
 
-      // Moon position at 1 LD
+      // Moon position at 1 LD (18 units)
       const moonAngle = (epochMs / (27.3 * 86400000)) * Math.PI * 2;
       moonMesh.position.set(Math.cos(moonAngle) * 18, 0, Math.sin(moonAngle) * 18);
-      moonMesh.visible = showMoon;
+      moonMesh.visible = moonVisible;
 
-      // Trajectory flyby arc
-      const trajPoints: THREE.Vector3[] = [];
-      const flybyLen = 45;
-      const velAngle = Math.atan2(state.velocityVectorKmS.vy, state.velocityVectorKmS.vx);
-      for (let s = -flybyLen; s <= flybyLen; s += 2) {
-        trajPoints.push(new THREE.Vector3(
-          astX + Math.cos(velAngle) * s,
-          astY,
-          astZ + Math.sin(velAngle) * s
-        ));
+      // Trajectory flyby arc through closest encounter (cached: updated on target/perspective change)
+      const needsEncounterOrbitUpdate = 
+        threeRef.current.lastOrbitPerspective !== currentPerspective ||
+        threeRef.current.lastOrbitDes !== targetDes ||
+        !threeRef.current.asteroidOrbitLine.geometry.attributes.position;
+
+      if (needsEncounterOrbitUpdate) {
+        threeRef.current.lastOrbitPerspective = currentPerspective;
+        threeRef.current.lastOrbitDes = targetDes;
+        const trajPoints: THREE.Vector3[] = [];
+        const flybyLen = 50;
+        const vx = astState?.velocityVectorKmS?.vx ?? 10;
+        const vy = astState?.velocityVectorKmS?.vy ?? 5;
+        const velAngle = Math.atan2(vy, vx);
+        for (let s = -flybyLen; s <= flybyLen; s += 2) {
+          trajPoints.push(new THREE.Vector3(
+            astX + Math.cos(velAngle) * s,
+            astY,
+            astZ + Math.sin(velAngle) * s
+          ));
+        }
+        asteroidOrbitLine.geometry.dispose();
+        asteroidOrbitLine.geometry = new THREE.BufferGeometry().setFromPoints(trajPoints);
+        (asteroidOrbitLine.material as THREE.LineBasicMaterial).color.set(isPha ? 0xF43F5E : 0xF59E0B);
       }
-      orbitLine.geometry.dispose();
-      orbitLine.geometry = new THREE.BufferGeometry().setFromPoints(trajPoints);
-      orbitLine.visible = showOrbits;
-      (orbitLine.material as THREE.LineBasicMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
+      asteroidOrbitLine.visible = orbitsVisible;
 
-      // Distance line from Earth to Asteroid
-      const distPts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(astX, astY, astZ)];
-      distanceLine.geometry.dispose();
-      distanceLine.geometry = new THREE.BufferGeometry().setFromPoints(distPts);
-      distanceLine.computeLineDistances();
-      distanceLine.visible = showVectors;
+      // Distance line from Earth center to Asteroid (zero-allocation in-place buffer update)
+      const distPos = distanceLine.geometry.attributes.position as THREE.BufferAttribute;
+      if (distPos) {
+        distPos.setXYZ(0, 0, 0, 0);
+        distPos.setXYZ(1, astX, astY, astZ);
+        distPos.needsUpdate = true;
+        distanceLine.computeLineDistances();
+        distanceLine.visible = vectorsVisible;
+      }
 
       // Velocity Arrow
-      const dirVec = new THREE.Vector3(
-        state.velocityVectorKmS.vx,
-        state.velocityVectorKmS.vz,
-        state.velocityVectorKmS.vy
-      ).normalize();
-      velocityVector.position.set(astX, astY, astZ);
-      velocityVector.setDirection(dirVec);
-      velocityVector.setLength(7);
-      velocityVector.visible = showVectors;
-    } else {
-      // Heliocentric View: Sun at center
-      sunMesh.visible = true;
-      moonMesh.visible = false;
-      const scaleAU = 35.0;
+      if (astState?.velocityVectorKmS) {
+        const dirVec = new THREE.Vector3(
+          astState.velocityVectorKmS.vx,
+          astState.velocityVectorKmS.vz,
+          astState.velocityVectorKmS.vy
+        ).normalize();
+        velocityVector.position.set(astX, astY, astZ);
+        velocityVector.setDirection(dirVec);
+        velocityVector.setLength(7);
+        velocityVector.visible = vectorsVisible;
+      }
 
-      const earthX = state.earthPositionAU.x * scaleAU;
-      const earthY = state.earthPositionAU.z * scaleAU;
-      const earthZ = state.earthPositionAU.y * scaleAU;
+      // Camera Target in Encounter Perspective
+      if (currentFocus === 'asteroid') {
+        currentTarget.set(astX, astY, astZ);
+      } else {
+        currentTarget.set(0, 0, 0);
+      }
+    } else {
+      // -------------------------------------------------------------------
+      // 2. HELIOCENTRIC SOLAR SYSTEM PERSPECTIVE (Inner System AU Scale)
+      // -------------------------------------------------------------------
+      const scaleAU = 32.0; // 32 Three.js units = 1 AU
+
+      // Sun at center
+      sunGroup.position.set(0, 0, 0);
+      sunGroup.visible = true;
+      moonMesh.visible = false;
+
+      // Earth Position
+      const earthX = earthPos.xAU * scaleAU;
+      const earthY = earthPos.zAU * scaleAU;
+      const earthZ = earthPos.yAU * scaleAU;
       earthGroup.position.set(earthX, earthY, earthZ);
       earthGroup.visible = true;
 
-      const astX = state.heliocentricAU.x * scaleAU;
-      const astY = state.heliocentricAU.z * scaleAU;
-      const astZ = state.heliocentricAU.y * scaleAU;
-      asteroidMesh.position.set(astX, astY, astZ);
-      (asteroidMesh.material as THREE.MeshStandardMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
+      // Mars Position
+      const marsX = marsPos.xAU * scaleAU;
+      const marsY = marsPos.zAU * scaleAU;
+      const marsZ = marsPos.yAU * scaleAU;
+      marsGroup.position.set(marsX, marsY, marsZ);
+      marsGroup.visible = planetsVisible;
 
-      if (motionData.trajectories.asteroidOrbitPath) {
-        const orbitPts = motionData.trajectories.asteroidOrbitPath.map(
-          pt => new THREE.Vector3(pt.x * scaleAU, pt.z * scaleAU, pt.y * scaleAU)
-        );
-        orbitLine.geometry.dispose();
-        orbitLine.geometry = new THREE.BufferGeometry().setFromPoints(orbitPts);
-        orbitLine.visible = showOrbits;
-        (orbitLine.material as THREE.LineBasicMaterial).color.set(isPha ? 0xEF4444 : 0xF59E0B);
-      }
+      // Mercury Position
+      const mercX = mercuryPos.xAU * scaleAU;
+      const mercY = mercuryPos.zAU * scaleAU;
+      const mercZ = mercuryPos.yAU * scaleAU;
+      mercuryMesh.position.set(mercX, mercY, mercZ);
+      mercuryMesh.visible = planetsVisible;
 
-      if (motionData.trajectories.earthOrbitPath) {
-        const earthPts = motionData.trajectories.earthOrbitPath.map(
-          pt => new THREE.Vector3(pt.x * scaleAU, pt.z * scaleAU, pt.y * scaleAU)
-        );
-        earthOrbitLine.geometry.dispose();
-        earthOrbitLine.geometry = new THREE.BufferGeometry().setFromPoints(earthPts);
-        earthOrbitLine.visible = showOrbits;
-      }
+      // Venus Position
+      const venX = venusPos.xAU * scaleAU;
+      const venY = venusPos.zAU * scaleAU;
+      const venZ = venusPos.yAU * scaleAU;
+      venusMesh.position.set(venX, venY, venZ);
+      venusMesh.visible = planetsVisible;
 
-      const distPts = [new THREE.Vector3(earthX, earthY, earthZ), new THREE.Vector3(astX, astY, astZ)];
-      distanceLine.geometry.dispose();
-      distanceLine.geometry = new THREE.BufferGeometry().setFromPoints(distPts);
-      distanceLine.computeLineDistances();
-      distanceLine.visible = showVectors;
+      // Jupiter Position
+      const jupX = jupiterPos.xAU * scaleAU;
+      const jupY = jupiterPos.zAU * scaleAU;
+      const jupZ = jupiterPos.yAU * scaleAU;
+      jupiterMesh.position.set(jupX, jupY, jupZ);
+      jupiterMesh.visible = planetsVisible;
 
-      const dirVec = new THREE.Vector3(
-        state.velocityVectorKmS.vx,
-        state.velocityVectorKmS.vz,
-        state.velocityVectorKmS.vy
-      ).normalize();
-      velocityVector.position.set(astX, astY, astZ);
-      velocityVector.setDirection(dirVec);
-      velocityVector.setLength(8);
-      velocityVector.visible = showVectors;
-    }
-  }, [motionData, getKeplerianElements, viewPerspective, showMoon, showOrbits, showVectors]);
+      // Show/Hide planetary orbit lines
+      Object.entries(planetOrbitLines).forEach(([key, line]) => {
+        line.visible = orbitsVisible && (key === 'earth' || planetsVisible);
+      });
 
-  // Handle Playback animation loop (runs in-memory at 60fps)
-  useEffect(() => {
-    if (!isPlaying) return;
-    let animId: number;
+      // Asteroid Position
+      if (astState) {
+        const astX = astState.heliocentricAU.x * scaleAU;
+        const astY = astState.heliocentricAU.z * scaleAU;
+        const astZ = astState.heliocentricAU.y * scaleAU;
+        asteroidMesh.position.set(astX, astY, astZ);
 
-    const tick = (now: number) => {
-      if (!isDocumentVisible) {
-        animId = requestAnimationFrame(tick);
-        return;
-      }
+        // Distance Line from Earth to Asteroid (zero-allocation in-place buffer update)
+        const distPos = distanceLine.geometry.attributes.position as THREE.BufferAttribute;
+        if (distPos) {
+          distPos.setXYZ(0, earthX, earthY, earthZ);
+          distPos.setXYZ(1, astX, astY, astZ);
+          distPos.needsUpdate = true;
+          distanceLine.computeLineDistances();
+          distanceLine.visible = vectorsVisible;
+        }
 
-      const deltaSec = (now - lastTickRef.current) / 1000;
-      lastTickRef.current = now;
+        // Velocity Arrow
+        if (astState.velocityVectorKmS) {
+          const dirVec = new THREE.Vector3(
+            astState.velocityVectorKmS.vx,
+            astState.velocityVectorKmS.vz,
+            astState.velocityVectorKmS.vy
+          ).normalize();
+          velocityVector.position.set(astX, astY, astZ);
+          velocityVector.setDirection(dirVec);
+          velocityVector.setLength(8);
+          velocityVector.visible = vectorsVisible;
+        }
 
-      // Advance simulated time
-      const timeAdvanceMs = deltaSec * speedFactor * 1000;
-      simTimeRef.current += timeAdvanceMs;
-
-      // Synchronize 3D meshes immediately
-      if (renderEngine === '3d') {
-        sync3DPositionForEpoch(simTimeRef.current);
-      }
-
-      // Throttle React state updates to ~10fps so the UI numbers refresh without choking 60fps canvas
-      if (now - lastHudUpdateRef.current > 100) {
-        lastHudUpdateRef.current = now;
-        const newDate = new Date(simTimeRef.current);
-        setSimulatedDate(newDate);
-
-        const kepler = getKeplerianElements();
-        if (kepler) {
-          const st = propagateElementsClient(kepler, newDate);
-          setRealtimeDistLD(st.distEarthLunar);
-          setRealtimeDistAU(st.distEarthAU);
-          setRealtimeSpeedKmS(st.orbitalSpeedKmS);
+        // Camera target tracking in Heliocentric mode
+        if (currentFocus === 'asteroid') {
+          currentTarget.set(astX, astY, astZ);
+        } else if (currentFocus === 'earth') {
+          currentTarget.set(earthX, earthY, earthZ);
+        } else if (currentFocus === 'mars') {
+          currentTarget.set(marsX, marsY, marsZ);
+        } else {
+          currentTarget.set(0, 0, 0); // Sun
         }
       }
 
-      animId = requestAnimationFrame(tick);
+      // Asteroid Orbit Path Line (cached: only recomputed on target or perspective change)
+      const needsHeliocentricOrbitUpdate = 
+        threeRef.current.lastOrbitPerspective !== currentPerspective ||
+        threeRef.current.lastOrbitDes !== targetDes ||
+        !threeRef.current.asteroidOrbitLine.geometry.attributes.position;
+
+      if (needsHeliocentricOrbitUpdate && data?.trajectories?.asteroidOrbitPath) {
+        threeRef.current.lastOrbitPerspective = currentPerspective;
+        threeRef.current.lastOrbitDes = targetDes;
+        const orbitPts = data.trajectories.asteroidOrbitPath.map(
+          pt => new THREE.Vector3(pt.x * scaleAU, pt.z * scaleAU, pt.y * scaleAU)
+        );
+        asteroidOrbitLine.geometry.dispose();
+        asteroidOrbitLine.geometry = new THREE.BufferGeometry().setFromPoints(orbitPts);
+        (asteroidOrbitLine.material as THREE.LineBasicMaterial).color.set(isPha ? 0xF43F5E : 0xF59E0B);
+      }
+      asteroidOrbitLine.visible = orbitsVisible;
+    }
+  }, []);
+
+  // -------------------------------------------------------------
+  // THREE.JS 3D SCENE SETUP & SMOOTH CAMERA EASING
+  // Initialized cleanly on container mount or renderEngine change
+  // -------------------------------------------------------------
+  useEffect(() => {
+    if (renderEngine !== '3d' || !containerRef.current) return;
+    const container = containerRef.current;
+
+    // Clean existing children
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+
+    const width = container.clientWidth || 800;
+    const height = Math.max(500, container.clientHeight || 520);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x02040A);
+
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
+    camera.position.set(0, 45, 95);
+    camera.lookAt(0, 0, 0);
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: false,
+        powerPreference: 'high-performance'
+      });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.domElement.style.width = '100%';
+      renderer.domElement.style.height = '100%';
+      renderer.domElement.style.display = 'block';
+      container.appendChild(renderer.domElement);
+    } catch (err: any) {
+      console.warn('[AsteroidMotionViewer] WebGLRenderer creation failed, using 2D radar fallback:', err);
+      setWebGlNotice('WebGL acceleration unavailable. Automatically switched to high-DPI 2D radar.');
+      setRenderEngine('2d');
+      return;
+    }
+
+    // 1. Lighting (Sun is the primary directional illumination source in deep space)
+    const ambientLight = new THREE.AmbientLight(0x1E293B, 0.35);
+    scene.add(ambientLight);
+
+    const sunPointLight = new THREE.PointLight(0xFFF9E6, 2.6, 1200, 0.4);
+    sunPointLight.position.set(0, 0, 0);
+    scene.add(sunPointLight);
+
+    const fillLight = new THREE.DirectionalLight(0x38BDF8, 0.15);
+    fillLight.position.set(50, 70, 50);
+    scene.add(fillLight);
+
+    // 2. Cinematic Multi-Tier Deep Space Starfield
+    const starGroup = new THREE.Group();
+
+    // Tier 1: Microscopic distant background stars (3000 points)
+    const distantStarGeo = new THREE.BufferGeometry();
+    const distantCount = 3000;
+    const distantPositions = new Float32Array(distantCount * 3);
+    for (let i = 0; i < distantCount * 3; i += 3) {
+      const radius = 700 + Math.random() * 700;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(Math.random() * 2 - 1);
+      distantPositions[i] = radius * Math.sin(phi) * Math.cos(theta);
+      distantPositions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      distantPositions[i + 2] = radius * Math.cos(phi);
+    }
+    distantStarGeo.setAttribute('position', new THREE.BufferAttribute(distantPositions, 3));
+    const distantStarMat = new THREE.PointsMaterial({
+      color: 0xE2E8F0,
+      size: 1.0,
+      transparent: true,
+      opacity: 0.75
+    });
+    starGroup.add(new THREE.Points(distantStarGeo, distantStarMat));
+
+    // Tier 2: Prominent navigation stars with realistic stellar spectral colors (350 points)
+    const brightStarGeo = new THREE.BufferGeometry();
+    const brightCount = 350;
+    const brightPositions = new Float32Array(brightCount * 3);
+    const brightColors = new Float32Array(brightCount * 3);
+
+    const spectralColors = [
+      new THREE.Color(0x93C5FD), // O/B blue-white
+      new THREE.Color(0xBAE6FD), // A-type white-blue
+      new THREE.Color(0xF8FAFC), // F-type white
+      new THREE.Color(0xFDE047), // G-type yellow (Sun-like)
+      new THREE.Color(0xFDBA74), // K-type orange
+      new THREE.Color(0xFCA5A5)  // M-type red
+    ];
+
+    for (let i = 0; i < brightCount * 3; i += 3) {
+      const radius = 650 + Math.random() * 600;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(Math.random() * 2 - 1);
+      brightPositions[i] = radius * Math.sin(phi) * Math.cos(theta);
+      brightPositions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      brightPositions[i + 2] = radius * Math.cos(phi);
+
+      const col = spectralColors[Math.floor(Math.random() * spectralColors.length)];
+      brightColors[i] = col.r;
+      brightColors[i + 1] = col.g;
+      brightColors[i + 2] = col.b;
+    }
+    brightStarGeo.setAttribute('position', new THREE.BufferAttribute(brightPositions, 3));
+    brightStarGeo.setAttribute('color', new THREE.BufferAttribute(brightColors, 3));
+    const brightStarMat = new THREE.PointsMaterial({
+      size: 2.2,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.95
+    });
+    starGroup.add(new THREE.Points(brightStarGeo, brightStarMat));
+
+    // Tier 3: Milky Way galactic dust plane (1500 particles)
+    const galaxyGeo = new THREE.BufferGeometry();
+    const galaxyCount = 1500;
+    const galaxyPositions = new Float32Array(galaxyCount * 3);
+    for (let i = 0; i < galaxyCount * 3; i += 3) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = 750 + Math.random() * 450;
+      const spread = (Math.random() - 0.5) * 80;
+      galaxyPositions[i] = Math.cos(angle) * r;
+      galaxyPositions[i + 1] = spread;
+      galaxyPositions[i + 2] = Math.sin(angle) * r;
+    }
+    galaxyGeo.setAttribute('position', new THREE.BufferAttribute(galaxyPositions, 3));
+    const galaxyMat = new THREE.PointsMaterial({
+      color: 0x94A3B8,
+      size: 2.5,
+      transparent: true,
+      opacity: 0.18
+    });
+    starGroup.add(new THREE.Points(galaxyGeo, galaxyMat));
+
+    scene.add(starGroup);
+
+    // 3. Central Sun Group (Granulated plasma photosphere + multi-tier coronal glow)
+    const sunGroup = new THREE.Group();
+    const sunMat = new THREE.MeshBasicMaterial();
+    const sunTex = loadPlanetTexture('sun', (tex) => {
+      sunMat.map = tex;
+      sunMat.needsUpdate = true;
+    });
+    sunMat.map = sunTex;
+    const sunGeo = new THREE.SphereGeometry(4.2, 48, 48);
+    const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+    sunGroup.add(sunMesh);
+
+    // Inner Photosphere Corona
+    const coronaGeo = new THREE.SphereGeometry(4.8, 32, 32);
+    const coronaMat = new THREE.MeshBasicMaterial({
+      color: 0xFDE047,
+      transparent: true,
+      opacity: 0.32,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending
+    });
+    sunGroup.add(new THREE.Mesh(coronaGeo, coronaMat));
+
+    // Outer Solar Corona Halo
+    const outerCoronaGeo = new THREE.SphereGeometry(6.0, 32, 32);
+    const outerCoronaMat = new THREE.MeshBasicMaterial({
+      color: 0xF97316,
+      transparent: true,
+      opacity: 0.18,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending
+    });
+    sunGroup.add(new THREE.Mesh(outerCoronaGeo, outerCoronaMat));
+    scene.add(sunGroup);
+
+    // 4. Central Earth Group (Surface reflectance + cloud deck + Rayleigh limb)
+    const earthGroup = new THREE.Group();
+    const earthMat = new THREE.MeshStandardMaterial({
+      roughness: 0.65,
+      metalness: 0.1
+    });
+    const earthTex = loadPlanetTexture('earth', (tex) => {
+      earthMat.map = tex;
+      earthMat.needsUpdate = true;
+    });
+    earthMat.map = earthTex;
+    const earthGeo = new THREE.SphereGeometry(3.2, 48, 48);
+    const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+    earthGroup.add(earthMesh);
+
+    // Dynamic Concentric Cloud Deck (rotating at differential speed, cached texture)
+    const cloudTex = getCloudTexture();
+    const cloudGeo = new THREE.SphereGeometry(3.235, 48, 48);
+    const cloudMat = new THREE.MeshStandardMaterial({
+      map: cloudTex,
+      transparent: true,
+      opacity: 0.40,
+      depthWrite: false,
+      roughness: 0.95
+    });
+    const earthCloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
+    earthGroup.add(earthCloudMesh);
+
+    // Earth Rayleigh Atmospheric Scattering Halo
+    const atmoGeo = new THREE.SphereGeometry(3.32, 32, 32);
+    const atmoMat = new THREE.MeshBasicMaterial({
+      color: 0x38BDF8,
+      transparent: true,
+      opacity: 0.22,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending
+    });
+    earthGroup.add(new THREE.Mesh(atmoGeo, atmoMat));
+    scene.add(earthGroup);
+
+    // 5. Moon Mesh & Orbit
+    const moonMat = new THREE.MeshStandardMaterial({
+      roughness: 0.92,
+      metalness: 0.05
+    });
+    const moonTex = loadPlanetTexture('moon', (tex) => {
+      moonMat.map = tex;
+      moonMat.needsUpdate = true;
+    });
+    moonMat.map = moonTex;
+    const moonGeo = new THREE.SphereGeometry(0.85, 24, 24);
+    const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+    scene.add(moonMesh);
+
+    const moonOrbitGeo = new THREE.BufferGeometry();
+    const moonPts: THREE.Vector3[] = [];
+    for (let i = 0; i <= 64; i++) {
+      const th = (i / 64) * Math.PI * 2;
+      moonPts.push(new THREE.Vector3(Math.cos(th) * 18, 0, Math.sin(th) * 18));
+    }
+    moonOrbitGeo.setFromPoints(moonPts);
+    const moonOrbitLine = new THREE.Line(
+      moonOrbitGeo, 
+      new THREE.LineDashedMaterial({ color: 0x38BDF8, dashSize: 1, gapSize: 1, transparent: true, opacity: 0.6 })
+    );
+    moonOrbitLine.computeLineDistances();
+    scene.add(moonOrbitLine);
+
+    // 6. Mars Group (Volcanic surface + thin atmosphere)
+    const marsGroup = new THREE.Group();
+    const marsMat = new THREE.MeshStandardMaterial({
+      roughness: 0.88,
+      metalness: 0.05
+    });
+    const marsTex = loadPlanetTexture('mars', (tex) => {
+      marsMat.map = tex;
+      marsMat.needsUpdate = true;
+    });
+    marsMat.map = marsTex;
+    const marsGeo = new THREE.SphereGeometry(2.0, 32, 32);
+    const marsMesh = new THREE.Mesh(marsGeo, marsMat);
+    marsGroup.add(marsMesh);
+
+    const marsAtmoGeo = new THREE.SphereGeometry(2.07, 24, 24);
+    const marsAtmoMat = new THREE.MeshBasicMaterial({
+      color: 0xF87171,
+      transparent: true,
+      opacity: 0.16,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending
+    });
+    marsGroup.add(new THREE.Mesh(marsAtmoGeo, marsAtmoMat));
+    scene.add(marsGroup);
+
+    // 7. Other Inner Planets
+    const mercMat = new THREE.MeshStandardMaterial({ roughness: 0.95 });
+    const mercTex = loadPlanetTexture('mercury', (tex) => {
+      mercMat.map = tex;
+      mercMat.needsUpdate = true;
+    });
+    mercMat.map = mercTex;
+    const mercGeo = new THREE.SphereGeometry(1.2, 24, 24);
+    const mercuryMesh = new THREE.Mesh(mercGeo, mercMat);
+    scene.add(mercuryMesh);
+
+    const venMat = new THREE.MeshStandardMaterial({ roughness: 0.82 });
+    const venTex = loadPlanetTexture('venus', (tex) => {
+      venMat.map = tex;
+      venMat.needsUpdate = true;
+    });
+    venMat.map = venTex;
+    const venGeo = new THREE.SphereGeometry(2.8, 32, 32);
+    const venusMesh = new THREE.Mesh(venGeo, venMat);
+    scene.add(venusMesh);
+
+    const jupMat = new THREE.MeshStandardMaterial({ roughness: 0.68 });
+    const jupTex = loadPlanetTexture('jupiter', (tex) => {
+      jupMat.map = tex;
+      jupMat.needsUpdate = true;
+    });
+    jupMat.map = jupTex;
+    const jupGeo = new THREE.SphereGeometry(5.0, 48, 48);
+    const jupiterMesh = new THREE.Mesh(jupGeo, jupMat);
+    scene.add(jupiterMesh);
+
+    // 8. Planetary Orbit Lines (calculated using JPL Standish orbit paths)
+    const scaleAU = 32.0;
+    const planetOrbitLines: Record<string, THREE.Line> = {};
+
+    const majorPlanets: MajorPlanetKey[] = ['mercury', 'venus', 'earth', 'mars', 'jupiter'];
+    majorPlanets.forEach(pKey => {
+      const pathPts = generateMajorPlanetOrbitPath(pKey, new Date(), 96).map(
+        pt => new THREE.Vector3(pt.x * scaleAU, pt.z * scaleAU, pt.y * scaleAU)
+      );
+      const pGeo = new THREE.BufferGeometry().setFromPoints(pathPts);
+      const pColor = pKey === 'earth' ? 0x38BDF8 : pKey === 'mars' ? 0xFB923C : 0x64748B;
+      const pMat = new THREE.LineBasicMaterial({ color: pColor, transparent: true, opacity: pKey === 'earth' ? 0.55 : 0.35 });
+      const pLine = new THREE.Line(pGeo, pMat);
+      scene.add(pLine);
+      planetOrbitLines[pKey] = pLine;
+    });
+
+    // 9. Asteroid Mesh (Authentic non-spherical procedural geometry & PBR rock materials)
+    const initialIsPha = motionData?.asteroid?.isPotentiallyHazardous ?? false;
+    const asteroidGeo = createAsteroidGeometry(selectedDes, 1.5);
+    const asteroidMat = createAsteroidMaterial(selectedDes, initialIsPha);
+    const asteroidMesh = new THREE.Mesh(asteroidGeo, asteroidMat);
+    scene.add(asteroidMesh);
+
+    // 10. Asteroid Orbit Line
+    const asteroidOrbitGeo = new THREE.BufferGeometry();
+    const asteroidOrbitMat = new THREE.LineBasicMaterial({
+      color: initialIsPha ? 0xF43F5E : 0xF59E0B,
+      transparent: true,
+      opacity: 0.85
+    });
+    const asteroidOrbitLine = new THREE.Line(asteroidOrbitGeo, asteroidOrbitMat);
+    scene.add(asteroidOrbitLine);
+
+    // 11. Distance Line (Earth to Asteroid with allocated buffer)
+    const distGeo = new THREE.BufferGeometry();
+    distGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+    const distMat = new THREE.LineDashedMaterial({ color: 0x94A3B8, dashSize: 0.8, gapSize: 0.6 });
+    const distanceLine = new THREE.Line(distGeo, distMat);
+    scene.add(distanceLine);
+
+    // 12. Velocity Vector Arrow
+    const velocityVector = new THREE.ArrowHelper(
+      new THREE.Vector3(1, 0, 0),
+      new THREE.Vector3(0, 0, 0),
+      8,
+      0x38BDF8,
+      2,
+      1
+    );
+    scene.add(velocityVector);
+
+    // 13. State Reference for 60fps render loop
+    threeRef.current = {
+      scene,
+      camera,
+      renderer,
+      sunGroup,
+      earthGroup,
+      earthCloudMesh,
+      moonMesh,
+      marsGroup,
+      mercuryMesh,
+      venusMesh,
+      jupiterMesh,
+      asteroidMesh,
+      asteroidOrbitLine,
+      planetOrbitLines,
+      distanceLine,
+      velocityVector,
+      isDragging: false,
+      prevMouse: { x: 0, y: 0 },
+      currentRotation: { x: 0.35, y: -0.4 },
+      targetRotation: { x: 0.35, y: -0.4 },
+      currentZoom: 85,
+      targetZoom: 85,
+      cameraTarget: new THREE.Vector3(0, 0, 0),
+      currentTarget: new THREE.Vector3(0, 0, 0),
+      currentAsteroidDes: selectedDes
     };
 
-    lastTickRef.current = performance.now();
-    animId = requestAnimationFrame(tick);
+    // Synchronize initial positions
+    sync3DPositionForEpoch(simTimeRef.current);
 
-    return () => cancelAnimationFrame(animId);
-  }, [isPlaying, speedFactor, isDocumentVisible, renderEngine, sync3DPositionForEpoch, getKeplerianElements]);
+    // Mouse Drag Controls
+    const onMouseDown = (e: MouseEvent) => {
+      if (!threeRef.current) return;
+      threeRef.current.isDragging = true;
+      threeRef.current.prevMouse = { x: e.clientX, y: e.clientY };
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!threeRef.current || !threeRef.current.isDragging) return;
+      const dx = e.clientX - threeRef.current.prevMouse.x;
+      const dy = e.clientY - threeRef.current.prevMouse.y;
+      threeRef.current.targetRotation.y += dx * 0.008;
+      threeRef.current.targetRotation.x = Math.max(-1.45, Math.min(1.45, threeRef.current.targetRotation.x + dy * 0.008));
+      threeRef.current.prevMouse = { x: e.clientX, y: e.clientY };
+    };
+
+    const onMouseUp = () => {
+      if (threeRef.current) threeRef.current.isDragging = false;
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (!threeRef.current) return;
+      threeRef.current.targetZoom = Math.max(15, Math.min(260, threeRef.current.targetZoom + e.deltaY * 0.08));
+    };
+
+    const canvasDom = renderer.domElement;
+    canvasDom.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    canvasDom.addEventListener('wheel', onWheel, { passive: false });
+
+    // Touch Controls
+    let touchStartDist = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      if (!threeRef.current) return;
+      if (e.touches.length === 1) {
+        threeRef.current.isDragging = true;
+        threeRef.current.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2) {
+        touchStartDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!threeRef.current) return;
+      if (e.touches.length === 1 && threeRef.current.isDragging) {
+        const dx = e.touches[0].clientX - threeRef.current.prevMouse.x;
+        const dy = e.touches[0].clientY - threeRef.current.prevMouse.y;
+        threeRef.current.targetRotation.y += dx * 0.008;
+        threeRef.current.targetRotation.x = Math.max(-1.45, Math.min(1.45, threeRef.current.targetRotation.x + dy * 0.008));
+        threeRef.current.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const delta = touchStartDist - dist;
+        touchStartDist = dist;
+        threeRef.current.targetZoom = Math.max(15, Math.min(260, threeRef.current.targetZoom + delta * 0.15));
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (threeRef.current) threeRef.current.isDragging = false;
+    };
+
+    canvasDom.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd);
+
+    // Responsive Resize Handler
+    const handleResize = () => {
+      if (!container || !threeRef.current) return;
+      const w = container.clientWidth || 800;
+      const h = Math.max(500, container.clientHeight || 520);
+      threeRef.current.camera.aspect = w / h;
+      threeRef.current.camera.updateProjectionMatrix();
+      threeRef.current.renderer.setSize(w, h);
+    };
+    window.addEventListener('resize', handleResize);
+
+    // 60fps Single Unified Render & Propagation Loop
+    let animId: number;
+    let lastTime = performance.now();
+    let lastHudTime = 0;
+
+    const render = (now: number) => {
+      if (threeRef.current && isDocumentVisible) {
+        const { 
+          camera, 
+          scene: activeScene, 
+          renderer: activeRenderer, 
+          currentRotation, 
+          targetRotation, 
+          currentZoom, 
+          targetZoom, 
+          cameraTarget, 
+          currentTarget, 
+          earthGroup: activeEarth,
+          earthCloudMesh: activeEarthClouds,
+          marsGroup: activeMars,
+          asteroidMesh: activeAsteroid
+        } = threeRef.current;
+
+        // Delta time capped to 100ms prevents time-travel explosions on tab switch or frame stall
+        const deltaSec = Math.min((now - lastTime) / 1000, 0.1);
+        lastTime = now;
+
+        // Advance simulated time if playing
+        if (isPlayingRef.current) {
+          const timeAdvanceMs = deltaSec * speedFactorRef.current * 1000;
+          simTimeRef.current += timeAdvanceMs;
+
+          // Throttle React state & HUD updates to ~10Hz
+          if (now - lastHudTime > 100) {
+            lastHudTime = now;
+            const newDate = new Date(simTimeRef.current);
+            setSimulatedDate(newDate);
+
+            const kepler = getKeplerianElements();
+            if (kepler) {
+              const st = propagateElementsClient(kepler, newDate);
+              setRealtimeDistLD(st.distEarthLunar);
+              setRealtimeDistAU(st.distEarthAU);
+              setRealtimeSpeedKmS(st.orbitalSpeedKmS);
+            }
+          }
+        }
+
+        // Synchronize positions for current epoch
+        sync3DPositionForEpoch(simTimeRef.current);
+
+        // Smooth camera lerp
+        const lerpFactor = isReducedMotion ? 1.0 : 0.08;
+        currentRotation.x += (targetRotation.x - currentRotation.x) * lerpFactor;
+        currentRotation.y += (targetRotation.y - currentRotation.y) * lerpFactor;
+        threeRef.current.currentZoom += (targetZoom - currentZoom) * lerpFactor;
+        cameraTarget.lerp(currentTarget, lerpFactor);
+
+        // Compute Cartesian position from spherical angles and target
+        const cy = Math.cos(currentRotation.x) * threeRef.current.currentZoom;
+        camera.position.x = cameraTarget.x + Math.sin(currentRotation.y) * cy;
+        camera.position.y = cameraTarget.y + Math.sin(currentRotation.x) * threeRef.current.currentZoom;
+        camera.position.z = cameraTarget.z + Math.cos(currentRotation.y) * cy;
+        camera.lookAt(cameraTarget);
+
+        // Gentle axial rotation & realistic asteroid tumbling scaled by deltaSec
+        if (!isReducedMotion) {
+          activeEarth.rotation.y += deltaSec * 0.15;
+          if (activeEarthClouds) {
+            activeEarthClouds.rotation.y += deltaSec * 0.20;
+          }
+          activeMars.rotation.y += deltaSec * 0.12;
+          updateAsteroidTumble(activeAsteroid, deltaSec, selectedDesRef.current);
+        }
+
+        activeRenderer.render(activeScene, camera);
+      } else {
+        lastTime = now;
+      }
+      animId = requestAnimationFrame(render);
+    };
+    animId = requestAnimationFrame(render);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', handleResize);
+      canvasDom.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      canvasDom.removeEventListener('wheel', onWheel);
+      canvasDom.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+
+      // Deep GPU resource disposal to prevent WebGL memory leaks
+      scene.traverse((obj) => {
+        if (obj instanceof THREE.Mesh || obj instanceof THREE.Line || obj instanceof THREE.Points) {
+          if (obj.geometry) {
+            obj.geometry.dispose();
+          }
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((m) => m.dispose());
+          } else if (obj.material) {
+            obj.material.dispose();
+          }
+        }
+      });
+
+      renderer.dispose();
+      if (container.contains(canvasDom)) {
+        container.removeChild(canvasDom);
+      }
+      threeRef.current = null;
+    };
+  }, [renderEngine, isDocumentVisible, isReducedMotion, sync3DPositionForEpoch]);
 
   // Smooth encounter transit to close approach epoch
   const jumpToCloseApproach = () => {
@@ -395,7 +1229,6 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     if (transitAnimRef.current) cancelAnimationFrame(transitAnimRef.current);
 
     if (isReducedMotion) {
-      // Instant transit for reduced-motion users
       simTimeRef.current = targetDate.getTime();
       setSimulatedDate(targetDate);
       setBaseEpoch(targetDate);
@@ -415,8 +1248,6 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
       const eased = Easing.easeInOutCubic(progress);
       const currentEpoch = startEpoch + (endEpoch - startEpoch) * eased;
       simTimeRef.current = currentEpoch;
-
-      sync3DPositionForEpoch(currentEpoch);
 
       if (progress < 1.0) {
         transitAnimRef.current = requestAnimationFrame(transitStep);
@@ -461,8 +1292,24 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
   const resetCameraView = () => {
     if (!threeRef.current) return;
     threeRef.current.targetRotation = { x: 0.35, y: -0.4 };
-    threeRef.current.targetZoom = viewPerspective === 'encounter' ? 75 : 120;
+    threeRef.current.targetZoom = viewPerspective === 'encounter' ? 75 : 85;
     threeRef.current.currentTarget.set(0, 0, 0);
+    setFocusedBody('asteroid');
+  };
+
+  // Focus specific body
+  const handleFocusBody = (body: FocusedBody) => {
+    setFocusedBody(body);
+    if (!threeRef.current) return;
+    if (body === 'sun') {
+      threeRef.current.targetZoom = 110;
+    } else if (body === 'earth') {
+      threeRef.current.targetZoom = 45;
+    } else if (body === 'mars') {
+      threeRef.current.targetZoom = 40;
+    } else {
+      threeRef.current.targetZoom = viewPerspective === 'encounter' ? 65 : 55;
+    }
   };
 
   // Format Distance based on unit
@@ -488,314 +1335,6 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
   };
 
   // -------------------------------------------------------------
-  // THREE.JS 3D SCENE SETUP & SMOOTH CAMERA EASING
-  // -------------------------------------------------------------
-  useEffect(() => {
-    if (renderEngine !== '3d' || !webglCanvasRef.current || !containerRef.current) return;
-    const canvas = webglCanvasRef.current;
-    const container = containerRef.current;
-
-    // Check WebGL availability
-    try {
-      const testGl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      if (!testGl) {
-        setRenderEngine('2d');
-        return;
-      }
-    } catch {
-      setRenderEngine('2d');
-      return;
-    }
-
-    const width = container.clientWidth || 800;
-    const height = 500;
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x050B1A);
-
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 35, 75);
-    camera.lookAt(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-
-    // Ambient and Directional Lighting
-    const ambientLight = new THREE.AmbientLight(0x38BDF8, 0.4);
-    scene.add(ambientLight);
-
-    const dirLight = new THREE.DirectionalLight(0xFFFFFF, 1.2);
-    dirLight.position.set(50, 40, 50);
-    scene.add(dirLight);
-
-    // 1. Central Earth Group
-    const earthGroup = new THREE.Group();
-    const earthGeo = new THREE.SphereGeometry(3.5, 32, 32);
-    const earthMat = new THREE.MeshPhongMaterial({
-      color: 0x1E40AF,
-      emissive: 0x0C2050,
-      specular: 0x38BDF8,
-      shininess: 25
-    });
-    const earthMesh = new THREE.Mesh(earthGeo, earthMat);
-    earthGroup.add(earthMesh);
-
-    // Earth Atmosphere Glow Halo
-    const atmoGeo = new THREE.SphereGeometry(3.9, 32, 32);
-    const atmoMat = new THREE.MeshBasicMaterial({
-      color: 0x38BDF8,
-      transparent: true,
-      opacity: 0.25,
-      side: THREE.BackSide
-    });
-    earthGroup.add(new THREE.Mesh(atmoGeo, atmoMat));
-    scene.add(earthGroup);
-
-    // 2. Moon Mesh & Orbit
-    const moonGeo = new THREE.SphereGeometry(0.9, 16, 16);
-    const moonMat = new THREE.MeshLambertMaterial({ color: 0xCBD5E1 });
-    const moonMesh = new THREE.Mesh(moonGeo, moonMat);
-    scene.add(moonMesh);
-
-    // Moon Orbit Ring
-    const moonOrbitGeo = new THREE.BufferGeometry();
-    const moonPts: THREE.Vector3[] = [];
-    for (let i = 0; i <= 64; i++) {
-      const th = (i / 64) * Math.PI * 2;
-      moonPts.push(new THREE.Vector3(Math.cos(th) * 18, 0, Math.sin(th) * 18));
-    }
-    moonOrbitGeo.setFromPoints(moonPts);
-    const moonOrbitLine = new THREE.Line(
-      moonOrbitGeo, 
-      new THREE.LineDashedMaterial({ color: 0x38BDF8, dashSize: 1, gapSize: 1 })
-    );
-    moonOrbitLine.computeLineDistances();
-    scene.add(moonOrbitLine);
-
-    // 3. Sun Mesh (for heliocentric perspective)
-    const sunGeo = new THREE.SphereGeometry(5.0, 32, 32);
-    const sunMat = new THREE.MeshBasicMaterial({ color: 0xFBBF24 });
-    const sunMesh = new THREE.Mesh(sunGeo, sunMat);
-    sunMesh.visible = false;
-    scene.add(sunMesh);
-
-    // 4. Asteroid Mesh
-    const asteroidGeo = new THREE.DodecahedronGeometry(1.4, 1);
-    const asteroidMat = new THREE.MeshStandardMaterial({
-      color: 0xF59E0B,
-      roughness: 0.8,
-      metalness: 0.2
-    });
-    const asteroidMesh = new THREE.Mesh(asteroidGeo, asteroidMat);
-    scene.add(asteroidMesh);
-
-    // 5. Orbit Trajectory Line
-    const orbitGeo = new THREE.BufferGeometry();
-    const orbitMat = new THREE.LineBasicMaterial({ color: 0xF87171, linewidth: 2 });
-    const orbitLine = new THREE.Line(orbitGeo, orbitMat);
-    scene.add(orbitLine);
-
-    // Earth Orbit Line (Heliocentric)
-    const earthOrbitGeo = new THREE.BufferGeometry();
-    const earthOrbitMat = new THREE.LineBasicMaterial({ color: 0x38BDF8, linewidth: 1.5 });
-    const earthOrbitLine = new THREE.Line(earthOrbitGeo, earthOrbitMat);
-    earthOrbitLine.visible = false;
-    scene.add(earthOrbitLine);
-
-    // 6. Distance Vector Line
-    const distGeo = new THREE.BufferGeometry();
-    const distMat = new THREE.LineDashedMaterial({ color: 0x94A3B8, dashSize: 0.8, gapSize: 0.6 });
-    const distanceLine = new THREE.Line(distGeo, distMat);
-    scene.add(distanceLine);
-
-    // 7. Direction of Travel Arrow
-    const velocityVector = new THREE.ArrowHelper(
-      new THREE.Vector3(1, 0, 0),
-      new THREE.Vector3(0, 0, 0),
-      8,
-      0x38BDF8,
-      2,
-      1
-    );
-    scene.add(velocityVector);
-
-    // Three State Reference with smooth camera target and angles
-    threeRef.current = {
-      scene,
-      camera,
-      renderer,
-      earthGroup,
-      asteroidMesh,
-      moonMesh,
-      sunMesh,
-      orbitLine,
-      earthOrbitLine,
-      distanceLine,
-      velocityVector,
-      isDragging: false,
-      prevMouse: { x: 0, y: 0 },
-      currentRotation: { x: 0.35, y: -0.4 },
-      targetRotation: { x: 0.35, y: -0.4 },
-      currentZoom: 75,
-      targetZoom: 75,
-      cameraTarget: new THREE.Vector3(0, 0, 0),
-      currentTarget: new THREE.Vector3(0, 0, 0)
-    };
-
-    // Initial position sync
-    sync3DPositionForEpoch(simTimeRef.current);
-
-    // Mouse Drag Controls for Orbit Rotation
-    const onMouseDown = (e: MouseEvent) => {
-      if (!threeRef.current) return;
-      threeRef.current.isDragging = true;
-      threeRef.current.prevMouse = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!threeRef.current || !threeRef.current.isDragging) return;
-      const dx = e.clientX - threeRef.current.prevMouse.x;
-      const dy = e.clientY - threeRef.current.prevMouse.y;
-      threeRef.current.targetRotation.y += dx * 0.008;
-      threeRef.current.targetRotation.x = Math.max(-1.4, Math.min(1.4, threeRef.current.targetRotation.x + dy * 0.008));
-      threeRef.current.prevMouse = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseUp = () => {
-      if (threeRef.current) threeRef.current.isDragging = false;
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      if (!threeRef.current) return;
-      threeRef.current.targetZoom = Math.max(20, Math.min(220, threeRef.current.targetZoom + e.deltaY * 0.08));
-    };
-
-    canvas.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    canvas.addEventListener('wheel', onWheel, { passive: false });
-
-    // Touch support for mobile
-    let touchStartDist = 0;
-    const onTouchStart = (e: TouchEvent) => {
-      if (!threeRef.current) return;
-      if (e.touches.length === 1) {
-        threeRef.current.isDragging = true;
-        threeRef.current.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      } else if (e.touches.length === 2) {
-        touchStartDist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-      }
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      if (!threeRef.current) return;
-      if (e.touches.length === 1 && threeRef.current.isDragging) {
-        const dx = e.touches[0].clientX - threeRef.current.prevMouse.x;
-        const dy = e.touches[0].clientY - threeRef.current.prevMouse.y;
-        threeRef.current.targetRotation.y += dx * 0.008;
-        threeRef.current.targetRotation.x = Math.max(-1.4, Math.min(1.4, threeRef.current.targetRotation.x + dy * 0.008));
-        threeRef.current.prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      } else if (e.touches.length === 2) {
-        const dist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        const delta = touchStartDist - dist;
-        touchStartDist = dist;
-        threeRef.current.targetZoom = Math.max(20, Math.min(220, threeRef.current.targetZoom + delta * 0.15));
-      }
-    };
-
-    const onTouchEnd = () => {
-      if (threeRef.current) threeRef.current.isDragging = false;
-    };
-
-    canvas.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    window.addEventListener('touchend', onTouchEnd);
-
-    // Responsive Resize Handler
-    const handleResize = () => {
-      if (!container || !threeRef.current) return;
-      const w = container.clientWidth || 800;
-      const h = 500;
-      threeRef.current.camera.aspect = w / h;
-      threeRef.current.camera.updateProjectionMatrix();
-      threeRef.current.renderer.setSize(w, h);
-    };
-    window.addEventListener('resize', handleResize);
-
-    // Render loop with smooth camera easing
-    let animId: number;
-    const render = () => {
-      if (threeRef.current && isDocumentVisible) {
-        const { 
-          camera, 
-          scene, 
-          renderer, 
-          currentRotation, 
-          targetRotation, 
-          currentZoom, 
-          targetZoom, 
-          cameraTarget, 
-          currentTarget, 
-          earthGroup 
-        } = threeRef.current;
-
-        // Smooth camera lerp
-        const lerpFactor = isReducedMotion ? 1.0 : 0.09;
-        currentRotation.x += (targetRotation.x - currentRotation.x) * lerpFactor;
-        currentRotation.y += (targetRotation.y - currentRotation.y) * lerpFactor;
-        threeRef.current.currentZoom += (targetZoom - currentZoom) * lerpFactor;
-        cameraTarget.lerp(currentTarget, lerpFactor);
-
-        // Compute camera Cartesian position
-        const cy = Math.cos(currentRotation.x) * threeRef.current.currentZoom;
-        camera.position.x = cameraTarget.x + Math.sin(currentRotation.y) * cy;
-        camera.position.y = cameraTarget.y + Math.sin(currentRotation.x) * threeRef.current.currentZoom;
-        camera.position.z = cameraTarget.z + Math.cos(currentRotation.y) * cy;
-        camera.lookAt(cameraTarget);
-
-        // Gentle ambient Earth rotation (disabled if reduced motion)
-        if (!isReducedMotion) {
-          earthGroup.rotation.y += 0.002;
-        }
-
-        renderer.render(scene, camera);
-      }
-      animId = requestAnimationFrame(render);
-    };
-    animId = requestAnimationFrame(render);
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener('resize', handleResize);
-      canvas.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      canvas.removeEventListener('wheel', onWheel);
-      canvas.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
-      renderer.dispose();
-      threeRef.current = null;
-    };
-  }, [renderEngine, isDocumentVisible, isReducedMotion, sync3DPositionForEpoch]);
-
-  // Synchronize camera zoom when view perspective changes
-  useEffect(() => {
-    if (!threeRef.current) return;
-    threeRef.current.targetZoom = viewPerspective === 'encounter' ? 75 : 120;
-    threeRef.current.currentTarget.set(0, 0, 0);
-    sync3DPositionForEpoch(simTimeRef.current);
-  }, [viewPerspective, sync3DPositionForEpoch]);
-
-  // -------------------------------------------------------------
   // 2D CANVAS RADAR RENDERING (ACCESSIBILITY & LOW-SPEC FALLBACK)
   // -------------------------------------------------------------
   const render2DRadar = useCallback((epochMs: number) => {
@@ -806,7 +1345,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
 
     const dpr = window.devicePixelRatio || 1;
     const width = canvas.parentElement?.clientWidth || 800;
-    const height = 500;
+    const height = Math.max(500, canvas.parentElement?.clientHeight || 520);
 
     canvas.width = width * dpr;
     canvas.height = height * dpr;
@@ -836,89 +1375,79 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     const isPha = motionData.asteroid.isPotentiallyHazardous;
 
     if (viewPerspective === 'encounter') {
-      // 2D ENCOUNTER RADAR VIEW: Earth at center
+      // -----------------------------------------------------------
+      // Geocentric Encounter Radar: Earth at center, Lunar Distances
+      // -----------------------------------------------------------
       const pxPerLD = Math.min(width, height) / 10;
-      const missLD = state.distEarthLunar;
-      const missPx = Math.max(24, Math.min(width * 0.44, missLD * pxPerLD));
 
-      // Radar Concentric Distance Rings
-      const rings = [0.11, 0.5, 1.0, 2.0, 3.5];
-      rings.forEach(r => {
+      // Range Rings: 0.5 LD, 1.0 LD (Moon), 2.0 LD, 3.0 LD, 4.0 LD
+      const rings = [0.5, 1.0, 2.0, 3.0, 4.0];
+      rings.forEach(rLD => {
         ctx.beginPath();
-        ctx.arc(centerX, centerY, r * pxPerLD, 0, Math.PI * 2);
-        ctx.strokeStyle = r === 1.0 ? 'rgba(56, 189, 248, 0.4)' : 'rgba(148, 163, 184, 0.15)';
-        if (r === 1.0) ctx.setLineDash([4, 4]);
-        ctx.lineWidth = 1;
+        ctx.arc(centerX, centerY, rLD * pxPerLD, 0, Math.PI * 2);
+        ctx.strokeStyle = rLD === 1.0 ? '#38BDF8' : '#1E293B';
+        ctx.lineWidth = rLD === 1.0 ? 1.5 : 1;
+        if (rLD === 1.0) ctx.setLineDash([4, 4]);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        if (showLabels) {
-          ctx.fillStyle = r === 1.0 ? '#38BDF8' : '#64748B';
-          ctx.font = '10px monospace';
-          ctx.fillText(`${r} LD`, centerX + r * pxPerLD + 4, centerY - 4);
-        }
+        ctx.fillStyle = '#64748B';
+        ctx.font = '10px monospace';
+        ctx.fillText(`${rLD} LD`, centerX + rLD * pxPerLD + 4, centerY - 4);
       });
 
-      // Central Earth with atmosphere glow
-      const earthRadius = 14;
-      const glow = ctx.createRadialGradient(centerX, centerY, earthRadius, centerX, centerY, earthRadius + 12);
-      glow.addColorStop(0, 'rgba(56, 189, 248, 0.4)');
-      glow.addColorStop(1, 'rgba(56, 189, 248, 0)');
-      ctx.fillStyle = glow;
+      // Earth at center
       ctx.beginPath();
-      ctx.arc(centerX, centerY, earthRadius + 12, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, earthRadius, 0, Math.PI * 2);
-      ctx.fillStyle = '#1D4ED8';
+      ctx.arc(centerX, centerY, 9, 0, Math.PI * 2);
+      ctx.fillStyle = '#1E40AF';
       ctx.fill();
       ctx.strokeStyle = '#38BDF8';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 2;
       ctx.stroke();
 
       if (showLabels) {
-        ctx.fillStyle = '#F8FAFC';
-        ctx.font = 'bold 10px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('Earth', centerX, centerY + 3);
-        ctx.textAlign = 'left';
+        ctx.fillStyle = '#38BDF8';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('Earth', centerX + 12, centerY + 4);
       }
 
-      // Moon Marker (at 1.0 LD)
+      // Moon position at 1 LD
       if (showMoon) {
         const moonAngle = (epochMs / (27.3 * 86400000)) * Math.PI * 2;
-        const moonX = centerX + Math.cos(moonAngle) * 1.0 * pxPerLD;
-        const moonY = centerY + Math.sin(moonAngle) * 1.0 * pxPerLD;
+        const moonX = centerX + Math.cos(moonAngle) * pxPerLD;
+        const moonY = centerY + Math.sin(moonAngle) * pxPerLD;
+
         ctx.beginPath();
         ctx.arc(moonX, moonY, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#E2E8F0';
+        ctx.fillStyle = '#CBD5E1';
         ctx.fill();
+
         if (showLabels) {
           ctx.fillStyle = '#94A3B8';
-          ctx.font = '9px monospace';
-          ctx.fillText('Moon', moonX + 6, moonY + 3);
+          ctx.font = '10px monospace';
+          ctx.fillText('Moon (1 LD)', moonX + 6, moonY + 3);
         }
       }
 
-      // Asteroid Position & Trajectory
-      const encounterAngle = -Math.PI / 4;
-      const astX = centerX + Math.cos(encounterAngle) * missPx;
-      const astY = centerY + Math.sin(encounterAngle) * missPx;
+      // Asteroid Position
+      const missLD = state.distEarthLunar;
+      const relNorm = Math.hypot(state.earthRelativeAU.x, state.earthRelativeAU.y) || 1;
+      const astX = centerX + (state.earthRelativeAU.x / relNorm) * missLD * pxPerLD;
+      const astY = centerY + (state.earthRelativeAU.y / relNorm) * missLD * pxPerLD;
 
       // Trajectory Line
       if (showOrbits) {
-        const trajAngle = encounterAngle + Math.PI / 2;
-        const trajLen = width * 0.45;
+        const flybyLen = 140;
+        const velAngle = Math.atan2(state.velocityVectorKmS.vy, state.velocityVectorKmS.vx);
         ctx.beginPath();
-        ctx.moveTo(astX - Math.cos(trajAngle) * trajLen, astY - Math.sin(trajAngle) * trajLen);
-        ctx.lineTo(astX + Math.cos(trajAngle) * trajLen, astY + Math.sin(trajAngle) * trajLen);
-        ctx.strokeStyle = isPha ? '#F87171' : '#F5C451';
-        ctx.lineWidth = 1.5;
+        ctx.moveTo(astX - Math.cos(velAngle) * flybyLen, astY - Math.sin(velAngle) * flybyLen);
+        ctx.lineTo(astX + Math.cos(velAngle) * flybyLen, astY + Math.sin(velAngle) * flybyLen);
+        ctx.strokeStyle = isPha ? '#EF4444' : '#F59E0B';
+        ctx.lineWidth = 2;
         ctx.stroke();
       }
 
-      // Distance Vector Line
+      // Distance Line (Earth to Asteroid)
       if (showVectors) {
         ctx.beginPath();
         ctx.setLineDash([3, 3]);
@@ -930,7 +1459,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
         ctx.setLineDash([]);
       }
 
-      // Asteroid Dot
+      // Asteroid Marker
       ctx.beginPath();
       ctx.arc(astX, astY, 6, 0, Math.PI * 2);
       ctx.fillStyle = isPha ? '#EF4444' : '#F59E0B';
@@ -942,55 +1471,82 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
       if (showLabels) {
         ctx.fillStyle = '#F8FAFC';
         ctx.font = 'bold 11px monospace';
-        ctx.fillText(motionData.asteroid.shortName, astX + 10, astY - 6);
-        ctx.fillStyle = '#38BDF8';
-        ctx.font = '10px monospace';
-        ctx.fillText(formatDist(state.distEarthLunar, state.distEarthAU), astX + 10, astY + 8);
+        ctx.fillText(motionData.asteroid.shortName, astX + 9, astY + 4);
       }
     } else {
-      // 2D HELIOCENTRIC INNER SYSTEM VIEW: Sun at center
-      const pxPerAU = Math.min(width, height) / 3.8;
+      // -----------------------------------------------------------
+      // Heliocentric Inner System: Sun at center, AU scale
+      // -----------------------------------------------------------
+      const pxPerAU = Math.min(width, height) / 4.5;
 
-      // Central Sun
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, 12, 0, Math.PI * 2);
-      ctx.fillStyle = '#FBBF24';
-      ctx.fill();
-      if (showLabels) {
-        ctx.fillStyle = '#050B1A';
-        ctx.font = 'bold 9px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('Sun', centerX, centerY + 3);
-        ctx.textAlign = 'left';
-      }
-
-      // Earth Orbit Ring
-      if (showOrbits) {
+      // Range Rings: 0.5 AU, 1.0 AU (Earth), 1.52 AU (Mars)
+      const auRings = [0.5, 1.0, 1.52, 2.0];
+      auRings.forEach(rAU => {
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 1.0 * pxPerAU, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+        ctx.arc(centerX, centerY, rAU * pxPerAU, 0, Math.PI * 2);
+        ctx.strokeStyle = rAU === 1.0 ? '#38BDF8' : rAU === 1.52 ? '#EF4444' : '#1E293B';
         ctx.lineWidth = 1;
         ctx.stroke();
+
+        ctx.fillStyle = '#64748B';
+        ctx.font = '10px monospace';
+        ctx.fillText(`${rAU} AU`, centerX + rAU * pxPerAU + 4, centerY - 4);
+      });
+
+      // Sun at center
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+      ctx.fillStyle = '#FBBF24';
+      ctx.fill();
+
+      if (showLabels) {
+        ctx.fillStyle = '#F59E0B';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('Sun', centerX + 14, centerY + 4);
       }
 
-      // Earth position
-      const earthX = centerX + state.earthPositionAU.x * pxPerAU;
-      const earthY = centerY + state.earthPositionAU.y * pxPerAU;
+      // Earth Position
+      const earthPos = calculateMajorPlanetPosition('earth', currentDate);
+      const earthX = centerX + earthPos.xAU * pxPerAU;
+      const earthY = centerY + earthPos.yAU * pxPerAU;
+
       ctx.beginPath();
       ctx.arc(earthX, earthY, 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#38BDF8';
+      ctx.fillStyle = '#1E40AF';
       ctx.fill();
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
       if (showLabels) {
-        ctx.fillStyle = '#F8FAFC';
-        ctx.font = '10px monospace';
+        ctx.fillStyle = '#38BDF8';
+        ctx.font = 'bold 10px monospace';
         ctx.fillText('Earth', earthX + 8, earthY + 3);
+      }
+
+      // Mars Position
+      if (showPlanets) {
+        const marsPos = calculateMajorPlanetPosition('mars', currentDate);
+        const marsX = centerX + marsPos.xAU * pxPerAU;
+        const marsY = centerY + marsPos.yAU * pxPerAU;
+
+        ctx.beginPath();
+        ctx.arc(marsX, marsY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#EF4444';
+        ctx.fill();
+
+        if (showLabels) {
+          ctx.fillStyle = '#FCA5A5';
+          ctx.font = 'bold 10px monospace';
+          ctx.fillText('Mars', marsX + 7, marsY + 3);
+        }
       }
 
       // Asteroid Position
       const astX = centerX + state.heliocentricAU.x * pxPerAU;
       const astY = centerY + state.heliocentricAU.y * pxPerAU;
 
-      // Distance Line
+      // Distance Line from Earth
       if (showVectors) {
         ctx.beginPath();
         ctx.setLineDash([3, 3]);
@@ -1004,9 +1560,12 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
 
       // Asteroid marker
       ctx.beginPath();
-      ctx.arc(astX, astY, 5, 0, Math.PI * 2);
+      ctx.arc(astX, astY, 6, 0, Math.PI * 2);
       ctx.fillStyle = isPha ? '#EF4444' : '#F59E0B';
       ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
 
       if (showLabels) {
         ctx.fillStyle = '#F8FAFC';
@@ -1014,7 +1573,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
         ctx.fillText(motionData.asteroid.shortName, astX + 8, astY + 3);
       }
     }
-  }, [renderEngine, motionData, getKeplerianElements, viewPerspective, showLabels, showMoon, showOrbits, showVectors, distanceUnit]);
+  }, [renderEngine, motionData, getKeplerianElements, viewPerspective, showLabels, showMoon, showPlanets, showOrbits, showVectors]);
 
   // Redraw 2D radar on epoch change
   useEffect(() => {
@@ -1023,78 +1582,233 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
     }
   }, [renderEngine, simulatedDate, render2DRadar]);
 
+  // Playback animation loop for 2D Radar Canvas fallback mode
+  useEffect(() => {
+    if (renderEngine !== '2d' || !isPlaying) return;
+    let animId: number;
+    let lastTime = performance.now();
+    let lastHudTime = 0;
+
+    const tick2D = (now: number) => {
+      if (!isDocumentVisible) {
+        lastTime = now;
+        animId = requestAnimationFrame(tick2D);
+        return;
+      }
+
+      const deltaSec = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      const timeAdvanceMs = deltaSec * speedFactor * 1000;
+      simTimeRef.current += timeAdvanceMs;
+
+      render2DRadar(simTimeRef.current);
+
+      if (now - lastHudTime > 100) {
+        lastHudTime = now;
+        const newDate = new Date(simTimeRef.current);
+        setSimulatedDate(newDate);
+
+        const kepler = getKeplerianElements();
+        if (kepler) {
+          const st = propagateElementsClient(kepler, newDate);
+          setRealtimeDistLD(st.distEarthLunar);
+          setRealtimeDistAU(st.distEarthAU);
+          setRealtimeSpeedKmS(st.orbitalSpeedKmS);
+        }
+      }
+
+      animId = requestAnimationFrame(tick2D);
+    };
+
+    lastTime = performance.now();
+    animId = requestAnimationFrame(tick2D);
+
+    return () => cancelAnimationFrame(animId);
+  }, [renderEngine, isPlaying, speedFactor, isDocumentVisible, render2DRadar, getKeplerianElements]);
+
   return (
     <div className="space-y-6">
-      {/* 1. TOP STATUS & ENGINE CONTROLS BAR */}
+      {/* 1. TOP HEADER & TELEMETRY CONTROLS BAR */}
       <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
                 <Orbit className="w-3.5 h-3.5" />
-                Motion Mode • JPL Keplerian Ephemeris
+                Live Motion Observatory
               </span>
-              <span className="text-xs text-[#A7B4CC] font-mono">ICRF / J2000 Frame</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black text-[#F8FAFC] tracking-tight flex items-center gap-2">
-              <span>{motionData?.asteroid.name || selectedDes}</span>
-              {motionData?.asteroid.isPotentiallyHazardous && (
-                <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#EF4444]/20 text-[#FCA5A5] border border-[#EF4444]/40">
-                  Potentially Hazardous
+
+              {/* Provenance Badge */}
+              {motionData?.provenance ? (
+                motionData.provenance.retrievalStatus === 'live' ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Live response (JPL SBDB)
+                  </span>
+                ) : motionData.provenance.retrievalStatus === 'cached' ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-sky-500/10 text-sky-300 border border-sky-500/30">
+                    <Database className="w-3.5 h-3.5" />
+                    Cached response (JPL Feed)
+                  </span>
+                ) : motionData.provenance.retrievalStatus === 'archive' ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                    <Clock className="w-3.5 h-3.5" />
+                    Verified archive
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30">
+                    <Orbit className="w-3.5 h-3.5" />
+                    Local propagation
+                  </span>
+                )
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-500/10 text-slate-300 border border-slate-500/30">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  Source status unavailable
                 </span>
               )}
-            </h2>
+
+              <span className="text-xs text-[#A7B4CC] font-mono">ICRF / J2000 Frame</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl sm:text-2xl font-black text-[#F8FAFC] tracking-tight flex items-center gap-2">
+                <span>{motionData?.asteroid.name || selectedDes}</span>
+                {motionData?.asteroid.isPotentiallyHazardous && (
+                  <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#EF4444]/20 text-[#FCA5A5] border border-[#EF4444]/40 flex items-center gap-1">
+                    <ShieldAlert className="w-3 h-3" />
+                    Potentially Hazardous
+                  </span>
+                )}
+              </h2>
+
+              <button
+                onClick={handleRetryLive}
+                disabled={isRefreshing || isLoading}
+                className={`px-2.5 py-1 rounded-lg bg-[#050B1A] hover:bg-[#1E293B] text-[#38BDF8] border border-[#1E293B] transition-all flex items-center gap-1.5 ${
+                  isRefreshing ? 'cursor-not-allowed opacity-75' : 'cursor-pointer active:scale-95'
+                }`}
+                title="Trigger genuine live network query to NASA/JPL SBDB"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="text-[11px] font-mono font-bold">
+                  {isRefreshing ? 'Querying...' : 'Retry Live'}
+                </span>
+              </button>
+            </div>
           </div>
 
-          {/* Quick Preset Selector */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-[#A7B4CC] font-mono">Featured NEOs:</span>
-            <div className="flex flex-wrap gap-1.5">
-              {FAMOUS_NEO_PRESETS.map(preset => (
-                <button
-                  key={preset.des}
-                  onClick={() => handleSelectTarget(preset.des)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
-                    selectedDes === preset.des
-                      ? 'bg-[#38BDF8] text-[#050B1A] font-bold shadow-md shadow-[#38BDF8]/20'
-                      : 'bg-[#0E1B38] text-[#A7B4CC] hover:text-[#F8FAFC] hover:bg-[#1E293B] border border-[#1E293B]'
-                  }`}
-                  title={preset.note}
-                >
-                  {preset.label}
-                </button>
-              ))}
+          {/* Quick Preset Selector & Search Input */}
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-[#A7B4CC] font-mono">Featured NEOs:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {FAMOUS_NEO_PRESETS.map(preset => (
+                  <button
+                    key={preset.des}
+                    onClick={() => handleSelectTarget(preset.des)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
+                      selectedDes === preset.des
+                        ? 'bg-[#38BDF8] text-[#050B1A] font-bold shadow-md shadow-[#38BDF8]/20'
+                        : 'bg-[#0E1B38] text-[#A7B4CC] hover:text-[#F8FAFC] hover:bg-[#1E293B] border border-[#1E293B]'
+                    }`}
+                    title={preset.note}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Custom Search Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchInput.trim()) {
+                  handleSelectTarget(searchInput.trim());
+                }
+              }}
+              className="flex items-center gap-2"
+            >
+              <div className="relative flex-1 sm:w-64">
+                <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Target designation (e.g. 99942, Eros)..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1 text-xs font-mono rounded-lg bg-[#050B1A] border border-[#1E293B] text-[#F8FAFC] placeholder-[#64748B] focus:border-[#38BDF8] focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-3 py-1 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] text-[#38BDF8] border border-[#38BDF8]/40 text-xs font-mono font-bold cursor-pointer transition-all"
+              >
+                Track
+              </button>
+            </form>
           </div>
         </div>
 
-        {/* Mode Switchers: 3D WebGL vs 2D Radar & Perspectives */}
+        {/* Mode Switchers: 3D WebGL vs 2D Radar & Perspectives & Camera Focus */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#1E293B] text-xs font-mono">
           <div className="flex flex-wrap items-center gap-3">
             {/* Perspective Toggle */}
             <div className="flex rounded-xl bg-[#050B1A] p-1 border border-[#1E293B]">
               <button
-                onClick={() => setViewPerspective('encounter')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                  viewPerspective === 'encounter'
-                    ? 'bg-[#38BDF8] text-[#050B1A]'
-                    : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
-                }`}
-                title="Earth-centered flyby geometry (measured in Lunar Distances)"
-              >
-                Earth Flyby Radar
-              </button>
-              <button
-                onClick={() => setViewPerspective('heliocentric')}
+                onClick={() => {
+                  setViewPerspective('heliocentric');
+                  if (threeRef.current) {
+                    threeRef.current.targetZoom = 85;
+                  }
+                }}
                 className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
                   viewPerspective === 'heliocentric'
                     ? 'bg-[#38BDF8] text-[#050B1A]'
                     : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
                 }`}
-                title="Sun-centered inner Solar System orbit view (measured in AU)"
+                title="Sun-centered Solar System orbit view (inner planets and asteroid orbit)"
               >
-                Heliocentric Inner System
+                Solar System Heliocentric
               </button>
+              <button
+                onClick={() => {
+                  setViewPerspective('encounter');
+                  if (threeRef.current) {
+                    threeRef.current.targetZoom = 70;
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  viewPerspective === 'encounter'
+                    ? 'bg-[#38BDF8] text-[#050B1A]'
+                    : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
+                }`}
+                title="Earth-centered flyby radar geometry (measured in Lunar Distances)"
+              >
+                Earth Flyby Radar
+              </button>
+            </div>
+
+            {/* Object Focus Selection (Smooth Tracking) */}
+            <div className="flex items-center gap-1.5 bg-[#050B1A] px-2.5 py-1 rounded-xl border border-[#1E293B]">
+              <span className="text-[#64748B] flex items-center gap-1">
+                <Eye className="w-3.5 h-3.5 text-[#38BDF8]" />
+                Focus:
+              </span>
+              {(['asteroid', 'earth', 'mars', 'sun'] as FocusedBody[]).map(bodyKey => (
+                <button
+                  key={bodyKey}
+                  onClick={() => handleFocusBody(bodyKey)}
+                  className={`px-2 py-0.5 rounded text-[11px] font-bold capitalize transition-all cursor-pointer ${
+                    focusedBody === bodyKey
+                      ? 'bg-[#8B5CF6] text-[#F8FAFC]'
+                      : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
+                  }`}
+                >
+                  {bodyKey}
+                </button>
+              ))}
             </div>
 
             {/* Render Engine Toggle */}
@@ -1130,7 +1844,15 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
                 showOrbits ? 'bg-[#0E1B38] text-[#38BDF8] border-[#38BDF8]/40' : 'bg-[#050B1A] text-[#64748B] border-[#1E293B]'
               }`}
             >
-              Orbit: {showOrbits ? 'ON' : 'OFF'}
+              Orbits: {showOrbits ? 'ON' : 'OFF'}
+            </button>
+            <button
+              onClick={() => setShowPlanets(!showPlanets)}
+              className={`px-2.5 py-1 rounded-lg border text-[11px] transition-all cursor-pointer ${
+                showPlanets ? 'bg-[#0E1B38] text-[#38BDF8] border-[#38BDF8]/40' : 'bg-[#050B1A] text-[#64748B] border-[#1E293B]'
+              }`}
+            >
+              Planets: {showPlanets ? 'ON' : 'OFF'}
             </button>
             <button
               onClick={() => setShowVectors(!showVectors)}
@@ -1149,7 +1871,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
               Labels: {showLabels ? 'ON' : 'OFF'}
             </button>
 
-            {/* Moon toggle */}
+            {/* Moon toggle for Encounter view */}
             {viewPerspective === 'encounter' && (
               <button
                 onClick={() => setShowMoon(!showMoon)}
@@ -1191,9 +1913,30 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
           </div>
         </div>
 
+        {webGlNotice && (
+          <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-mono flex items-center justify-between">
+            <span>{webGlNotice}</span>
+            <button
+              onClick={() => setWebGlNotice(null)}
+              className="text-purple-400 hover:text-purple-200 underline text-[11px] cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {error && (
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
-            {error}
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Info className="w-4 h-4 text-amber-400" />
+              <span>{error}</span>
+            </div>
+            <button
+              onClick={() => loadOrbitData(selectedDes, simulatedDate)}
+              className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[11px] font-bold cursor-pointer"
+            >
+              Retry Live
+            </button>
           </div>
         )}
       </div>
@@ -1203,19 +1946,19 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
         {/* Orbital Canvas Viewport */}
         <div className="lg:col-span-2 space-y-4">
           <div
-            ref={containerRef}
-            className="relative rounded-2xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-2xl h-125 flex items-center justify-center group"
+            className="relative rounded-2xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-2xl h-[520px] min-h-[500px] flex items-center justify-center group"
           >
             {renderEngine === '3d' ? (
-              <canvas ref={webglCanvasRef} className="w-full h-full cursor-grab active:cursor-grabbing block" />
+              <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing block" />
             ) : (
               <canvas ref={canvas2dRef} className="w-full h-full block" />
             )}
 
             {/* Overlay Telemetry HUD (Top-Left) */}
             <div className="absolute top-4 left-4 p-3 rounded-xl bg-[#050B1A]/85 backdrop-blur-md border border-[#1E293B] font-mono text-xs space-y-1 pointer-events-none">
-              <div className="text-[10px] uppercase text-[#A7B4CC]">
-                {viewPerspective === 'encounter' ? 'Earth Flyby Radar View' : 'Heliocentric Ecliptic View'}
+              <div className="text-[10px] uppercase text-[#A7B4CC] flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#38BDF8]" />
+                {viewPerspective === 'encounter' ? 'Earth Flyby Radar View' : 'Heliocentric Solar System View'}
               </div>
               <div className="text-sm font-bold text-[#F8FAFC]">
                 {motionData?.asteroid.name || selectedDes}
@@ -1225,9 +1968,15 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
                   Dist to Earth: {formatDist(realtimeDistLD || motionData.stateVector.distEarthLunar, realtimeDistAU || motionData.stateVector.distEarthAU)}
                 </div>
               )}
+              <div className="text-[10px] text-[#A7B4CC]">
+                Physical Scale: <span className="text-[#FDE047] font-semibold">{getAsteroidPhysicalInfo(selectedDes).physicalDiameterText}</span>
+              </div>
+              <div className="text-[10px] text-[#94A3B8]">
+                Target Tracking: <span className="text-[#C084FC] font-bold capitalize">{focusedBody}</span>
+              </div>
             </div>
 
-            {/* Top-Right HUD Controls: Hint & Reset View */}
+            {/* Top-Right HUD Controls: Reset View & Guide */}
             <div className="absolute top-4 right-4 flex items-center gap-2">
               <button
                 onClick={resetCameraView}
@@ -1243,15 +1992,21 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
               </div>
             </div>
 
-            {/* Scientific Scaling Disclaimer (Bottom-Left) */}
-            <div className="absolute bottom-3 left-3 text-[10px] font-mono text-[#A7B4CC] bg-[#050B1A]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#1E293B] max-w-sm">
-              * Physical sizes of Earth, Moon, and asteroid are visually magnified so surface orientation remains visible. Trajectory geometry and velocities follow true Keplerian elements.
+            {/* Scientific Scaling & Model Provenance Disclaimer (Bottom-Left) */}
+            <div className="absolute bottom-3 left-3 text-[10px] font-mono text-[#A7B4CC] bg-[#050B1A]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#1E293B] max-w-md hidden sm:block space-y-0.5">
+              <div className="text-[#38BDF8] font-bold flex items-center gap-1">
+                <Info className="w-3 h-3 text-[#38BDF8]" />
+                <span>Scientific Visual Provenance</span>
+              </div>
+              <p className="text-[9.5px] leading-tight text-[#94A3B8]">
+                3D Surface Visualization: Physically grounded topographical model based on radar delay-Doppler and lightcurve inversion profiles; celestial spheres are visually magnified for feature clarity. Orbits and relative velocities follow authentic JPL Keplerian elements.
+              </p>
             </div>
 
             {/* Playback Indicator (Bottom-Right) */}
             <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-[#050B1A]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#1E293B] text-[10px] font-mono">
               <span className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-emerald-400 beacon-pulse' : 'bg-amber-400'}`} />
-              <span className="text-[#F8FAFC]">{isPlaying ? 'PLAYING MOTION' : 'PAUSED'}</span>
+              <span className="text-[#F8FAFC]">{isPlaying ? 'SIMULATION PLAYING' : 'PAUSED'}</span>
             </div>
           </div>
 
@@ -1386,6 +2141,139 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
 
         {/* Telemetry Inspector Panel (Col Span 1) */}
         <div className="space-y-6">
+          {/* DATA PROVENANCE & RETRIEVAL PIPELINE CARD */}
+          <div className="p-5 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-[#38BDF8]" />
+                <h3 className="text-xs font-mono font-bold text-[#F8FAFC] uppercase tracking-wider">
+                  Data Provenance & Status
+                </h3>
+              </div>
+
+              {/* Retry Live Button */}
+              <button
+                onClick={handleRetryLive}
+                disabled={isRefreshing || isLoading}
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-md ${
+                  isRefreshing || isLoading
+                    ? 'bg-[#1E293B] text-[#64748B] cursor-not-allowed'
+                    : 'bg-[#38BDF8] text-[#050B1A] hover:bg-[#38BDF8]/90 cursor-pointer active:scale-95'
+                }`}
+                title="Initiate genuine live network query to NASA/JPL SBDB"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span>{isRefreshing ? 'Querying...' : 'Retry Live'}</span>
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-2.5 text-xs font-mono">
+              {/* Selected Object */}
+              <div className="flex justify-between items-center py-1 border-b border-[#1E293B]/60">
+                <span className="text-[#64748B]">SELECTED OBJECT</span>
+                <span className="font-bold text-[#F8FAFC]">
+                  {motionData?.asteroid.name || selectedDes}
+                </span>
+              </div>
+
+              {/* Source Provider */}
+              <div className="flex justify-between items-center py-1 border-b border-[#1E293B]/60">
+                <span className="text-[#64748B]">SOURCE</span>
+                <span className="font-bold text-[#38BDF8] text-right truncate max-w-[210px]" title={motionData?.provenance?.source || 'Source status unavailable'}>
+                  {motionData?.provenance?.source || 'Source status unavailable'}
+                </span>
+              </div>
+
+              {/* Retrieval Status */}
+              <div className="flex justify-between items-center py-1 border-b border-[#1E293B]/60">
+                <span className="text-[#64748B]">STATUS</span>
+                <div>
+                  {motionData?.provenance ? (
+                    motionData.provenance.retrievalStatus === 'live' ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Live response
+                      </span>
+                    ) : motionData.provenance.retrievalStatus === 'cached' ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/10 text-sky-300 border border-sky-500/30">
+                        <Database className="w-3 h-3" />
+                        Cached response
+                      </span>
+                    ) : motionData.provenance.retrievalStatus === 'archive' ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                        <Clock className="w-3 h-3" />
+                        Verified archive
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30">
+                        <Orbit className="w-3 h-3" />
+                        Local propagation
+                      </span>
+                    )
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/10 text-slate-300 border border-slate-500/30">
+                      <AlertCircle className="w-3 h-3" />
+                      Source status unavailable
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Last Successful Retrieval */}
+              <div className="flex justify-between items-center py-1 border-b border-[#1E293B]/60">
+                <span className="text-[#64748B]">LAST SUCCESSFUL RETRIEVAL</span>
+                <span className="text-[#F8FAFC]">
+                  {motionData?.provenance?.lastSuccessfulRetrieval
+                    ? `${new Date(motionData.provenance.lastSuccessfulRetrieval).toISOString().replace('T', ' ').slice(0, 19)} UTC`
+                    : (motionData?.provenance?.retrievalTimestamp
+                      ? `${new Date(motionData.provenance.retrievalTimestamp).toISOString().replace('T', ' ').slice(0, 19)} UTC`
+                      : 'Unavailable (not recorded by archive)')}
+                </span>
+              </div>
+
+              {/* Epoch / Reference Time */}
+              <div className="flex justify-between items-center py-1 border-b border-[#1E293B]/60">
+                <span className="text-[#64748B]">EPOCH / REFERENCE TIME</span>
+                <span className="text-[#A7B4CC]">
+                  {motionData?.provenance?.epochReference || (motionData?.asteroid?.orbitalElements?.epochJd ? `JD ${motionData.asteroid.orbitalElements.epochJd}` : 'Unspecified')}
+                </span>
+              </div>
+
+              {/* Last Refresh Attempt */}
+              <div className="flex justify-between items-center py-1 border-b border-[#1E293B]/60">
+                <span className="text-[#64748B]">LAST REFRESH ATTEMPT</span>
+                <span className="text-right">
+                  {motionData?.provenance?.lastRefreshAttempt ? (
+                    motionData.provenance.lastRefreshAttempt.success ? (
+                      <span className="text-emerald-400 font-bold">
+                        {new Date(motionData.provenance.lastRefreshAttempt.timestamp).toISOString().replace('T', ' ').slice(11, 19)} UTC — Success
+                      </span>
+                    ) : (
+                      <span className="text-amber-400 font-bold" title={motionData.provenance.lastRefreshAttempt.error}>
+                        {new Date(motionData.provenance.lastRefreshAttempt.timestamp).toISOString().replace('T', ' ').slice(11, 19)} UTC — Failed
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-[#64748B]">Initial session load</span>
+                  )}
+                </span>
+              </div>
+
+              {/* Status Explanation */}
+              <div className="pt-1 text-[11px] text-[#A7B4CC] leading-relaxed">
+                {motionData?.provenance?.statusExplanation || (
+                  motionData?.provenance?.retrievalStatus === 'live'
+                    ? 'Live response received directly from NASA/JPL Small-Body Database API.'
+                    : motionData?.provenance?.retrievalStatus === 'cached'
+                    ? 'Cached response stored from recent live query to prevent duplicate requests.'
+                    : motionData?.provenance?.retrievalStatus === 'archive'
+                    ? 'Authenticated offline record from NASA JPL Small-Body Database and CNEOS reference catalogs.'
+                    : 'Source status unavailable: Provenance metadata was omitted or could not be verified.'
+                )}
+              </div>
+            </div>
+          </div>
+
           {motionData ? (
             <div className="p-5 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-5">
               {/* Header with Visual Card */}
@@ -1448,22 +2336,46 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
                     </span>
                   </div>
                   <div>
-                    <span className="text-[#64748B] block text-[10px]">VELOCITY VECTOR</span>
+                    <span className="text-[#64748B] block text-[10px]">SEMI-MAJOR AXIS (a)</span>
                     <span className="font-bold text-[#F8FAFC]">
-                      ({motionData.stateVector.velocityVectorKmS.vx.toFixed(1)}, {motionData.stateVector.velocityVectorKmS.vy.toFixed(1)})
+                      {motionData.asteroid.orbitalElements?.semiMajorAxisAU.toFixed(3) || 'N/A'} AU
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Physical Properties & Size Benchmark */}
+              {/* Physical Properties, Morphology & Size Benchmark */}
               <div className="p-3.5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-2 text-xs font-mono">
                 <div className="text-[11px] font-bold text-[#38BDF8] uppercase tracking-wider">
-                  Physical Scale
+                  Physical Scale & Morphology
                 </div>
                 <div className="space-y-1 text-[#A7B4CC]">
                   <div className="flex justify-between">
-                    <span>Estimated Diameter:</span>
+                    <span>Physical Diameter:</span>
+                    <span className="font-bold text-[#F8FAFC]">
+                      {getAsteroidPhysicalInfo(selectedDes).physicalDiameterText}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Shape Model:</span>
+                    <span className="font-bold text-[#38BDF8] text-right truncate max-w-[190px]" title={getAsteroidPhysicalInfo(selectedDes).shapeModelType}>
+                      {getAsteroidPhysicalInfo(selectedDes).shapeModelType.split('(')[0]}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Rotation Period:</span>
+                    <span className="font-bold text-[#F8FAFC]">
+                      {getAsteroidPhysicalInfo(selectedDes).rotationPeriodText}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Spectral Type:</span>
+                    <span className="font-bold text-[#A7B4CC]">
+                      {getAsteroidPhysicalInfo(selectedDes).spectralType}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Photometric Size:</span>
                     <span className="font-bold text-[#F8FAFC]">
                       {motionData.asteroid.diameterMeters.avg} m ({motionData.asteroid.diameterMeters.min}–{motionData.asteroid.diameterMeters.max} m)
                     </span>
@@ -1472,6 +2384,18 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
                     <span>Absolute Magnitude (H):</span>
                     <span className="font-bold text-[#F8FAFC]">
                       {motionData.asteroid.absoluteMagnitudeH?.toFixed(1) || 'N/A'} mag
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Eccentricity (e):</span>
+                    <span className="font-bold text-[#F8FAFC]">
+                      {motionData.asteroid.orbitalElements?.eccentricity.toFixed(4) || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Inclination (i):</span>
+                    <span className="font-bold text-[#F8FAFC]">
+                      {motionData.asteroid.orbitalElements?.inclinationDeg.toFixed(2) || 'N/A'}°
                     </span>
                   </div>
                   <div className="pt-1 border-t border-[#1E293B]/60 text-[11px]">
@@ -1537,7 +2461,7 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
             </div>
           ) : (
             <div className="p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] text-center text-xs font-mono text-[#A7B4CC]">
-              {isLoading ? 'Loading orbital telemetries from JPL Small-Body Database...' : 'Loading orbital telemetries from JPL Small-Body Database...'}
+              {isLoading ? 'Loading orbital telemetries from JPL Small-Body Database...' : 'No telemetry loaded.'}
             </div>
           )}
 

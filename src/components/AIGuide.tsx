@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, type FC, type FormEvent } from 'react';
 import type { GuideMessage, AppPage } from '../types';
 import { STARTER_QUESTIONS, findVerifiedAnswer } from '../data/guideKnowledge';
+import { getApiUrl } from '../config/api';
 import { 
   Sparkles, 
   Send, 
@@ -62,7 +63,7 @@ export const AIGuide: FC<AIGuideProps> = ({ onNavigate }) => {
     let isMounted = true;
     async function checkStatus() {
       try {
-        const res = await fetch('/api/status');
+        const res = await fetch(getApiUrl('/api/status'));
         if (res.ok) {
           const data = await res.json();
           if (isMounted) {
@@ -139,7 +140,7 @@ export const AIGuide: FC<AIGuideProps> = ({ onNavigate }) => {
     }));
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch(getApiUrl('/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

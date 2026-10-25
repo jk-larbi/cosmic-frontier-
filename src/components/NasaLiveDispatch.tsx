@@ -1,5 +1,6 @@
 import { useState, useEffect, type FC } from 'react';
 import type { NasaApodData, NasaMissionPhoto, AppPage } from '../types';
+import { getApiUrl } from '../config/api';
 import { 
   Telescope, 
   ExternalLink, 
@@ -33,7 +34,7 @@ export const NasaLiveDispatch: FC<NasaLiveDispatchProps> = ({ onNavigate }) => {
     try {
       setErrorNotice(null);
       // Fetch APOD
-      const apodRes = await fetch('/api/nasa/apod');
+      const apodRes = await fetch(getApiUrl('/api/nasa/apod'));
       if (apodRes.ok) {
         const json = await apodRes.json();
         if (json.data) {
@@ -43,7 +44,7 @@ export const NasaLiveDispatch: FC<NasaLiveDispatchProps> = ({ onNavigate }) => {
       }
 
       // Fetch SPHEREx photos
-      const spherexRes = await fetch('/api/nasa/spherex');
+      const spherexRes = await fetch(getApiUrl('/api/nasa/spherex'));
       if (spherexRes.ok) {
         const json = await spherexRes.json();
         if (json.photos) {

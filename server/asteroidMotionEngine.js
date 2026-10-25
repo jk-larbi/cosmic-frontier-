@@ -411,116 +411,181 @@ function normalizeDes(str) {
 /**
  * Fetches or calculates complete orbital motion data for an asteroid
  */
-async function getAsteroidOrbitData(rawDes, targetDate = new Date()) {
+async function getAsteroidOrbitData(rawDes, targetDate = new Date(), options = {}) {
   const des = normalizeDes(rawDes);
   const date = targetDate instanceof Date && !isNaN(targetDate.getTime()) ? targetDate : new Date();
   const dateIso = date.toISOString();
+  const forceLive = !!(options.forceLive || options.refresh);
 
-  // 1. Check verified presets first
-  const presetKey = Object.keys(VERIFIED_NEO_PRESETS).find(
-    k => k.toLowerCase() === des.toLowerCase() || 
-         VERIFIED_NEO_PRESETS[k].name.toLowerCase().includes(des.toLowerCase()) ||
-         VERIFIED_NEO_PRESETS[k].shortName.toLowerCase().includes(des.toLowerCase())
-  );
-
-  let asteroidRecord = presetKey ? { ...VERIFIED_NEO_PRESETS[presetKey] } : null;
-  let dataSource = presetKey ? 'NASA/JPL SBDB & CNEOS Verified Archive' : 'NASA/JPL SBDB Live Query';
+  let asteroidRecord = null;
+  let dataSource = 'NASA/JPL SBDB & CNEOS Verified Archive';
+  let retrievalStatus = 'archive';
   let isLive = false;
+  let retrievalTimestamp = null;
+  let lastSuccessfulRetrieval = null;
+  let lastRefreshAttempt = null;
+  let statusExplanation = null;
+  let epochReference = null;
 
-  // 2. If not a known preset, query JPL SBDB API
-  if (!asteroidRecord) {
+  // 1. If not forcing a live network refresh, check in-memory cache first
+  if (!forceLive) {
     const cached = asteroidCache.get(des);
     if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
       asteroidRecord = cached.data;
-      dataSource = 'NASA/JPL SBDB Cached Feed';
+      dataSource = cached.source || 'NASA/JPL SBDB Cached Feed';
+      retrievalStatus = 'cached';
       isLive = false;
-    } else {
-      try {
-        const jplUrl = `https://ssd-api.jpl.nasa.gov/sbdb.api?sstr=${encodeURIComponent(des)}&phys-par=1`;
-        const res = await fetch(jplUrl, {
-          headers: { 'User-Agent': 'CosmicFrontier/1.0' },
-          signal: AbortSignal.timeout(6000)
-        });
-
-        if (res.ok) {
-          const json = await res.json();
-          if (json.object && json.orbit?.elements) {
-            const elems = json.orbit.elements;
-            const getVal = (name) => {
-              const el = elems.find(e => e.name === name || e.label === name);
-              return el ? parseFloat(el.value) : null;
-            };
-
-            const a = getVal('a');
-            const e = getVal('e');
-            const i = getVal('i');
-            const node = getVal('om') ?? getVal('node');
-            const peri = getVal('w') ?? getVal('peri');
-            const M0 = getVal('ma') ?? getVal('M');
-            const perDays = getVal('per');
-            const nDegDay = getVal('n') ?? (perDays ? 360 / perDays : (a ? 360 / (Math.pow(a, 1.5) * 365.25) : 1.0));
-            const epochJd = parseFloat(json.orbit.epoch) || 2460600.5;
-
-            // Physical parameters
-            const diamKm = json.phys_par?.find(p => p.name === 'diameter')?.value 
-              ? parseFloat(json.phys_par.find(p => p.name === 'diameter').value) 
-              : null;
-            const H = json.phys_par?.find(p => p.name === 'H')?.value 
-              ? parseFloat(json.phys_par.find(p => p.name === 'H').value) 
-              : null;
-
-            const isPha = !!json.object.pha;
-            const avgMeters = diamKm ? Math.round(diamKm * 1000) : (H ? Math.round(1329 / Math.sqrt(0.14) * Math.pow(10, -0.2 * H)) : 80);
-
-            asteroidRecord = {
-              designation: json.object.des || des,
-              name: json.object.fullname || des,
-              shortName: json.object.shortname || json.object.des || des,
-              orbitClass: json.object.orbit_class?.name || 'Near-Earth Asteroid',
-              isPotentiallyHazardous: isPha,
-              diameterKm: diamKm,
-              diameterMeters: {
-                min: Math.round(avgMeters * 0.7),
-                max: Math.round(avgMeters * 1.4),
-                avg: avgMeters
-              },
-              absoluteMagnitudeH: H,
-              a: a || 1.1,
-              e: e || 0.15,
-              i: i || 5.0,
-              node: node || 0,
-              peri: peri || 0,
-              M0: M0 || 0,
-              epochJd,
-              periodYears: perDays ? +(perDays / 365.25).toFixed(3) : (a ? +(Math.pow(a, 1.5)).toFixed(3) : 1.15),
-              meanMotionDegDay: nDegDay,
-              educationalSummary: `A confirmed near-Earth asteroid cataloged by NASA JPL Solar System Dynamics under orbit ID ${json.orbit?.orbit_id || 'N/A'}.`
-            };
-
-            asteroidCache.set(des, { timestamp: Date.now(), data: asteroidRecord });
-            dataSource = 'NASA/JPL SBDB Live API';
-            isLive = true;
-          }
-        }
-      } catch (err) {
-        console.warn(`[Asteroid Engine] Failed live query for ${des}:`, err.message);
-      }
+      retrievalTimestamp = new Date(cached.timestamp).toISOString();
+      lastSuccessfulRetrieval = new Date(cached.timestamp).toISOString();
+      epochReference = cached.epochReference || (cached.data.epochJd ? `JD ${cached.data.epochJd}` : null);
+      statusExplanation = 'Displaying cached response from in-memory server cache.';
     }
   }
 
-  // 3. Fallback to default near-Earth asteroid (Apophis) if object completely unknown
+  // 2. Query live NASA/JPL SBDB API if forcing refresh, or if not in cache
+  if (!asteroidRecord) {
+    const refreshTime = new Date().toISOString();
+    try {
+      const jplUrl = `https://ssd-api.jpl.nasa.gov/sbdb.api?sstr=${encodeURIComponent(des)}&phys-par=1`;
+      const res = await fetch(jplUrl, {
+        headers: { 'User-Agent': 'CosmicFrontier/1.0', 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.object && json.orbit?.elements) {
+          const elems = json.orbit.elements;
+          const getVal = (name) => {
+            const el = elems.find(e => e.name === name || e.label === name);
+            return el ? parseFloat(el.value) : null;
+          };
+
+          const a = getVal('a');
+          const e = getVal('e');
+          const i = getVal('i');
+          const node = getVal('om') ?? getVal('node');
+          const peri = getVal('w') ?? getVal('peri');
+          const M0 = getVal('ma') ?? getVal('M');
+          const perDays = getVal('per');
+          const nDegDay = getVal('n') ?? (perDays ? 360 / perDays : (a ? 360 / (Math.pow(a, 1.5) * 365.25) : 1.0));
+          const epochJd = parseFloat(json.orbit.epoch) || 2460600.5;
+
+          // Physical parameters
+          const diamKm = json.phys_par?.find(p => p.name === 'diameter')?.value 
+            ? parseFloat(json.phys_par.find(p => p.name === 'diameter').value) 
+            : null;
+          const H = json.phys_par?.find(p => p.name === 'H')?.value 
+            ? parseFloat(json.phys_par.find(p => p.name === 'H').value) 
+            : null;
+
+          const isPha = !!json.object.pha;
+          const avgMeters = diamKm ? Math.round(diamKm * 1000) : (H ? Math.round(1329 / Math.sqrt(0.14) * Math.pow(10, -0.2 * H)) : 80);
+
+          asteroidRecord = {
+            designation: json.object.des || des,
+            name: json.object.fullname || des,
+            shortName: json.object.shortname || json.object.des || des,
+            orbitClass: json.object.orbit_class?.name || 'Near-Earth Asteroid',
+            isPotentiallyHazardous: isPha,
+            diameterKm: diamKm,
+            diameterMeters: {
+              min: Math.round(avgMeters * 0.7),
+              max: Math.round(avgMeters * 1.4),
+              avg: avgMeters
+            },
+            absoluteMagnitudeH: H,
+            a: a || 1.1,
+            e: e || 0.15,
+            i: i || 5.0,
+            node: node || 0,
+            peri: peri || 0,
+            M0: M0 || 0,
+            epochJd,
+            periodYears: perDays ? +(perDays / 365.25).toFixed(3) : (a ? +(Math.pow(a, 1.5)).toFixed(3) : 1.15),
+            meanMotionDegDay: nDegDay,
+            educationalSummary: `A confirmed near-Earth asteroid cataloged by NASA JPL Solar System Dynamics under orbit ID ${json.orbit?.orbit_id || 'N/A'}.`
+          };
+
+          dataSource = json.signature?.source || 'NASA/JPL Small-Body Database (SBDB) API';
+          retrievalStatus = 'live';
+          isLive = true;
+          retrievalTimestamp = refreshTime;
+          lastSuccessfulRetrieval = refreshTime;
+          lastRefreshAttempt = { timestamp: refreshTime, success: true };
+          epochReference = json.orbit?.epoch ? `JD ${json.orbit.epoch}` : null;
+          statusExplanation = 'Live response successfully retrieved from official NASA/JPL SBDB API.';
+
+          asteroidCache.set(des, {
+            timestamp: Date.now(),
+            data: asteroidRecord,
+            source: dataSource,
+            epochReference
+          });
+        } else {
+          lastRefreshAttempt = { timestamp: refreshTime, success: false, error: 'JPL SBDB response missing orbit elements' };
+        }
+      } else {
+        lastRefreshAttempt = { timestamp: refreshTime, success: false, error: `HTTP ${res.status}: JPL SBDB query returned non-200` };
+      }
+    } catch (err) {
+      console.warn(`[Asteroid Engine] Failed live query for ${des}:`, err.message);
+      lastRefreshAttempt = { timestamp: refreshTime, success: false, error: err.message };
+    }
+  }
+
+  // 3. If live query failed, check whether we have cached or verified local preset
+  if (!asteroidRecord) {
+    const cached = asteroidCache.get(des);
+    if (cached) {
+      asteroidRecord = cached.data;
+      dataSource = 'NASA/JPL SBDB Cached Feed';
+      retrievalStatus = 'cached';
+      isLive = false;
+      retrievalTimestamp = new Date(cached.timestamp).toISOString();
+      lastSuccessfulRetrieval = new Date(cached.timestamp).toISOString();
+      epochReference = cached.epochReference || (cached.data.epochJd ? `JD ${cached.data.epochJd}` : null);
+      statusExplanation = 'Live JPL refresh was unreachable. Displaying cached response from in-memory cache.';
+    }
+  }
+
+  // 4. Check verified local archive presets
+  if (!asteroidRecord) {
+    const presetKey = Object.keys(VERIFIED_NEO_PRESETS).find(
+      k => k.toLowerCase() === des.toLowerCase() || 
+           VERIFIED_NEO_PRESETS[k].name.toLowerCase().includes(des.toLowerCase()) ||
+           VERIFIED_NEO_PRESETS[k].shortName.toLowerCase().includes(des.toLowerCase())
+    );
+
+    if (presetKey) {
+      asteroidRecord = { ...VERIFIED_NEO_PRESETS[presetKey] };
+      dataSource = 'NASA/JPL SBDB & CNEOS Verified Archive';
+      retrievalStatus = 'archive';
+      isLive = false;
+      epochReference = asteroidRecord.epochJd ? `JD ${asteroidRecord.epochJd}` : null;
+      statusExplanation = forceLive
+        ? 'Live JPL refresh connection failed. Displaying verified local archive.'
+        : 'Displaying verified local archive.';
+    }
+  }
+
+  // 5. Fallback to default near-Earth asteroid (Apophis) if object completely unknown
   if (!asteroidRecord) {
     asteroidRecord = { ...VERIFIED_NEO_PRESETS['99942'] };
     dataSource = 'NASA/JPL Verified Reference (Apophis Baseline)';
+    retrievalStatus = 'archive';
+    isLive = false;
+    epochReference = asteroidRecord.epochJd ? `JD ${asteroidRecord.epochJd}` : null;
+    statusExplanation = 'Requested target was not found in JPL SBDB. Displaying verified 99942 Apophis baseline.';
   }
 
-  // 4. Calculate orbital motion at target epoch
+  // 6. Calculate orbital motion at target epoch
   const stateVector = propagateElements(asteroidRecord, date);
 
-  // 5. Generate complete 3D orbital trajectory path (120 points)
+  // 7. Generate complete 3D orbital trajectory path (120 points)
   const orbitPath = generateOrbitPath(asteroidRecord, 120);
 
-  // 6. Generate Earth's 1-year orbit path for heliocentric context
+  // 8. Generate Earth's 1-year orbit path for heliocentric context
   const earthOrbitPath = [];
   const baseYearEpoch = new Date(date.getFullYear(), 0, 1);
   for (let d = 0; d <= 365; d += 4) {
@@ -566,10 +631,15 @@ async function getAsteroidOrbitData(rawDes, targetDate = new Date()) {
     provenance: {
       source: dataSource,
       isLive,
+      retrievalStatus,
+      statusExplanation,
+      retrievalTimestamp,
+      lastSuccessfulRetrieval,
+      lastRefreshAttempt,
       calculationEpoch: dateIso,
+      epochReference,
       calculationMethod: 'Keplerian osculating orbital element propagation with Standish planetary ephemeris',
       coordinateFrame: 'ICRF / J2000 Ecliptic (Heliocentric) & Geocentric Relative (Encounter Frame)',
-      retrievalTimestamp: new Date().toISOString(),
       sourceUrl: `https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=${encodeURIComponent(asteroidRecord.designation)}`,
       sentryUrl: 'https://cneos.jpl.nasa.gov/sentry/'
     }

@@ -1,4 +1,5 @@
 import type { AstronomicalImageRecord } from '../types';
+import { getApiUrl } from '../config/api';
 import { 
   getVerifiedAstronomicalImage, 
   getVerifiedAstronomicalGallery,
@@ -156,7 +157,7 @@ export async function searchNasaImages(query: string): Promise<AstronomicalImage
   }
 
   try {
-    const res = await fetch(`/api/data/images?search=${encodeURIComponent(trimmed)}`);
+    const res = await fetch(getApiUrl(`/api/data/images?search=${encodeURIComponent(trimmed)}`));
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data.records) && data.records.length > 0) {

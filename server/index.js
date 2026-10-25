@@ -700,9 +700,10 @@ app.get('/api/data/small-bodies', async (req, res) => {
 // 4b. GET /api/data/asteroid/orbit - Data-driven Keplerian orbital motion & state vectors
 app.get('/api/data/asteroid/orbit', async (req, res) => {
   try {
-    const { des = '99942', date } = req.query;
+    const { des = '99942', date, refresh, forceLive } = req.query;
     const targetDate = date ? new Date(date) : new Date();
-    const motionData = await getAsteroidOrbitData(des, targetDate);
+    const isRefresh = refresh === 'true' || forceLive === 'true';
+    const motionData = await getAsteroidOrbitData(des, targetDate, { forceLive: isRefresh });
     return res.json(motionData);
   } catch (err) {
     console.error('[Asteroid Motion] Error computing orbit:', err.message);

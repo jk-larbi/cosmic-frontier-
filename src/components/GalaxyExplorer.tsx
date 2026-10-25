@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, type FC } from 'react';
 import type { GalaxyObject, GalaxyCategory, AppPage } from '../types';
 import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { AstronomicalBadge } from './astronomy-images/AstronomicalBadge';
+import { getApiUrl } from '../config/api';
 import { 
   Search, 
   Filter, 
@@ -76,7 +77,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/data/galaxies');
+      const res = await fetch(getApiUrl('/api/data/galaxies'));
       if (!res.ok) {
         throw new Error(`Server returned HTTP ${res.status}`);
       }
@@ -112,7 +113,7 @@ export const GalaxyExplorer: FC<GalaxyExplorerProps> = ({ onNavigate }) => {
     setLookupMessage(null);
 
     try {
-      const res = await fetch(`/api/data/galaxies?lookup=${encodeURIComponent(liveQuery.trim())}`);
+      const res = await fetch(getApiUrl(`/api/data/galaxies?lookup=${encodeURIComponent(liveQuery.trim())}`));
       const data = await res.json();
       if (data.success && data.record) {
         const newRecord: GalaxyObject = data.record;

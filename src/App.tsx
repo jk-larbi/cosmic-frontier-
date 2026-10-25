@@ -19,23 +19,69 @@ export function App() {
   const [currentPage, setCurrentPage] = useState<AppPage>('home');
 
   // Handle URL hash routing or direct navigation
-  const handleNavigate = (page: AppPage) => {
-    let targetPage: AppPage = page;
-    if (page === 'guide' || page === 'ai-guide') {
+  const handleNavigate = (page: AppPage | string) => {
+    const [rawPage, queryString] = (page as string).split('?');
+    const clean = rawPage.toLowerCase().trim();
+
+    let targetPage: AppPage = 'home';
+    let targetHash = '';
+
+    if (clean === 'motion' || clean === 'asteroid-motion' || clean === 'orbit') {
+      targetPage = 'asteroid-watch';
+      targetHash = queryString ? `asteroid-watch?mode=motion&${queryString}` : 'asteroid-watch?mode=motion';
+    } else if (clean === 'guide' || clean === 'ai-guide') {
       targetPage = 'ai-guide';
-    } else if ((page as string) === 'live-space') {
+      targetHash = queryString ? `ai-guide?${queryString}` : 'ai-guide';
+    } else if (clean === 'live-space') {
       targetPage = 'mission-control';
+      targetHash = queryString ? `mission-control?${queryString}` : 'mission-control';
+    } else if (clean === 'spherex' || clean === 'image-lab' || clean === 'sphere-x') {
+      targetPage = 'spherex';
+      targetHash = queryString ? `spherex?${queryString}` : 'spherex';
+    } else if (clean === 'planet-x' || clean === 'planetx') {
+      targetPage = 'planet-x';
+      targetHash = queryString ? `planet-x?${queryString}` : 'planet-x';
+    } else if (clean === 'data-centre' || clean === 'data-center') {
+      targetPage = 'data-centre';
+      targetHash = queryString ? `data-centre?${queryString}` : 'data-centre';
+    } else if (clean === 'asteroids' || clean === 'asteroid-watch') {
+      targetPage = 'asteroid-watch';
+      if (queryString) {
+        targetHash = `asteroid-watch?${queryString}`;
+      } else if (window.location.hash.startsWith('#asteroid-watch?')) {
+        targetHash = window.location.hash.replace(/^#/, '');
+      } else {
+        targetHash = 'asteroid-watch';
+      }
+    } else if (clean === 'exoplanet' || clean === 'exoplanets') {
+      targetPage = 'exoplanets';
+      targetHash = queryString ? `exoplanets?${queryString}` : 'exoplanets';
+    } else if (clean === 'galaxy' || clean === 'galaxies') {
+      targetPage = 'galaxies';
+      targetHash = queryString ? `galaxies?${queryString}` : 'galaxies';
+    } else if (clean === 'home' || !clean) {
+      targetPage = 'home';
+      targetHash = '';
+    } else if (['mission-control', 'observatory', 'universe', 'about'].includes(clean)) {
+      targetPage = clean as AppPage;
+      targetHash = queryString ? `${clean}?${queryString}` : clean;
+    } else {
+      targetPage = 'home';
+      targetHash = '';
     }
+
     setCurrentPage(targetPage);
+
     if (targetPage === 'home') {
+      const homeUrl = import.meta.env.BASE_URL || '/';
       if (window.location.hash) {
         window.location.hash = '';
       }
-      if (window.location.pathname !== '/' && window.history?.pushState) {
-        window.history.pushState(null, '', '/');
+      if (window.location.pathname !== homeUrl && window.history?.pushState) {
+        window.history.pushState(null, '', homeUrl);
       }
-    } else {
-      window.location.hash = targetPage;
+    } else if (targetHash) {
+      window.location.hash = targetHash;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -43,22 +89,43 @@ export function App() {
   // Sync with browser hash and path on initial load and hash change
   useEffect(() => {
     const handleLocationChange = () => {
-      // Strip leading and trailing slashes and hashes
-      const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '');
-      const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
-      const fullCandidate = (rawHash || rawPath).toLowerCase();
-      const candidate = fullCandidate.split('?')[0];
+      // Strip base path if present (e.g. /cosmic-frontier-/)
+      const baseSegment = (import.meta.env.BASE_URL || '/').replace(/^\/+|\/+$/g, '');
+      let rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
+      if (baseSegment && (rawPath === baseSegment || rawPath.startsWith(baseSegment + '/'))) {
+        rawPath = rawPath.slice(baseSegment.length).replace(/^\/+/, '');
+      }
 
-      if (candidate === 'live-space') {
+      const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '');
+      const fullCandidate = (rawHash || rawPath).toLowerCase();
+      const [candidate, queryString] = fullCandidate.split('?');
+
+      if (candidate === 'motion' || candidate === 'asteroid-motion' || candidate === 'orbit') {
+        setCurrentPage('asteroid-watch');
+        if (!window.location.hash.includes('mode=motion')) {
+          const extraQuery = queryString ? `&${queryString}` : '';
+          window.location.hash = `asteroid-watch?mode=motion${extraQuery}`;
+        }
+      } else if (candidate === 'live-space') {
         setCurrentPage('mission-control');
         window.location.hash = 'mission-control';
       } else if (candidate === 'ai-guide' || candidate === 'guide') {
         setCurrentPage('ai-guide');
-      } else if (candidate === 'spherex' || candidate === 'image-lab') {
+      } else if (candidate === 'spherex' || candidate === 'image-lab' || candidate === 'sphere-x') {
         setCurrentPage('spherex');
+      } else if (candidate === 'planet-x' || candidate === 'planetx') {
+        setCurrentPage('planet-x');
+      } else if (candidate === 'data-centre' || candidate === 'data-center') {
+        setCurrentPage('data-centre');
+      } else if (candidate === 'asteroids' || candidate === 'asteroid-watch') {
+        setCurrentPage('asteroid-watch');
+      } else if (candidate === 'exoplanet' || candidate === 'exoplanets') {
+        setCurrentPage('exoplanets');
+      } else if (candidate === 'galaxy' || candidate === 'galaxies') {
+        setCurrentPage('galaxies');
       } else if (candidate === 'home' || !candidate) {
         setCurrentPage('home');
-      } else if (['mission-control', 'observatory', 'universe', 'asteroid-watch', 'exoplanets', 'galaxies', 'planet-x', 'data-centre', 'about'].includes(candidate)) {
+      } else if (['mission-control', 'observatory', 'universe', 'about'].includes(candidate)) {
         setCurrentPage(candidate as AppPage);
       } else {
         // Fallback for any unknown route/hash to guarantee the app never stays blank
@@ -89,16 +156,24 @@ export function App() {
           )}
           {currentPage === 'observatory' && <LiveCosmicObservatory onNavigate={handleNavigate} />}
           {currentPage === 'universe' && <Universe3DExplorer onNavigate={handleNavigate} />}
-          {currentPage === 'asteroid-watch' && <AsteroidWatch onNavigate={handleNavigate} />}
+          {(currentPage === 'asteroid-watch' || (currentPage as string) === 'motion' || (currentPage as string) === 'asteroid-motion') && (
+            <AsteroidWatch onNavigate={handleNavigate} />
+          )}
           {currentPage === 'exoplanets' && <ExoplanetDiscoveryLab onNavigate={handleNavigate} />}
           {currentPage === 'galaxies' && <GalaxyExplorer onNavigate={handleNavigate} />}
           {currentPage === 'spherex' && <SPHERExExplorer />}
           {currentPage === 'planet-x' && <PlanetXExplorer onNavigate={handleNavigate} />}
-          {currentPage === 'data-centre' && <NasaDataCentre onNavigate={handleNavigate} />}
+          {(currentPage === 'data-centre' || (currentPage as string) === 'data-center') && (
+            <NasaDataCentre onNavigate={handleNavigate} />
+          )}
           {(currentPage === 'guide' || currentPage === 'ai-guide') && (
             <AIGuide onNavigate={handleNavigate} />
           )}
           {currentPage === 'about' && <AboutPage />}
+          {/* Universal safe fallback: if anything unknown ever slips through, render HomePage */}
+          {!['home', 'mission-control', 'observatory', 'universe', 'asteroid-watch', 'motion', 'asteroid-motion', 'exoplanets', 'galaxies', 'spherex', 'planet-x', 'data-centre', 'data-center', 'guide', 'ai-guide', 'about'].includes(currentPage) && (
+            <HomePage onNavigate={handleNavigate} />
+          )}
         </div>
       </main>
 

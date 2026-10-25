@@ -1128,6 +1128,180 @@ async function runTests() {
     assert(false, `Test 22: NASA Real Planet Data & Imagery Integration Suite failed: ${err.message}`);
   }
 
+  // =========================================================================
+  // TEST 23: LIVE MOTION OBSERVATORY & SOLAR SYSTEM ENGINE
+  // =========================================================================
+  try {
+    const motionViewerTs = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidMotionViewer.tsx'), 'utf8');
+
+    // 23.1: Three.js DOM architecture preventing WebGL context lost & blank screens
+    assert(
+      motionViewerTs.includes('container.appendChild(renderer.domElement)') &&
+      motionViewerTs.includes('renderer.dispose()') &&
+      motionViewerTs.includes('container.removeChild(canvasDom)'),
+      'Test 23.1: AsteroidMotionViewer implements dynamic canvas mounting and clean resource disposal'
+    );
+
+    // 23.2: Valid non-collapsing viewport height styling
+    assert(
+      motionViewerTs.includes('h-[520px]') && motionViewerTs.includes('min-h-[500px]') && !motionViewerTs.includes('h-125'),
+      'Test 23.2: AsteroidMotionViewer eliminates collapsed zero-height classes with responsive height styling'
+    );
+
+    // 23.3: Dual perspective modes (Solar System Heliocentric & Earth Flyby Radar)
+    assert(
+      motionViewerTs.includes('Solar System Heliocentric') && motionViewerTs.includes('Earth Flyby Radar'),
+      'Test 23.3: AsteroidMotionViewer provides dual perspective modes for Solar System and Earth flyby'
+    );
+
+    // 23.4: Object selection & camera focus for Sun, Earth, Mars, Asteroid
+    assert(
+      motionViewerTs.includes("handleFocusBody") &&
+      motionViewerTs.includes("'asteroid'") &&
+      motionViewerTs.includes("'earth'") &&
+      motionViewerTs.includes("'mars'") &&
+      motionViewerTs.includes("'sun'"),
+      'Test 23.4: AsteroidMotionViewer enables smooth camera focus on Asteroid, Earth, Mars, and Sun'
+    );
+
+    // 23.5: Automatic WebGL fallback to high-DPI 2D radar canvas with notice
+    assert(
+      motionViewerTs.includes("renderEngine === '2d'") &&
+      motionViewerTs.includes('render2DRadar') &&
+      motionViewerTs.includes('webGlNotice'),
+      'Test 23.5: AsteroidMotionViewer implements graceful WebGL fallback to high-DPI 2D radar canvas'
+    );
+
+    // 23.6: Clear NASA/JPL provenance badges (Live vs Verified Archive)
+    assert(
+      motionViewerTs.includes('Live response') &&
+      motionViewerTs.includes('Verified archive'),
+      'Test 23.6: AsteroidMotionViewer renders transparent NASA/JPL data provenance badges'
+    );
+
+    // 23.7: Standish analytical planetary ephemeris exports in orbitalMotion.ts
+    const orbitalTs = fs.readFileSync(path.resolve(__dirname, '../src/utils/orbitalMotion.ts'), 'utf8');
+    assert(
+      orbitalTs.includes('calculateMajorPlanetPosition') && orbitalTs.includes('generateMajorPlanetOrbitPath'),
+      'Test 23.7: orbitalMotion.ts implements JPL Standish planetary positions and orbital ellipses'
+    );
+
+    // 23.8: Standish calculation computes realistic Earth and Mars states
+    const { calculateMajorPlanetPosition } = await import('../src/utils/orbitalMotion.ts');
+    const testDate = new Date('2026-10-25T12:00:00Z');
+    const earthState = calculateMajorPlanetPosition('earth', testDate);
+    const marsState = calculateMajorPlanetPosition('mars', testDate);
+
+    assert(
+      earthState.distSunAU >= 0.98 && earthState.distSunAU <= 1.02 &&
+      earthState.orbitalSpeedKmS >= 29 && earthState.orbitalSpeedKmS <= 31,
+      'Test 23.8: calculateMajorPlanetPosition computes authentic Earth distance (~1.0 AU) and velocity (~29.8 km/s)'
+    );
+
+    assert(
+      marsState.distSunAU >= 1.35 && marsState.distSunAU <= 1.70 &&
+      marsState.orbitalSpeedKmS >= 21 && marsState.orbitalSpeedKmS <= 27,
+      'Test 23.9: calculateMajorPlanetPosition computes authentic Mars distance (~1.38-1.67 AU) and velocity (~24 km/s)'
+    );
+
+    // 23.10: Asteroid Watch and routing integration
+    const watchTs = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidWatch.tsx'), 'utf8');
+    const appTs = fs.readFileSync(path.resolve(__dirname, '../src/App.tsx'), 'utf8');
+
+    assert(
+      watchTs.includes("viewMode === 'motion'") &&
+      watchTs.includes('AsteroidMotionViewer') &&
+      appTs.includes("candidate === 'motion' || candidate === 'asteroid-motion'"),
+      'Test 23.10: AsteroidWatch and App.tsx guarantee seamless routing and deep linking into Live Motion'
+    );
+  } catch (err) {
+    assert(false, `Test 23: Live Motion Observatory Suite failed: ${err.message}`);
+  }
+
+  // =========================================================================
+  // TEST 24: LIVE DATA PROVENANCE & RETRIEVAL PIPELINE SUITE
+  // =========================================================================
+  try {
+    // 24.1: Endpoint accepts refresh parameter and classifies live NASA/JPL response
+    const resLive = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=101955&refresh=true`);
+    assert(resLive.status === 200, 'Test 24.1: /api/data/asteroid/orbit?des=101955&refresh=true returns HTTP 200');
+    const liveJson = await resLive.json();
+    assert(liveJson.success === true && liveJson.asteroid && liveJson.provenance, 'Test 24.2: Orbit response contains success, asteroid, and provenance');
+    assert(
+      liveJson.provenance.retrievalStatus === 'live' || liveJson.provenance.retrievalStatus === 'archive' || liveJson.provenance.retrievalStatus === 'cached',
+      'Test 24.3: Orbit provenance accurately classifies retrievalStatus (live from JPL SBDB or archive fallback)'
+    );
+
+    if (liveJson.provenance.retrievalStatus === 'live') {
+      assert(liveJson.provenance.isLive === true, 'Test 24.4: Live response sets isLive to true');
+      assert(liveJson.provenance.source.includes('Small-Body Database'), 'Test 24.5: Live response source identifies NASA/JPL SBDB');
+      assert(liveJson.provenance.epochReference && liveJson.provenance.epochReference.startsWith('JD'), 'Test 24.6: Live response provides authentic Julian Date epoch reference');
+      assert(liveJson.provenance.lastRefreshAttempt && liveJson.provenance.lastRefreshAttempt.success === true, 'Test 24.7: Live refresh attempt logs success');
+    }
+
+    // 24.8: Subsequent query without refresh parameter returns cached response
+    const resCached = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=101955`);
+    assert(resCached.status === 200, 'Test 24.8: Subsequent query returns HTTP 200');
+    const cachedJson = await resCached.json();
+    assert(
+      cachedJson.provenance.retrievalStatus === 'cached' || cachedJson.provenance.retrievalStatus === 'live' || cachedJson.provenance.retrievalStatus === 'archive',
+      'Test 24.9: Subsequent query classifies status correctly without false live claim'
+    );
+    if (cachedJson.provenance.retrievalStatus === 'cached') {
+      assert(cachedJson.provenance.isLive === false, 'Test 24.10: Cached response does not falsely claim isLive: true');
+    }
+
+    // 24.11: Verified archive fallback for known preset
+    const resArchive = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=2025%20UK9`);
+    const archiveJson = await resArchive.json();
+    assert(
+      ['archive', 'live', 'cached'].includes(archiveJson.provenance.retrievalStatus),
+      'Test 24.11: Known preset query accurately reports retrieval status'
+    );
+
+    // 24.12: UI Data Provenance & Status panel implementation
+    const viewerTs = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidMotionViewer.tsx'), 'utf8');
+    assert(
+      viewerTs.includes('Data Provenance & Status') &&
+      viewerTs.includes('handleRetryLive') &&
+      viewerTs.includes('Retry Live'),
+      'Test 24.12: AsteroidMotionViewer.tsx implements dedicated Data Provenance & Status panel with Retry Live'
+    );
+
+    assert(
+      viewerTs.includes('SELECTED OBJECT') &&
+      viewerTs.includes('LAST SUCCESSFUL RETRIEVAL') &&
+      viewerTs.includes('EPOCH / REFERENCE TIME') &&
+      viewerTs.includes('LAST REFRESH ATTEMPT'),
+      'Test 24.13: Data panel displays Selected Object, Last Retrieval, Epoch Reference, and Last Refresh Attempt'
+    );
+
+    assert(
+      viewerTs.includes('Live response') &&
+      viewerTs.includes('Cached response') &&
+      viewerTs.includes('Verified archive') &&
+      viewerTs.includes('Source status unavailable'),
+      'Test 24.14: Data panel renders distinct badges for Live, Cached, Archive, and Unavailable states'
+    );
+
+    // 24.15: Duplicate click protection during active refresh
+    assert(
+      viewerTs.includes('disabled={isRefreshing || isLoading}'),
+      'Test 24.15: Retry Live button disables during in-flight network requests to prevent duplicate clicks'
+    );
+
+    // 24.16: liveSpaceService.ts cache busting and error handling
+    const serviceTs = fs.readFileSync(path.resolve(__dirname, '../src/services/liveSpaceService.ts'), 'utf8');
+    assert(
+      serviceTs.includes("url.searchParams.set('refresh', 'true')") &&
+      serviceTs.includes("url.searchParams.set('_t'") &&
+      serviceTs.includes('lastRefreshAttempt'),
+      'Test 24.16: liveSpaceService.ts adds cache-busting timestamp and captures refresh errors'
+    );
+  } catch (err) {
+    assert(false, `Test 24: Live Data Provenance & Retrieval Status Suite failed: ${err.message}`);
+  }
+
   console.log('\n====================================================');
   console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('====================================================');

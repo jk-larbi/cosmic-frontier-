@@ -4,9 +4,11 @@ import type {
   AppPage, 
   ObservatoryCategory, 
   ObservatoryApiResponse,
+  ObservatoryObject,
   LiveDataBadgeStatus
 } from '../types';
 import { fetchObservatoryObjects } from '../services/astronomyDataService';
+import { DEFAULT_OBSERVATORY_SNAPSHOT } from '../data/observatorySnapshot';
 import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { useReducedMotion, useDocumentVisibility } from '../utils/motion';
 import {
@@ -14,6 +16,10 @@ import {
   createSunTexture,
   NASA_JPL_TEXTURE_MAPS
 } from '../utils/planetTextureGenerator';
+import {
+  propagateElementsClient,
+  type KeplerianElements
+} from '../utils/orbitalMotion';
 import {
   Play,
   Pause,
@@ -30,7 +36,9 @@ import {
   Globe,
   Radio,
   Clock,
-  Disc
+  Disc,
+  RefreshCw,
+  Compass
 } from 'lucide-react';
 
 interface LiveCosmicObservatoryProps {
@@ -53,9 +61,9 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
   const isReducedMotion = useReducedMotion();
   const isDocumentVisible = useDocumentVisibility();
 
-  // Data state
-  const [observatoryData, setObservatoryData] = useState<ObservatoryApiResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Data state — initialize immediately with verified baseline snapshot (zero blank screens)
+  const [observatoryData, setObservatoryData] = useState<ObservatoryApiResponse>(DEFAULT_OBSERVATORY_SNAPSHOT);
+  const [isLoading, setIsLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
 
   // Filter & Search state
@@ -79,9 +87,22 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
   // Refs for 3D and 2D viewports
   const mount3DRef = useRef<HTMLDivElement | null>(null);
   const canvas2DRef = useRef<HTMLCanvasElement | null>(null);
-  const requestRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(performance.now());
+
+  // State refs accessed by 60fps render loop to prevent React re-render storms
+  const isPlayingRef = useRef<boolean>(isPlaying);
+  isPlayingRef.current = isPlaying;
+
+  const playbackSpeedRef = useRef<number>(playbackSpeed);
+  playbackSpeedRef.current = playbackSpeed;
+
+  const scaleModeRef = useRef<ScaleMode>(scaleMode);
+  scaleModeRef.current = scaleMode;
+
   const simulatedTimeRef = useRef<number>(simulatedDate.getTime());
+  const lastFetchedEpochRef = useRef<number>(simulatedDate.getTime());
+
+  // Quick lookup map for objects accessed in 60fps render loop
+  const objectsDataMapRef = useRef<Map<string, ObservatoryObject>>(new Map());
 
   // Three.js instances ref
   const threeStateRef = useRef<{
@@ -95,15 +116,24 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     controlsActive: boolean;
     isDragging: boolean;
     previousMousePosition: { x: number; y: number };
+    currentDistance: number;
+    targetDistance: number;
+    currentTheta: number;
+    targetTheta: number;
+    currentPhi: number;
+    targetPhi: number;
+    lookAtCurrent: THREE.Vector3;
+    lookAtTarget: THREE.Vector3;
+    focusedObjectId: string | null;
   } | null>(null);
 
-  // Keep simulatedTimeRef synchronized
+  // Keep simulatedTimeRef synchronized with external date changes
   useEffect(() => {
     simulatedTimeRef.current = simulatedDate.getTime();
     setDateInputVal(simulatedDate.toISOString().slice(0, 16));
   }, [simulatedDate]);
 
-  // Fetch astronomical data for the given date
+  // Fetch astronomical data for the given date (non-blocking progressive sync)
   const loadObservatoryData = useCallback(async (epochDate?: Date) => {
     setIsLoading(true);
     setDataError(null);
@@ -113,17 +143,18 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       if (res.data && res.data.success) {
         setObservatoryData(res.data as unknown as ObservatoryApiResponse);
       } else {
-        setDataError('Astronomical telemetry gateway returned unformatted response.');
+        // Keep existing snapshot active, do not discard working data
+        setDataError('Astronomical telemetry gateway returned unformatted response. Preserving active scene.');
       }
     } catch (err: unknown) {
-      console.error('[LiveCosmicObservatory] Failed to load data:', err);
-      setDataError('Could not connect to the astronomical ephemeris gateway.');
+      console.warn('[LiveCosmicObservatory] Ephemeris refresh failed, retaining active baseline:', err);
+      setDataError('Could not reach astronomical ephemeris gateway. Retaining verified Keplerian calculations.');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Initial data load
+  // Initial non-blocking background data load
   useEffect(() => {
     loadObservatoryData(simulatedDate);
   }, []);
@@ -141,62 +172,44 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     });
   }, [observatoryData, selectedCategory, searchQuery]);
 
+  // Update object data lookup map for the 60fps render loop
+  useEffect(() => {
+    const map = new Map<string, ObservatoryObject>();
+    if (observatoryData?.objects) {
+      observatoryData.objects.forEach(o => map.set(o.id, o));
+    }
+    objectsDataMapRef.current = map;
+  }, [observatoryData]);
+
   // Selected object record
   const selectedObject = useMemo(() => {
     if (!observatoryData?.objects) return null;
     return observatoryData.objects.find(o => o.id === selectedObjectId) || observatoryData.objects[0] || null;
   }, [observatoryData, selectedObjectId]);
 
-  // Handle Playback Time Step Animation
-  useEffect(() => {
-    if (!isPlaying) {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
-      return;
-    }
-
-    lastTimeRef.current = performance.now();
-
-    const animatePlayback = (now: number) => {
-      if (!isDocumentVisible) {
-        requestRef.current = requestAnimationFrame(animatePlayback);
-        return;
-      }
-
-      const deltaSec = (now - lastTimeRef.current) / 1000;
-      lastTimeRef.current = now;
-
-      // Advance simulation: playbackSpeed days per second
-      const deltaDays = deltaSec * playbackSpeed;
-      const deltaMs = deltaDays * 86400 * 1000;
-      simulatedTimeRef.current += deltaMs;
-
-      const newDate = new Date(simulatedTimeRef.current);
-      setSimulatedDate(newDate);
-
-      requestRef.current = requestAnimationFrame(animatePlayback);
+  // Real-time telemetry calculations for selected object during continuous scrubbing/playback
+  const realtimeSelectedState = useMemo(() => {
+    if (!selectedObject?.orbitalElements) return null;
+    const kepler: KeplerianElements = {
+      a: selectedObject.orbitalElements.semiMajorAxisAU,
+      e: selectedObject.orbitalElements.eccentricity || 0,
+      i: selectedObject.orbitalElements.inclinationDeg || 0,
+      node: selectedObject.orbitalElements.longitudeOfAscendingNodeDeg || 0,
+      peri: selectedObject.orbitalElements.argumentOfPerihelionDeg || 0,
+      M0: selectedObject.orbitalElements.meanAnomalyDeg || 0,
+      epochJd: selectedObject.orbitalElements.epochJd || 2451545.0,
+      periodYears: selectedObject.orbitalElements.orbitalPeriodYears,
+      meanMotionDegDay: selectedObject.orbitalElements.meanMotionDegDay
     };
+    return propagateElementsClient(kepler, simulatedDate);
+  }, [selectedObject, simulatedDate]);
 
-    requestRef.current = requestAnimationFrame(animatePlayback);
-    return () => {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
-    };
-  }, [isPlaying, playbackSpeed, isDocumentVisible]);
-
-  // Refresh data whenever simulation date changes significantly (e.g. paused jump or after 5 days of playback)
-  const lastFetchedEpochRef = useRef<number>(simulatedDate.getTime());
-  useEffect(() => {
-    const diffDays = Math.abs(simulatedDate.getTime() - lastFetchedEpochRef.current) / (86400 * 1000);
-    // If stepped or jumped more than 3 days, refresh analytical ephemerides
-    if (diffDays >= 3 && !isPlaying) {
-      lastFetchedEpochRef.current = simulatedDate.getTime();
-      loadObservatoryData(simulatedDate);
-    }
-  }, [simulatedDate, isPlaying, loadObservatoryData]);
-
-  // Preset Epoch Handler
+  // Preset Epoch Handler (smooth jump without scene reconstruction)
   const handleSelectPreset = (iso: string) => {
     const newDate = new Date(iso);
+    if (isNaN(newDate.getTime())) return;
     setSimulatedDate(newDate);
+    simulatedTimeRef.current = newDate.getTime();
     setIsPlaying(false);
     lastFetchedEpochRef.current = newDate.getTime();
     loadObservatoryData(newDate);
@@ -208,6 +221,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     const parsed = new Date(e.target.value);
     if (!isNaN(parsed.getTime())) {
       setSimulatedDate(parsed);
+      simulatedTimeRef.current = parsed.getTime();
       setIsPlaying(false);
       lastFetchedEpochRef.current = parsed.getTime();
       loadObservatoryData(parsed);
@@ -216,11 +230,11 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
   // Step Time helpers
   const handleStepDays = (days: number) => {
-    const newTime = simulatedDate.getTime() + days * 86400 * 1000;
+    const newTime = simulatedTimeRef.current + days * 86400 * 1000;
     const newDate = new Date(newTime);
+    simulatedTimeRef.current = newTime;
     setSimulatedDate(newDate);
-    setIsPlaying(false);
-    loadObservatoryData(newDate);
+    setDateInputVal(newDate.toISOString().slice(0, 16));
   };
 
   // Keyboard navigation for playback
@@ -238,7 +252,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
   };
 
   // =========================================================================
-  // 3D THREE.JS VIEWPORT INITIALIZATION & RENDERER
+  // 3D THREE.JS VIEWPORT INITIALIZATION & UNIFIED 60FPS RENDER LOOP
   // =========================================================================
   useEffect(() => {
     if (renderEngine !== '3d' || !mount3DRef.current) return;
@@ -248,48 +262,131 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
     // 1. Scene & Camera
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#030712');
+    scene.background = new THREE.Color(0x02040A); // Cinematic deep space void
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 50000);
     camera.position.set(0, 45, 95);
 
     // 2. Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.domElement.style.width = '100%';
-    renderer.domElement.style.height = '100%';
-    renderer.domElement.style.display = 'block';
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ 
+        antialias: true, 
+        alpha: false, 
+        powerPreference: 'high-performance' 
+      });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.domElement.style.width = '100%';
+      renderer.domElement.style.height = '100%';
+      renderer.domElement.style.display = 'block';
 
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      container.appendChild(renderer.domElement);
+    } catch (err: unknown) {
+      console.warn('[LiveCosmicObservatory] WebGL initialization failed, switching to 2D radar:', err);
+      setRenderEngine('2d');
+      return;
     }
-    container.appendChild(renderer.domElement);
 
-    // 3. Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    // 3. Lighting (Sun is primary illumination source)
+    const ambientLight = new THREE.AmbientLight(0x1E293B, 0.45);
     scene.add(ambientLight);
 
-    const sunPointLight = new THREE.PointLight(0xfff7d6, 2.5, 3000, 0.5);
+    const sunPointLight = new THREE.PointLight(0xFFF9E6, 2.6, 4000, 0.4);
     sunPointLight.position.set(0, 0, 0);
     scene.add(sunPointLight);
 
-    // 4. Background Starfield
-    const starGeo = new THREE.BufferGeometry();
-    const starCount = 1800;
-    const starPositions = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount * 3; i += 3) {
-      const radius = 2500 + Math.random() * 2000;
+    const fillLight = new THREE.DirectionalLight(0x38BDF8, 0.15);
+    fillLight.position.set(50, 70, 50);
+    scene.add(fillLight);
+
+    // 4. Restrained, Cinematic Multi-Tier Starfield
+    const starGroup = new THREE.Group();
+
+    // Tier 1: Distant microscopic stars (2500 points)
+    const distantStarGeo = new THREE.BufferGeometry();
+    const distantCount = 2500;
+    const distantPositions = new Float32Array(distantCount * 3);
+    for (let i = 0; i < distantCount * 3; i += 3) {
+      const radius = 2200 + Math.random() * 2500;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(Math.random() * 2 - 1);
-      starPositions[i] = radius * Math.sin(phi) * Math.cos(theta);
-      starPositions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
-      starPositions[i + 2] = radius * Math.cos(phi);
+      distantPositions[i] = radius * Math.sin(phi) * Math.cos(theta);
+      distantPositions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      distantPositions[i + 2] = radius * Math.cos(phi);
     }
-    starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, transparent: true, opacity: 0.8 });
-    const starPoints = new THREE.Points(starGeo, starMat);
-    scene.add(starPoints);
+    distantStarGeo.setAttribute('position', new THREE.BufferAttribute(distantPositions, 3));
+    const distantStarMat = new THREE.PointsMaterial({ 
+      color: 0xE2E8F0, 
+      size: 1.0, 
+      transparent: true, 
+      opacity: 0.65 
+    });
+    starGroup.add(new THREE.Points(distantStarGeo, distantStarMat));
+
+    // Tier 2: Prominent navigation stars with spectral colors (250 points)
+    const brightStarGeo = new THREE.BufferGeometry();
+    const brightCount = 250;
+    const brightPositions = new Float32Array(brightCount * 3);
+    const brightColors = new Float32Array(brightCount * 3);
+
+    const spectralColors = [
+      new THREE.Color(0x93C5FD), // O/B blue-white
+      new THREE.Color(0xBAE6FD), // A-type white-blue
+      new THREE.Color(0xF8FAFC), // F-type white
+      new THREE.Color(0xFDE047), // G-type yellow (Sun-like)
+      new THREE.Color(0xFDBA74), // K-type orange
+      new THREE.Color(0xFCA5A5)  // M-type red
+    ];
+
+    for (let i = 0; i < brightCount * 3; i += 3) {
+      const radius = 2000 + Math.random() * 2000;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(Math.random() * 2 - 1);
+      brightPositions[i] = radius * Math.sin(phi) * Math.cos(theta);
+      brightPositions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      brightPositions[i + 2] = radius * Math.cos(phi);
+
+      const col = spectralColors[Math.floor(Math.random() * spectralColors.length)];
+      brightColors[i] = col.r;
+      brightColors[i + 1] = col.g;
+      brightColors[i + 2] = col.b;
+    }
+    brightStarGeo.setAttribute('position', new THREE.BufferAttribute(brightPositions, 3));
+    brightStarGeo.setAttribute('color', new THREE.BufferAttribute(brightColors, 3));
+    const brightStarMat = new THREE.PointsMaterial({
+      size: 2.0,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.90
+    });
+    starGroup.add(new THREE.Points(brightStarGeo, brightStarMat));
+
+    // Tier 3: Subtle galactic plane dust band (1000 points)
+    const galaxyGeo = new THREE.BufferGeometry();
+    const galaxyCount = 1000;
+    const galaxyPositions = new Float32Array(galaxyCount * 3);
+    for (let i = 0; i < galaxyCount * 3; i += 3) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = 2400 + Math.random() * 1600;
+      const spread = (Math.random() - 0.5) * 220;
+      galaxyPositions[i] = Math.cos(angle) * r;
+      galaxyPositions[i + 1] = spread;
+      galaxyPositions[i + 2] = Math.sin(angle) * r;
+    }
+    galaxyGeo.setAttribute('position', new THREE.BufferAttribute(galaxyPositions, 3));
+    const galaxyMat = new THREE.PointsMaterial({
+      color: 0x94A3B8,
+      size: 2.5,
+      transparent: true,
+      opacity: 0.15
+    });
+    starGroup.add(new THREE.Points(galaxyGeo, galaxyMat));
+
+    scene.add(starGroup);
 
     // 5. Groups for Dynamic Celestial Objects & Orbit Lines
     const objectsMap = new Map<string, THREE.Group>();
@@ -300,12 +397,6 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     let isDragging = false;
     let prevMouseX = 0;
     let prevMouseY = 0;
-    let currentDistance = 95;
-    let targetDistance = 95;
-    let currentTheta = 0;
-    let targetTheta = 0;
-    let currentPhi = 0.45;
-    let targetPhi = 0.45;
 
     const onMouseDown = (e: MouseEvent) => {
       isDragging = true;
@@ -314,14 +405,14 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     };
 
     const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
+      if (!isDragging || !threeStateRef.current) return;
       const deltaX = e.clientX - prevMouseX;
       const deltaY = e.clientY - prevMouseY;
       prevMouseX = e.clientX;
       prevMouseY = e.clientY;
 
-      targetTheta -= deltaX * 0.007;
-      targetPhi = Math.max(0.05, Math.min(Math.PI - 0.05, targetPhi - deltaY * 0.007));
+      threeStateRef.current.targetTheta -= deltaX * 0.007;
+      threeStateRef.current.targetPhi = Math.max(0.05, Math.min(Math.PI - 0.05, threeStateRef.current.targetPhi - deltaY * 0.007));
     };
 
     const onMouseUp = () => {
@@ -330,7 +421,8 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      targetDistance = Math.max(10, Math.min(1200, targetDistance + e.deltaY * 0.08));
+      if (!threeStateRef.current) return;
+      threeStateRef.current.targetDistance = Math.max(8, Math.min(1800, threeStateRef.current.targetDistance + e.deltaY * 0.08));
     };
 
     const domElement = renderer.domElement;
@@ -350,39 +442,130 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       mouse: new THREE.Vector2(),
       controlsActive: true,
       isDragging: false,
-      previousMousePosition: { x: 0, y: 0 }
+      previousMousePosition: { x: 0, y: 0 },
+      currentDistance: 95,
+      targetDistance: 95,
+      currentTheta: 0,
+      targetTheta: 0,
+      currentPhi: 0.45,
+      targetPhi: 0.45,
+      lookAtCurrent: new THREE.Vector3(0, 0, 0),
+      lookAtTarget: new THREE.Vector3(0, 0, 0),
+      focusedObjectId: null
     };
 
-    // Resize observer
+    // Responsive Resize Handler
     const handleResize = () => {
-      if (!container) return;
+      if (!container || !threeStateRef.current) return;
       const w = container.clientWidth || 800;
       const h = container.clientHeight || 520;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      threeStateRef.current.camera.aspect = w / h;
+      threeStateRef.current.camera.updateProjectionMatrix();
+      threeStateRef.current.renderer.setSize(w, h);
     };
     window.addEventListener('resize', handleResize);
 
-    // Animation Loop with camera flight lerp and tab visibility pause
+    // Single Unified 60fps Animation & Keplerian Propagation Loop
     let animId: number;
-    const renderLoop = () => {
-      if (isDocumentVisible) {
-        const lerpFactor = isReducedMotion ? 1.0 : 0.09;
-        currentDistance += (targetDistance - currentDistance) * lerpFactor;
-        currentTheta += (targetTheta - currentTheta) * lerpFactor;
-        currentPhi += (targetPhi - currentPhi) * lerpFactor;
+    let lastFrameTime = performance.now();
+    let lastHudUpdate = 0;
 
-        const sinPhiRadius = currentDistance * Math.sin(currentPhi);
-        camera.position.x = sinPhiRadius * Math.sin(currentTheta);
-        camera.position.y = currentDistance * Math.cos(currentPhi);
-        camera.position.z = sinPhiRadius * Math.cos(currentTheta);
-        camera.lookAt(0, 0, 0);
+    const renderLoop = (now: number) => {
+      if (isDocumentVisible && threeStateRef.current) {
+        // Safe capped delta time (prevents speed explosion on tab focus or frame stalls)
+        const deltaSec = Math.min((now - lastFrameTime) / 1000, 0.1);
+        lastFrameTime = now;
+
+        const threeState = threeStateRef.current;
+        const currentScale = scaleModeRef.current;
+
+        let auScale = 12;
+        if (currentScale === 'full') auScale = 3.5;
+        else if (currentScale === 'outer') auScale = 0.35;
+        else if (currentScale === 'exoplanet') auScale = 85;
+        else if (currentScale === 'sky') auScale = 1.0;
+
+        // Advance simulation time if playing
+        if (isPlayingRef.current) {
+          const deltaMs = deltaSec * playbackSpeedRef.current * 86400 * 1000;
+          simulatedTimeRef.current += deltaMs;
+
+          // Throttle React state updates to ~10Hz to prevent React re-render storms
+          if (now - lastHudUpdate > 100) {
+            lastHudUpdate = now;
+            const currentSimDate = new Date(simulatedTimeRef.current);
+            setSimulatedDate(currentSimDate);
+            setDateInputVal(currentSimDate.toISOString().slice(0, 16));
+          }
+        }
+
+        const simDate = new Date(simulatedTimeRef.current);
+
+        // Smooth real-time Keplerian orbital positioning for all active celestial objects
+        for (const [id, grp] of threeState.objectsMap.entries()) {
+          const obj = objectsDataMapRef.current.get(id);
+          if (!obj) continue;
+
+          if (obj.orbitalElements && obj.orbitalElements.semiMajorAxisAU > 0) {
+            // Analytical Keplerian solver (accurate, zero network delay, smooth 60fps)
+            const kepler: KeplerianElements = {
+              a: obj.orbitalElements.semiMajorAxisAU,
+              e: obj.orbitalElements.eccentricity || 0,
+              i: obj.orbitalElements.inclinationDeg || 0,
+              node: obj.orbitalElements.longitudeOfAscendingNodeDeg || 0,
+              peri: obj.orbitalElements.argumentOfPerihelionDeg || 0,
+              M0: obj.orbitalElements.meanAnomalyDeg || 0,
+              epochJd: obj.orbitalElements.epochJd || 2451545.0,
+              periodYears: obj.orbitalElements.orbitalPeriodYears,
+              meanMotionDegDay: obj.orbitalElements.meanMotionDegDay
+            };
+            const state = propagateElementsClient(kepler, simDate);
+            grp.position.set(
+              state.heliocentricAU.x * auScale,
+              state.heliocentricAU.z * auScale,
+              state.heliocentricAU.y * auScale
+            );
+          } else if (obj.category === 'exoplanets' && obj.orbitalElements) {
+            // Smooth Keplerian phase for exoplanet around host star
+            const a = (obj.orbitalElements.semiMajorAxisAU || 0.2) * auScale;
+            const periodDays = obj.exoplanetParams?.orbitalPeriodDays || 30;
+            const phase = ((simulatedTimeRef.current / 86400000) % periodDays) / periodDays * Math.PI * 2;
+            grp.position.set(a * Math.cos(phase), 0, a * Math.sin(phase));
+          }
+
+          // Gentle, believable axial rotation
+          if (!isReducedMotion) {
+            grp.rotation.y += deltaSec * 0.35;
+          }
+        }
+
+        // Smooth camera lerp (no snapping, no fighting)
+        const lerpFactor = isReducedMotion ? 1.0 : 0.08;
+        threeState.currentDistance += (threeState.targetDistance - threeState.currentDistance) * lerpFactor;
+        threeState.currentTheta += (threeState.targetTheta - threeState.currentTheta) * lerpFactor;
+        threeState.currentPhi += (threeState.targetPhi - threeState.currentPhi) * lerpFactor;
+
+        // Smooth camera target tracking if focused on a specific object
+        if (threeState.focusedObjectId) {
+          const focusedGroup = threeState.objectsMap.get(threeState.focusedObjectId);
+          if (focusedGroup) {
+            threeState.lookAtTarget.copy(focusedGroup.position);
+          }
+        }
+
+        threeState.lookAtCurrent.lerp(threeState.lookAtTarget, lerpFactor);
+
+        const sinPhiRadius = threeState.currentDistance * Math.sin(threeState.currentPhi);
+        camera.position.x = threeState.lookAtCurrent.x + sinPhiRadius * Math.sin(threeState.currentTheta);
+        camera.position.y = threeState.lookAtCurrent.y + threeState.currentDistance * Math.cos(threeState.currentPhi);
+        camera.position.z = threeState.lookAtCurrent.z + sinPhiRadius * Math.cos(threeState.currentTheta);
+        camera.lookAt(threeState.lookAtCurrent);
 
         renderer.render(scene, camera);
       }
       animId = requestAnimationFrame(renderLoop);
     };
+
     animId = requestAnimationFrame(renderLoop);
 
     return () => {
@@ -392,17 +575,35 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
       domElement.removeEventListener('wheel', onWheel);
+
+      // Deep GPU resource disposal to prevent WebGL context exhaustion & memory leaks
+      scene.traverse((obj) => {
+        if (obj instanceof THREE.Mesh || obj instanceof THREE.Line || obj instanceof THREE.Points) {
+          if (obj.geometry) {
+            obj.geometry.dispose();
+          }
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((m) => m.dispose());
+          } else if (obj.material) {
+            obj.material.dispose();
+          }
+        }
+      });
+
       renderer.dispose();
+      if (container.contains(domElement)) {
+        container.removeChild(domElement);
+      }
       threeStateRef.current = null;
     };
-  }, [renderEngine]);
+  }, [renderEngine, isDocumentVisible, isReducedMotion]);
 
-  // Synchronize 3D Scene Objects whenever observatoryData, scaleMode, or filteredObjects change
+  // Synchronize 3D Scene Objects & Stable Orbit Lines (runs ONLY when objects or scale mode change, NOT on every frame)
   useEffect(() => {
     if (renderEngine !== '3d' || !threeStateRef.current || !observatoryData?.objects) return;
     const { scene, objectsMap, orbitLinesGroup } = threeStateRef.current;
 
-    // Clear existing orbit lines
+    // Clear existing orbit lines cleanly
     while (orbitLinesGroup.children.length > 0) {
       const child = orbitLinesGroup.children[0];
       orbitLinesGroup.remove(child);
@@ -415,11 +616,10 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     // Determine coordinate scale factor based on scaleMode
     let auScale = 12; // 1 AU = 12 3D units in inner mode
     if (scaleMode === 'full') auScale = 3.5;
-    if (scaleMode === 'outer') auScale = 0.35;
-    if (scaleMode === 'exoplanet') auScale = 85;
-    if (scaleMode === 'sky') auScale = 1.0;
+    else if (scaleMode === 'outer') auScale = 0.35;
+    else if (scaleMode === 'exoplanet') auScale = 85;
+    else if (scaleMode === 'sky') auScale = 1.0;
 
-    // Create or update meshes for filtered objects
     const currentObjectIds = new Set(filteredObjects.map(o => o.id));
 
     // Remove obsolete objects
@@ -430,7 +630,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       }
     }
 
-    // Add or update active objects
+    // Add or reuse active object groups
     filteredObjects.forEach(obj => {
       let group = objectsMap.get(obj.id);
       if (!group) {
@@ -447,12 +647,33 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         else if (obj.category === 'deep-sky') meshRadius = 1.6;
         else if (obj.category === 'spherex-targets') meshRadius = 1.2;
 
-        const sphereGeo = new THREE.SphereGeometry(meshRadius, 24, 24);
+        const sphereGeo = new THREE.SphereGeometry(meshRadius, 32, 32);
         let mat: THREE.Material;
 
         if (obj.id === 'sun') {
           const sunTex = createSunTexture();
           mat = new THREE.MeshBasicMaterial({ map: sunTex });
+
+          // Solar coronal halos with additive blending
+          const coronaGeo = new THREE.SphereGeometry(3.6, 24, 24);
+          const coronaMat = new THREE.MeshBasicMaterial({
+            color: 0xFDE047,
+            transparent: true,
+            opacity: 0.32,
+            side: THREE.BackSide,
+            blending: THREE.AdditiveBlending
+          });
+          group.add(new THREE.Mesh(coronaGeo, coronaMat));
+
+          const outerCoronaGeo = new THREE.SphereGeometry(4.8, 24, 24);
+          const outerCoronaMat = new THREE.MeshBasicMaterial({
+            color: 0xF97316,
+            transparent: true,
+            opacity: 0.18,
+            side: THREE.BackSide,
+            blending: THREE.AdditiveBlending
+          });
+          group.add(new THREE.Mesh(outerCoronaGeo, outerCoronaMat));
         } else if (obj.motionType === 'observation-footprint') {
           mat = new THREE.MeshBasicMaterial({ color: obj.color, wireframe: true });
         } else if (obj.category === 'solar-system' && NASA_JPL_TEXTURE_MAPS[obj.id]) {
@@ -469,8 +690,8 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         } else {
           mat = new THREE.MeshStandardMaterial({
             color: new THREE.Color(obj.color || '#38BDF8'),
-            roughness: 0.6,
-            metalness: 0.2
+            roughness: 0.65,
+            metalness: 0.15
           });
         }
 
@@ -480,7 +701,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
         // Saturn's Ring System
         if (obj.id === 'saturn') {
-          const ringGeo = new THREE.RingGeometry(2.5, 4.2, 32);
+          const ringGeo = new THREE.RingGeometry(2.5, 4.2, 48);
           const ringMat = new THREE.MeshBasicMaterial({
             color: 0xE2C58A,
             side: THREE.DoubleSide,
@@ -496,24 +717,15 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         objectsMap.set(obj.id, group);
       }
 
-      // Position the object in 3D
+      // Initial Cartesian position
       if (obj.heliocentricAU) {
         group.position.set(
           obj.heliocentricAU.x * auScale,
           obj.heliocentricAU.z * auScale,
           obj.heliocentricAU.y * auScale
         );
-      } else if (obj.category === 'exoplanets' && obj.orbitalElements) {
-        // Exoplanetary local orbit around its parent star at origin (or offset)
-        const a = obj.orbitalElements.semiMajorAxisAU || 0.2;
-        // Illustrative Keplerian orbit at current time
-        const periodDays = obj.exoplanetParams?.orbitalPeriodDays || 30;
-        const phase = ((simulatedDate.getTime() / 86400000) % periodDays) / periodDays * Math.PI * 2;
-        const xExo = a * Math.cos(phase) * auScale;
-        const zExo = a * Math.sin(phase) * auScale;
-        group.position.set(xExo, 0, zExo);
       } else if (obj.category === 'deep-sky' || obj.category === 'spherex-targets') {
-        // Project onto outer celestial sphere using Right Ascension and Declination
+        // Project onto celestial sphere using Right Ascension and Declination
         const raParts = (obj.celestialCoords?.rightAscension || obj.rightAscension || '00h 00m 00s').match(/(\d+)h\s*(\d+)m\s*([\d.]+)s/);
         const decParts = (obj.celestialCoords?.declination || obj.declination || '+00° 00′ 00″').match(/([+-]?\d+)°\s*(\d+)′\s*([\d.]+)″/);
 
@@ -527,7 +739,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
           decDeg = sign * (Math.abs(parseFloat(decParts[1])) + parseFloat(decParts[2]) / 60 + parseFloat(decParts[3]) / 3600);
         }
 
-        const sphereDist = 120; // sphere radius
+        const sphereDist = 120;
         const raRad = (raHours * 15) * (Math.PI / 180);
         const decRad = decDeg * (Math.PI / 180);
 
@@ -538,7 +750,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         );
       }
 
-      // Draw Orbit Lines when valid orbital elements exist
+      // Draw Orbit Lines once when valid orbital elements exist (cached, zero garbage collection thrash)
       if (showOrbits && obj.orbitalElements && obj.orbitalElements.semiMajorAxisAU > 0) {
         const segments = 128;
         const linePoints: THREE.Vector3[] = [];
@@ -555,7 +767,6 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
           const xOrb = a * (Math.cos(theta) - e);
           const yOrb = b * Math.sin(theta);
 
-          // Rotate by argument of perihelion, inclination, and longitude of ascending node
           const cosW = Math.cos(periRad), sinW = Math.sin(periRad);
           const cosN = Math.cos(nodeRad), sinN = Math.sin(nodeRad);
           const cosI = Math.cos(incRad), sinI = Math.sin(incRad);
@@ -568,27 +779,45 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         }
 
         const orbitGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
+        const isSelected = obj.id === selectedObjectId;
         const lineMat = new THREE.LineBasicMaterial({
-          color: new THREE.Color(obj.color || '#38BDF8'),
+          color: new THREE.Color(isSelected ? '#38BDF8' : (obj.color || '#64748B')),
           transparent: true,
-          opacity: obj.id === selectedObjectId ? 0.9 : 0.28
+          opacity: isSelected ? 0.85 : 0.28
         });
         const orbitLine = new THREE.Line(orbitGeo, lineMat);
         orbitLinesGroup.add(orbitLine);
       }
     });
-  }, [renderEngine, observatoryData, filteredObjects, scaleMode, showOrbits, selectedObjectId, simulatedDate]);
+  }, [renderEngine, observatoryData, filteredObjects, scaleMode, showOrbits, selectedObjectId]);
 
-  // Focus Camera on Selected Object in 3D
+  // Focus Camera Smoothly on Selected Object
   const handleFocusSelected = () => {
     if (!threeStateRef.current || !selectedObject) return;
     const group = threeStateRef.current.objectsMap.get(selectedObject.id);
     if (!group) return;
 
-    const camera = threeStateRef.current.camera;
-    const targetPos = group.position.clone();
-    camera.position.set(targetPos.x + 12, targetPos.y + 8, targetPos.z + 18);
-    camera.lookAt(targetPos);
+    threeStateRef.current.focusedObjectId = selectedObject.id;
+    threeStateRef.current.lookAtTarget.copy(group.position);
+
+    // Frame object comfortably
+    let focusDist = 28;
+    if (selectedObject.id === 'sun') focusDist = 45;
+    else if (['jupiter', 'saturn'].includes(selectedObject.id)) focusDist = 20;
+    else if (scaleMode === 'outer') focusDist = 18;
+    else if (scaleMode === 'exoplanet') focusDist = 22;
+
+    threeStateRef.current.targetDistance = focusDist;
+  };
+
+  // Reset Camera View Smoothly to Default
+  const handleResetView = () => {
+    if (!threeStateRef.current) return;
+    threeStateRef.current.focusedObjectId = null;
+    threeStateRef.current.lookAtTarget.set(0, 0, 0);
+    threeStateRef.current.targetTheta = 0;
+    threeStateRef.current.targetPhi = 0.45;
+    threeStateRef.current.targetDistance = scaleMode === 'outer' ? 240 : scaleMode === 'full' ? 140 : 95;
   };
 
   // =========================================================================
@@ -613,7 +842,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     ctx.scale(dpr, dpr);
 
     // Deep cosmic background
-    ctx.fillStyle = '#030712';
+    ctx.fillStyle = '#02040A';
     ctx.fillRect(0, 0, width, height);
 
     const centerX = width / 2;
@@ -633,7 +862,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         ctx.stroke();
 
         ctx.fillStyle = '#64748B';
-        ctx.font = '10px JetBrains Mono, monospace';
+        ctx.font = '10px monospace';
         ctx.fillText(`${h}h`, x + 4, 16);
       }
 
@@ -645,11 +874,11 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         ctx.stroke();
 
         ctx.fillStyle = '#64748B';
-        ctx.font = '10px JetBrains Mono, monospace';
+        ctx.font = '10px monospace';
         ctx.fillText(`${deg > 0 ? '+' : ''}${deg}°`, 6, y - 4);
       }
 
-      // Plot Celestial Objects
+      // Plot Objects on Sky Grid
       filteredObjects.forEach(obj => {
         const raParts = (obj.celestialCoords?.rightAscension || obj.rightAscension || '00h 00m 00s').match(/(\d+)h\s*(\d+)m\s*([\d.]+)s/);
         const decParts = (obj.celestialCoords?.declination || obj.declination || '+00° 00′ 00″').match(/([+-]?\d+)°\s*(\d+)′\s*([\d.]+)″/);
@@ -668,68 +897,55 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         const y = ((90 - decDeg) / 180) * height;
         const isSelected = obj.id === selectedObjectId;
 
-        // Draw Marker
         ctx.fillStyle = obj.color || '#38BDF8';
-        if (obj.motionType === 'observation-footprint') {
-          // Footprint rectangle
-          ctx.strokeStyle = obj.color || '#38BDF8';
-          ctx.lineWidth = isSelected ? 2.5 : 1.5;
-          ctx.strokeRect(x - 8, y - 6, 16, 12);
-        } else {
+        ctx.beginPath();
+        ctx.arc(x, y, isSelected ? 5.5 : 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (isSelected) {
+          ctx.strokeStyle = '#F8FAFC';
+          ctx.lineWidth = 1.5;
           ctx.beginPath();
-          ctx.arc(x, y, isSelected ? 6 : 4, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.arc(x, y, 8, 0, Math.PI * 2);
+          ctx.stroke();
         }
 
         if (showLabels || isSelected) {
           ctx.fillStyle = isSelected ? '#F8FAFC' : '#94A3B8';
-          ctx.font = `${isSelected ? 'bold ' : ''}11px JetBrains Mono, monospace`;
-          ctx.fillText(obj.name.split(' ')[0], x + 9, y + 4);
+          ctx.font = `${isSelected ? 'bold ' : ''}10px monospace`;
+          ctx.fillText(obj.name.split(' ')[0], x + 6, y - 2);
         }
       });
     } else {
-      // 2D TOP-DOWN ORBITAL RADAR VIEW
-      let maxAU = 5.2; // inner mode
-      if (scaleMode === 'full') maxAU = 35;
-      if (scaleMode === 'outer') maxAU = 1100;
-      if (scaleMode === 'exoplanet') maxAU = 0.5;
+      // 2D RADAR HELIOCENTRIC PROJECTION
+      let pxPerAU = Math.min(width, height) / 12;
+      if (scaleMode === 'full') pxPerAU = Math.min(width, height) / 75;
+      else if (scaleMode === 'outer') pxPerAU = Math.min(width, height) / 1800;
+      else if (scaleMode === 'exoplanet') pxPerAU = Math.min(width, height) / 1.2;
 
-      const pxPerAU = (Math.min(width, height) * 0.44) / maxAU;
+      // Range Rings
+      const ringDistances = scaleMode === 'inner' ? [1, 2, 3, 5] : scaleMode === 'full' ? [5, 10, 20, 30] : [100, 300, 600, 1000];
+      ringDistances.forEach(rAU => {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, rAU * pxPerAU, 0, Math.PI * 2);
+        ctx.strokeStyle = '#1E293B';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
 
-      // Concentric Distance Guide Rings
-      const guideRings = scaleMode === 'inner' 
-        ? [0.387, 0.723, 1.0, 1.524, 5.2] 
-        : scaleMode === 'full' 
-        ? [1.0, 5.2, 9.5, 19.2, 30.0] 
-        : scaleMode === 'outer'
-        ? [30.0, 76.0, 240.0, 500.0, 1000.0]
-        : [0.05, 0.1, 0.2, 0.4];
-
-      ctx.strokeStyle = '#1E293B';
-      ctx.lineWidth = 1;
-      guideRings.forEach(rAU => {
-        const rPx = rAU * pxPerAU;
-        if (rPx < width / 2) {
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, rPx, 0, Math.PI * 2);
-          ctx.stroke();
-
-          ctx.fillStyle = '#64748B';
-          ctx.font = '9px JetBrains Mono, monospace';
-          ctx.fillText(`${rAU} AU`, centerX + rPx + 4, centerY + 3);
-        }
+        ctx.fillStyle = '#64748B';
+        ctx.font = '10px monospace';
+        ctx.fillText(`${rAU} AU`, centerX + rAU * pxPerAU + 4, centerY - 4);
       });
 
-      // Central Star
-      ctx.fillStyle = scaleMode === 'exoplanet' ? '#C084FC' : '#F5C451';
-      ctx.shadowColor = scaleMode === 'exoplanet' ? '#C084FC' : '#F5C451';
-      ctx.shadowBlur = 15;
+      // Sun at Center
       ctx.beginPath();
       ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#F5C451';
       ctx.fill();
-      ctx.shadowBlur = 0;
 
-      // Draw Orbit Tracks
+      // Draw Orbit Lines
       if (showOrbits) {
         filteredObjects.forEach(obj => {
           if (!obj.orbitalElements || obj.orbitalElements.semiMajorAxisAU <= 0) return;
@@ -740,17 +956,15 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
           ctx.save();
           ctx.translate(centerX, centerY);
-
-          // Rotate by node + perihelion
           const angle = ((obj.orbitalElements.longitudeOfAscendingNodeDeg || 0) + (obj.orbitalElements.argumentOfPerihelionDeg || 0)) * (Math.PI / 180);
           ctx.rotate(angle);
 
-          ctx.strokeStyle = obj.color || '#38BDF8';
-          ctx.globalAlpha = obj.id === selectedObjectId ? 0.9 : 0.25;
-          ctx.lineWidth = obj.id === selectedObjectId ? 2 : 1;
+          ctx.strokeStyle = obj.id === selectedObjectId ? '#38BDF8' : (obj.color || '#38BDF8');
+          ctx.globalAlpha = obj.id === selectedObjectId ? 0.85 : 0.25;
+          ctx.lineWidth = obj.id === selectedObjectId ? 1.5 : 1;
 
           if (obj.motionType === 'illustrative-exoplanet' || obj.isHypothetical) {
-            ctx.setLineDash([4, 4]); // dashed line for illustrative or hypothetical orbits
+            ctx.setLineDash([4, 4]);
           } else {
             ctx.setLineDash([]);
           }
@@ -767,36 +981,45 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         let x = centerX;
         let y = centerY;
 
-        if (obj.heliocentricAU) {
+        if (obj.orbitalElements && obj.orbitalElements.semiMajorAxisAU > 0) {
+          const kepler: KeplerianElements = {
+            a: obj.orbitalElements.semiMajorAxisAU,
+            e: obj.orbitalElements.eccentricity || 0,
+            i: obj.orbitalElements.inclinationDeg || 0,
+            node: obj.orbitalElements.longitudeOfAscendingNodeDeg || 0,
+            peri: obj.orbitalElements.argumentOfPerihelionDeg || 0,
+            M0: obj.orbitalElements.meanAnomalyDeg || 0,
+            epochJd: obj.orbitalElements.epochJd || 2451545.0,
+            periodYears: obj.orbitalElements.orbitalPeriodYears,
+            meanMotionDegDay: obj.orbitalElements.meanMotionDegDay
+          };
+          const state = propagateElementsClient(kepler, simulatedDate);
+          x = centerX + state.heliocentricAU.x * pxPerAU;
+          y = centerY - state.heliocentricAU.y * pxPerAU;
+        } else if (obj.heliocentricAU) {
           x = centerX + obj.heliocentricAU.x * pxPerAU;
-          y = centerY - obj.heliocentricAU.y * pxPerAU; // invert y for canvas
-        } else if (obj.category === 'exoplanets' && obj.orbitalElements) {
-          const a = obj.orbitalElements.semiMajorAxisAU || 0.1;
-          const periodDays = obj.exoplanetParams?.orbitalPeriodDays || 20;
-          const phase = ((simulatedDate.getTime() / 86400000) % periodDays) / periodDays * Math.PI * 2;
-          x = centerX + a * Math.cos(phase) * pxPerAU;
-          y = centerY - a * Math.sin(phase) * pxPerAU;
+          y = centerY - obj.heliocentricAU.y * pxPerAU;
         }
 
         const isSelected = obj.id === selectedObjectId;
 
         ctx.fillStyle = obj.color || '#38BDF8';
         ctx.beginPath();
-        ctx.arc(x, y, isSelected ? 6 : 4, 0, Math.PI * 2);
+        ctx.arc(x, y, isSelected ? 5.5 : 3.5, 0, Math.PI * 2);
         ctx.fill();
 
         if (isSelected) {
           ctx.strokeStyle = '#F8FAFC';
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 1.5;
           ctx.beginPath();
-          ctx.arc(x, y, 9, 0, Math.PI * 2);
+          ctx.arc(x, y, 8, 0, Math.PI * 2);
           ctx.stroke();
         }
 
         if (showLabels || isSelected) {
           ctx.fillStyle = isSelected ? '#F8FAFC' : '#94A3B8';
-          ctx.font = `${isSelected ? 'bold ' : ''}11px JetBrains Mono, monospace`;
-          ctx.fillText(obj.name.split(' ')[0], x + 8, y + 4);
+          ctx.font = `${isSelected ? 'bold ' : ''}10px monospace`;
+          ctx.fillText(obj.name.split(' ')[0], x + 6, y + 3);
         }
       });
     }
@@ -868,14 +1091,14 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               </div>
               {observatoryData && renderStatusBadge(observatoryData.statusLabel)}
               <span className="text-[11px] font-mono text-[#94A3B8] px-2.5 py-0.5 rounded-full bg-[#050B1A] border border-[#1E293B]">
-                {filteredObjects.length} Objects Loaded
+                {filteredObjects.length} Objects Active
               </span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#F8FAFC]">
               Live Cosmic Observatory
             </h1>
             <p className="text-xs sm:text-sm text-[#A7B4CC] max-w-3xl leading-relaxed">
-              Explore the Universe. Discover the Unknown. An interactive motion viewer for all supported astronomical objects across NASA, JPL, IPAC, and international catalogs.
+              Explore the Universe. Discover the Unknown. High-precision analytical orbital viewer for all supported astronomical objects across NASA, JPL, IPAC, and international ephemeris catalogues.
             </p>
           </div>
 
@@ -892,7 +1115,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                 {simulatedDate.toUTCString().slice(0, 25)}
               </div>
               <div className="text-[10px] font-mono text-[#64748B]">
-                Last Data Sync: {observatoryData?.retrievalTimestamp ? new Date(observatoryData.retrievalTimestamp).toLocaleTimeString() : 'Recent'}
+                Last Data Sync: {observatoryData?.retrievalTimestamp ? new Date(observatoryData.retrievalTimestamp).toLocaleTimeString() : 'Verified Baseline'}
               </div>
             </div>
 
@@ -964,49 +1187,29 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
               {/* Scale Mode Selector */}
               <div className="flex flex-wrap rounded-lg bg-[#050B1A] p-0.5 border border-[#1E293B] text-xs font-mono">
-                <button
-                  onClick={() => setScaleMode('inner')}
-                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                    scaleMode === 'inner' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
-                  }`}
-                >
-                  Inner (0-5 AU)
-                </button>
-                <button
-                  onClick={() => setScaleMode('full')}
-                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                    scaleMode === 'full' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
-                  }`}
-                >
-                  Full (0-35 AU)
-                </button>
-                <button
-                  onClick={() => setScaleMode('outer')}
-                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                    scaleMode === 'outer' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
-                  }`}
-                >
-                  Outer (1200 AU)
-                </button>
-                <button
-                  onClick={() => setScaleMode('exoplanet')}
-                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                    scaleMode === 'exoplanet' ? 'bg-[#0E1B38] text-[#C084FC] font-bold border border-[#8B5CF6]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
-                  }`}
-                >
-                  Exo Orbit
-                </button>
-                <button
-                  onClick={() => setScaleMode('sky')}
-                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                    scaleMode === 'sky' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
-                  }`}
-                >
-                  Sky View (RA/Dec)
-                </button>
+                {(['inner', 'full', 'outer', 'exoplanet', 'sky'] as ScaleMode[]).map(mode => (
+                  <button
+                    key={mode}
+                    onClick={() => {
+                      setScaleMode(mode);
+                      if (threeStateRef.current) {
+                        if (mode === 'outer') threeStateRef.current.targetDistance = 240;
+                        else if (mode === 'full') threeStateRef.current.targetDistance = 140;
+                        else if (mode === 'exoplanet') threeStateRef.current.targetDistance = 60;
+                        else if (mode === 'sky') threeStateRef.current.targetDistance = 160;
+                        else threeStateRef.current.targetDistance = 90;
+                      }
+                    }}
+                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer capitalize ${
+                      scaleMode === mode ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+                    }`}
+                  >
+                    {mode === 'inner' ? 'Inner (0-5 AU)' : mode === 'full' ? 'Full (0-35 AU)' : mode === 'outer' ? 'Outer (1200 AU)' : mode === 'exoplanet' ? 'Exo Orbit' : 'Sky View'}
+                  </button>
+                ))}
               </div>
 
-              {/* Orbits & Labels Toggles */}
+              {/* Display Layer & Camera Controls */}
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setShowOrbits(!showOrbits)}
@@ -1029,16 +1232,25 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                 <button
                   onClick={handleFocusSelected}
                   className="px-2.5 py-1 rounded-lg bg-[#050B1A] hover:bg-[#1E293B] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] flex items-center gap-1 transition-all cursor-pointer"
-                  title="Focus camera on selected object"
+                  title="Focus camera smoothly on selected object"
                 >
                   <Eye className="w-3.5 h-3.5 text-[#38BDF8]" />
                   <span>Focus</span>
+                </button>
+
+                <button
+                  onClick={handleResetView}
+                  className="px-2.5 py-1 rounded-lg bg-[#050B1A] hover:bg-[#1E293B] border border-[#1E293B] text-xs font-mono text-[#94A3B8] hover:text-[#F8FAFC] flex items-center gap-1 transition-all cursor-pointer"
+                  title="Reset camera vantage point to system center"
+                >
+                  <Compass className="w-3.5 h-3.5 text-[#38BDF8]" />
+                  <span>Reset</span>
                 </button>
               </div>
             </div>
 
             {/* Canvas Container */}
-            <div className="relative rounded-xl bg-[#030712] border border-[#1E293B] overflow-hidden shadow-inner h-130 lg:h-145 flex items-center justify-center">
+            <div className="relative rounded-xl bg-[#02040A] border border-[#1E293B] overflow-hidden shadow-inner h-130 lg:h-145 flex items-center justify-center">
               {renderEngine === '3d' ? (
                 <div ref={mount3DRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
               ) : (
@@ -1062,20 +1274,27 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                 </div>
               </div>
 
-              {/* Loading Indicator */}
+              {/* Non-Blocking Subtle Loading Pill (Does not obstruct scene or controls) */}
               {isLoading && (
-                <div className="absolute inset-0 bg-[#030712]/75 backdrop-blur-xs flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-3 font-mono text-xs text-[#38BDF8]">
-                    <div className="w-8 h-8 rounded-full border-2 border-[#38BDF8] border-t-transparent animate-spin" />
-                    <span>Propagating analytical ephemeris state vectors...</span>
-                  </div>
+                <div className="absolute top-3 right-3 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#050B1A]/85 backdrop-blur-md border border-[#1E293B] text-[11px] font-mono text-[#38BDF8] shadow-lg animate-pulse pointer-events-none">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#38BDF8]" />
+                  <span>Syncing ephemeris...</span>
                 </div>
               )}
 
-              {/* Error Notice */}
+              {/* Non-Intrusive Error Notice with Retry */}
               {dataError && (
-                <div className="absolute bottom-4 left-4 right-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
-                  {dataError}
+                <div className="absolute bottom-4 left-4 right-4 p-3 rounded-xl bg-[#050B1A]/90 backdrop-blur-md border border-amber-500/40 text-amber-300 text-xs font-mono flex items-center justify-between shadow-xl">
+                  <div className="flex items-center gap-2">
+                    <Info className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>{dataError}</span>
+                  </div>
+                  <button
+                    onClick={() => loadObservatoryData(simulatedDate)}
+                    className="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[11px] font-bold cursor-pointer transition-all"
+                  >
+                    Retry
+                  </button>
                 </div>
               )}
             </div>
@@ -1254,29 +1473,41 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                 />
               </div>
 
-              {/* Real-Time / Calculated Telemetry Grid */}
+              {/* Real-Time / Calculated Telemetry Grid (Continuously updated as time advances) */}
               <div className="grid grid-cols-2 gap-2 text-xs font-mono">
                 {selectedObject.distSunAU !== undefined && (
                   <div className="p-2.5 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                     <span className="text-[10px] text-[#64748B]">Dist. to Sun:</span>
-                    <div className="font-bold text-[#F8FAFC] mt-0.5 tabular-nums">{selectedObject.distSunAU} AU</div>
-                    <div className="text-[10px] text-[#94A3B8]">{selectedObject.distSunMillionKm}M km</div>
+                    <div className="font-bold text-[#F8FAFC] mt-0.5 tabular-nums">
+                      {realtimeSelectedState ? realtimeSelectedState.distSunAU.toFixed(3) : selectedObject.distSunAU} AU
+                    </div>
+                    <div className="text-[10px] text-[#94A3B8]">
+                      {realtimeSelectedState ? (realtimeSelectedState.distSunAU * 149.598).toFixed(1) : selectedObject.distSunMillionKm}M km
+                    </div>
                   </div>
                 )}
 
                 {selectedObject.distEarthAU !== undefined && (
                   <div className="p-2.5 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                     <span className="text-[10px] text-[#64748B]">Dist. to Earth:</span>
-                    <div className="font-bold text-[#38BDF8] mt-0.5 tabular-nums">{selectedObject.distEarthAU} AU</div>
-                    <div className="text-[10px] text-[#94A3B8]">{selectedObject.distEarthLunar} LD</div>
+                    <div className="font-bold text-[#38BDF8] mt-0.5 tabular-nums">
+                      {realtimeSelectedState ? realtimeSelectedState.distEarthAU.toFixed(3) : selectedObject.distEarthAU} AU
+                    </div>
+                    <div className="text-[10px] text-[#94A3B8]">
+                      {realtimeSelectedState ? realtimeSelectedState.distEarthLunar.toFixed(1) : selectedObject.distEarthLunar} LD
+                    </div>
                   </div>
                 )}
 
                 {selectedObject.orbitalSpeedKmS !== undefined && (
                   <div className="p-2.5 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                     <span className="text-[10px] text-[#64748B]">Orbital Speed:</span>
-                    <div className="font-bold text-[#F5C451] mt-0.5 tabular-nums">{selectedObject.orbitalSpeedKmS} km/s</div>
-                    <div className="text-[10px] text-[#94A3B8]">~{Math.round(selectedObject.orbitalSpeedKmS * 3600).toLocaleString()} km/h</div>
+                    <div className="font-bold text-[#F5C451] mt-0.5 tabular-nums">
+                      {realtimeSelectedState ? realtimeSelectedState.orbitalSpeedKmS : selectedObject.orbitalSpeedKmS} km/s
+                    </div>
+                    <div className="text-[10px] text-[#94A3B8]">
+                      ~{Math.round((realtimeSelectedState ? realtimeSelectedState.orbitalSpeedKmS : selectedObject.orbitalSpeedKmS) * 3600).toLocaleString()} km/h
+                    </div>
                   </div>
                 )}
 
@@ -1475,3 +1706,5 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     </div>
   );
 };
+
+export default LiveCosmicObservatory;
