@@ -6,7 +6,13 @@
  *   - /api/data/live-space/close-approaches: Verified near-Earth close approaches from NASA/JPL CNEOS CAD API
  */
 
-import type { LiveEphemerisResponse, LiveCloseApproachesResponse, AsteroidMotionResponse } from '../types';
+import type { 
+  LiveEphemerisResponse, 
+  LiveCloseApproachesResponse, 
+  AsteroidMotionResponse,
+  HorizonsVectorResponse,
+  HorizonsVectorQueryParams
+} from '../types';
 import { BACKEND_URL } from '../config/api';
 import { buildFallbackAsteroidMotionResponse } from '../data/verifiedAsteroidPresets';
 
@@ -123,6 +129,35 @@ export async function fetchLiveCloseApproaches(
 
   if (!res.ok) {
     throw new Error(`Failed to fetch close approaches: HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function fetchHorizonsVector(
+  params?: HorizonsVectorQueryParams,
+  signal?: AbortSignal
+): Promise<HorizonsVectorResponse> {
+  const isRefresh = !!params?.refresh;
+  const url = new URL('/api/data/horizons/vector', getApiOrigin());
+  if (params?.target) url.searchParams.set('target', params.target);
+  if (params?.date) url.searchParams.set('date', params.date);
+  if (isRefresh) {
+    url.searchParams.set('refresh', 'true');
+    url.searchParams.set('_t', Date.now().toString());
+  }
+
+  const res = await fetch(url.toString(), {
+    signal,
+    cache: isRefresh ? 'no-cache' : 'default',
+    headers: {
+      'Accept': 'application/json',
+      ...(isRefresh ? { 'Cache-Control': 'no-cache, no-store' } : {})
+    }
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch Horizons vector: HTTP ${res.status}`);
   }
 
   return res.json();

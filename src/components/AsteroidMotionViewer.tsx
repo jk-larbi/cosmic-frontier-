@@ -2239,6 +2239,30 @@ export const AsteroidMotionViewer: FC<AsteroidMotionViewerProps> = ({
                 </span>
               </div>
 
+              {/* Coordinate Frame & Origin */}
+              <div className="flex justify-between items-center py-1 border-b border-[#1E293B]/60">
+                <span className="text-[#64748B]">COORDINATE FRAME</span>
+                <span className="text-[#A7B4CC]">
+                  {motionData?.provenance?.coordinateFrame || 'ICRF / J2000 Ecliptic (Sun Center)'}
+                </span>
+              </div>
+
+              {/* Calculation Method */}
+              <div className="flex justify-between items-center py-1 border-b border-[#1E293B]/60">
+                <span className="text-[#64748B]">COMPUTATION METHOD</span>
+                <span className="text-[#A7B4CC]">
+                  {motionData?.provenance?.calculationMethod || 'Two-body Keplerian osculating propagation'}
+                </span>
+              </div>
+
+              {/* Measurement Uncertainties */}
+              <div className="flex justify-between items-center py-1 border-b border-[#1E293B]/60">
+                <span className="text-[#64748B]">MEASUREMENT UNCERTAINTY</span>
+                <span className="text-[#94A3B8] italic">
+                  Not available
+                </span>
+              </div>
+
               {/* Last Refresh Attempt */}
               <div className="flex justify-between items-center py-1 border-b border-[#1E293B]/60">
                 <span className="text-[#64748B]">LAST REFRESH ATTEMPT</span>

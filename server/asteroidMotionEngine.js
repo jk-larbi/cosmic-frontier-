@@ -504,7 +504,8 @@ async function getAsteroidOrbitData(rawDes, targetDate = new Date(), options = {
             epochJd,
             periodYears: perDays ? +(perDays / 365.25).toFixed(3) : (a ? +(Math.pow(a, 1.5)).toFixed(3) : 1.15),
             meanMotionDegDay: nDegDay,
-            educationalSummary: `A confirmed near-Earth asteroid cataloged by NASA JPL Solar System Dynamics under orbit ID ${json.orbit?.orbit_id || 'N/A'}.`
+            closeApproach: VERIFIED_NEO_PRESETS[des]?.closeApproach || null,
+            educationalSummary: VERIFIED_NEO_PRESETS[des]?.educationalSummary || `A confirmed near-Earth asteroid cataloged by NASA JPL Solar System Dynamics under orbit ID ${json.orbit?.orbit_id || 'N/A'}.`
           };
 
           dataSource = json.signature?.source || 'NASA/JPL Small-Body Database (SBDB) API';

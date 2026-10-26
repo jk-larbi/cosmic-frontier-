@@ -1302,6 +1302,352 @@ async function runTests() {
     assert(false, `Test 24: Live Data Provenance & Retrieval Status Suite failed: ${err.message}`);
   }
 
+  // =========================================================================
+  // TEST 25: SCIENTIFIC DATA ACCURACY & EPHEMERIS INTEGRATION SUITE
+  // =========================================================================
+  try {
+    const AU_KM = 149597870.7;
+    const LD_KM = 384400.0;
+    const viewerTs = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidMotionViewer.tsx'), 'utf8');
+    const serviceTs = fs.readFileSync(path.resolve(__dirname, '../src/services/liveSpaceService.ts'), 'utf8');
+
+    // 25.1: Horizons Vector API returns HTTP 200 and standard coordinate frame
+    const resHorizons = await fetch(`${BASE_URL}/api/data/horizons/vector?target=399`);
+    assert(resHorizons.status === 200, 'Test 25.1: /api/data/horizons/vector returns HTTP 200');
+    const horizonsJson = await resHorizons.json();
+    assert(
+      horizonsJson.target === '399' &&
+      horizonsJson.coordinateFrame === 'ICRF / J2000 Heliocentric Ecliptic' &&
+      horizonsJson.origin && horizonsJson.origin.includes('Sun'),
+      'Test 25.2: Horizons endpoint formats ICRF/J2000 Heliocentric Ecliptic coordinates with Sun center'
+    );
+
+    // 25.3: Astronomical constant unit conversions
+    assert(
+      horizonsJson.positionKm && horizonsJson.positionAU,
+      'Test 25.3: Horizons state vector provides position in both km and AU'
+    );
+    const calculatedAU = Math.hypot(horizonsJson.positionKm.x, horizonsJson.positionKm.y, horizonsJson.positionKm.z) / AU_KM;
+    assert(
+      Math.abs(calculatedAU - horizonsJson.rangeAU) < 0.0001,
+      'Test 25.4: 1 AU is rigorously defined as 149,597,870.7 km within numerical precision'
+    );
+
+    // 25.5: Velocity vector speed consistency
+    if (horizonsJson.velocityKmS) {
+      const calcSpeed = Math.hypot(horizonsJson.velocityKmS.vx, horizonsJson.velocityKmS.vy, horizonsJson.velocityKmS.vz);
+      assert(
+        Math.abs(calcSpeed - horizonsJson.speedKmS) < 0.05,
+        'Test 25.5: Velocity vector magnitude matches reported orbital speed'
+      );
+    }
+
+    // 25.6: Authoritative Horizons Deterministic Benchmarks file exists and validates
+    const benchmarkPath = path.resolve(__dirname, '../data/horizons-benchmarks.json');
+    assert(fs.existsSync(benchmarkPath), 'Test 25.6: data/horizons-benchmarks.json fixture file exists');
+    const benchmarks = JSON.parse(fs.readFileSync(benchmarkPath, 'utf8'));
+    assert(
+      benchmarks.benchmarks &&
+      benchmarks.benchmarks.earth_j2000 &&
+      benchmarks.benchmarks.mars_j2000 &&
+      benchmarks.benchmarks.bennu_20261025 &&
+      benchmarks.benchmarks.apophis_20290413,
+      'Test 25.7: Benchmark fixtures contain verified NASA/JPL state vectors for Earth, Mars, Bennu, and Apophis'
+    );
+
+    // 25.8: Earth J2000 epoch verification
+    const earthJ2000 = benchmarks.benchmarks.earth_j2000;
+    assert(
+      earthJ2000.epochJd === 2451545.0,
+      'Test 25.8: J2000.0 epoch rigorously corresponds to Julian Date 2451545.0'
+    );
+    assert(
+      earthJ2000.rangeAU >= 0.980 && earthJ2000.rangeAU <= 0.986 &&
+      earthJ2000.speedKmS >= 29.5 && earthJ2000.speedKmS <= 30.5,
+      'Test 25.9: Earth at J2000 is 0.9833 AU from Sun traveling at ~30.3 km/s'
+    );
+
+    // 25.10: Mars J2000 epoch verification
+    const marsJ2000 = benchmarks.benchmarks.mars_j2000;
+    assert(
+      marsJ2000.rangeAU >= 1.38 && marsJ2000.rangeAU <= 1.40 &&
+      marsJ2000.speedKmS >= 25.5 && marsJ2000.speedKmS <= 27.0,
+      'Test 25.10: Mars at J2000 is 1.391 AU from Sun traveling at ~26.3 km/s'
+    );
+
+    // 25.11: Standish analytical ephemeris agreement with Horizons benchmark (Earth at J2000)
+    const ephemJ2000Res = await fetch(`${BASE_URL}/api/data/live-space/ephemeris?date=2000-01-01T12:00:00Z&target=earth`);
+    const ephemJ2000 = await ephemJ2000Res.json();
+    const earthEphem = ephemJ2000.objects?.find(o => o.id === 'earth');
+    assert(
+      earthEphem && Math.abs(earthEphem.distSunAU - earthJ2000.rangeAU) < 0.005,
+      'Test 25.11: Analytical Keplerian Earth distance matches Horizons benchmark within 0.005 AU (< 0.5% tolerance)'
+    );
+
+    // 25.12: Standish analytical ephemeris agreement with Horizons benchmark (Mars at J2000)
+    const ephemMarsRes = await fetch(`${BASE_URL}/api/data/live-space/ephemeris?date=2000-01-01T12:00:00Z&target=mars`);
+    const ephemMars = await ephemMarsRes.json();
+    const marsEphem = ephemMars.objects?.find(o => o.id === 'mars');
+    assert(
+      marsEphem && Math.abs(marsEphem.distSunAU - marsJ2000.rangeAU) < 0.015,
+      'Test 25.12: Analytical Keplerian Mars distance matches Horizons benchmark within 0.015 AU (< 1.0% tolerance)'
+    );
+
+    // 25.13: Asteroid Bennu (101955) Keplerian orbital physical bounds
+    const resBennu = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=101955`);
+    const bennuData = await resBennu.json();
+    const bennuA = bennuData.asteroid.orbitalElements.semiMajorAxisAU;
+    const bennuE = bennuData.asteroid.orbitalElements.eccentricity;
+    const bennuPerihelion = bennuA * (1 - bennuE);
+    const bennuAphelion = bennuA * (1 + bennuE);
+    assert(
+      bennuData.stateVector.distSunAU >= (bennuPerihelion - 0.02) &&
+      bennuData.stateVector.distSunAU <= (bennuAphelion + 0.02),
+      'Test 25.13: Asteroid Bennu propagated position is strictly bounded by orbital perihelion (~0.897 AU) and aphelion (~1.356 AU)'
+    );
+
+    // 25.14: Apophis 2029 encounter accuracy & transparent hazard disclosure
+    const resApophis = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=99942`);
+    const apophisData = await resApophis.json();
+    assert(
+      apophisData.asteroid.closeApproach &&
+      Math.abs(apophisData.asteroid.closeApproach.nominalDistanceKm - 31600) < 2000 &&
+      apophisData.asteroid.closeApproach.sentryImpactProbability.includes('0.00%'),
+      'Test 25.14: Apophis 2029 close approach verifies safe miss distance (~31,600 km / 0.082 LD) with 0.00% impact risk'
+    );
+
+    // 25.15: Missing uncertainty fields represented transparently as unavailable
+    assert(
+      viewerTs.includes('MEASUREMENT UNCERTAINTY') &&
+      viewerTs.includes('Not available'),
+      'Test 25.15: UI displays "Not available" when upstream measurement uncertainties are omitted'
+    );
+
+    // 25.16: Observatory Snapshot honest classification (no fake live claim)
+    const snapshotTs = fs.readFileSync(path.resolve(__dirname, '../src/data/observatorySnapshot.ts'), 'utf8');
+    assert(
+      !snapshotTs.includes('"statusLabel": "LIVE DATA"') &&
+      snapshotTs.includes('"statusLabel": "ARCHIVED BASELINE'),
+      'Test 25.16: Observatory startup snapshot identifies as ARCHIVED BASELINE rather than claiming live data'
+    );
+
+    // 25.17: client liveSpaceService exports fetchHorizonsVector
+    assert(
+      serviceTs.includes('export async function fetchHorizonsVector'),
+      'Test 25.17: liveSpaceService.ts exports authoritative fetchHorizonsVector client function'
+    );
+
+    // 25.18: LiveCosmicObservatory scientific modeling & provenance notice panel
+    const observatoryTs = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveCosmicObservatory.tsx'), 'utf8');
+    assert(
+      observatoryTs.includes('Scientific Modeling & Provenance') &&
+      observatoryTs.includes('Coordinate Frame:') &&
+      observatoryTs.includes('Computation Method:'),
+      'Test 25.18: LiveCosmicObservatory implements transparent Scientific Modeling & Provenance drawer'
+    );
+  } catch (err) {
+    assert(false, `Test 25: Scientific Data Accuracy & Ephemeris Integration Suite failed: ${err.message}`);
+  }
+
+  // =========================================================================
+  // TEST 26: COMBINED DEEP-SPACE RADAR & PLANET X INVESTIGATION SUITE
+  // =========================================================================
+  try {
+    const radarTs = fs.readFileSync(path.resolve(__dirname, '../src/components/CosmicRadarHUD.tsx'), 'utf8');
+    const appTs = fs.readFileSync(path.resolve(__dirname, '../src/App.tsx'), 'utf8');
+
+    // 26.1: deriveOrbitalParametersFromQ Keplerian conversion
+    const { 
+      deriveOrbitalParametersFromQ, 
+      deriveOrbitalParametersFromA, 
+      validateHypothesisParams, 
+      PLANET_NINE_PRESETS,
+      generateSecularTestParticles,
+      calculateClusteringMetric,
+      stepSecularSimulation 
+    } = await import('../src/utils/planetXPhysics.ts');
+
+    const p9Derived = deriveOrbitalParametersFromQ(247, 0.35, { massEarth: 6.2 });
+    assert(
+      Math.abs(p9Derived.semiMajorAxisAU - 380) < 0.1 &&
+      Math.abs(p9Derived.aphelionAU - 513) < 0.1 &&
+      p9Derived.orbitalPeriodYears > 7300 && p9Derived.orbitalPeriodYears < 7500,
+      "Test 26.1: deriveOrbitalParametersFromQ converts q and e to a, Q, and P accurately via Kepler's third law"
+    );
+
+    // 26.2: deriveOrbitalParametersFromA reproduces Sedna
+    const sednaDerived = deriveOrbitalParametersFromA(506.8, 0.849, { massEarth: 0.00017 });
+    assert(
+      Math.abs(sednaDerived.perihelionAU - 76.5) < 0.2 &&
+      Math.abs(sednaDerived.aphelionAU - 937.1) < 0.2 &&
+      sednaDerived.orbitalPeriodYears > 11300 && sednaDerived.orbitalPeriodYears < 11500,
+      'Test 26.2: deriveOrbitalParametersFromA derives perihelion, aphelion, and period reproducing Sedna and Planet Nine'
+    );
+
+    // 26.3: Hypothesis parameter boundary validation
+    const validCheck = validateHypothesisParams({ massEarth: 6.2, perihelionAU: 250, eccentricity: 0.35 });
+    const invalidCheck = validateHypothesisParams({ massEarth: 100, perihelionAU: -5, eccentricity: 1.5 });
+    assert(
+      validCheck.valid === true && validCheck.errors.length === 0 &&
+      invalidCheck.valid === false && invalidCheck.errors.length >= 2,
+      'Test 26.3: validateHypothesisParams checks boundaries and rejects non-physical inputs'
+    );
+
+    // 26.4: Literature reference presets
+    assert(
+      PLANET_NINE_PRESETS.batyginBrown2021 &&
+      PLANET_NINE_PRESETS.batyginBrown2016 &&
+      PLANET_NINE_PRESETS.trujilloSheppard2014 &&
+      PLANET_NINE_PRESETS.batyginBrown2021.doi.includes('10.3847') &&
+      PLANET_NINE_PRESETS.batyginBrown2021.isHypothetical === true,
+      'Test 26.4: PLANET_NINE_PRESETS incorporates Batygin & Brown (2016, 2021) and Trujillo & Sheppard (2014) with DOI citations'
+    );
+
+    // 26.5: Radar coordinate projection engine
+    const { 
+      projectHeliocentricToRadar, 
+      RADAR_RANGE_PRESETS, 
+      computeSweepPhosphorIntensity 
+    } = await import('../src/utils/deepSpaceRadar.ts');
+
+    const projCenter = projectHeliocentricToRadar(0, 0, 1000, 300, 300, 280);
+    const proj100 = projectHeliocentricToRadar(100, 0, 1000, 300, 300, 280);
+    const projOutOfRange = projectHeliocentricToRadar(1500, 0, 1000, 300, 300, 280);
+
+    assert(
+      projCenter.xPx === 300 && projCenter.yPx === 300 && projCenter.inRange === true &&
+      proj100.xPx === 328 && proj100.yPx === 300 && proj100.azimuthDeg === 0 && proj100.inRange === true &&
+      projOutOfRange.inRange === false && projOutOfRange.rangeFraction === 1.5,
+      'Test 26.5: projectHeliocentricToRadar accurately maps 3D ICRF/J2000 positions to 2D polar radar screen coordinates'
+    );
+
+    // 26.6: Radar Range Presets (5 AU, 35 AU, 150 AU, 1,000 AU)
+    assert(
+      RADAR_RANGE_PRESETS.inner.maxRangeAU === 5.0 &&
+      RADAR_RANGE_PRESETS.outer.maxRangeAU === 35.0 &&
+      RADAR_RANGE_PRESETS.tno.maxRangeAU === 150.0 &&
+      RADAR_RANGE_PRESETS['deep-space'].maxRangeAU === 1000.0 &&
+      RADAR_RANGE_PRESETS.outer.ringLabels[30.0].includes('Neptune'),
+      'Test 26.6: RADAR_RANGE_PRESETS configures 5 AU, 35 AU, 150 AU, and 1,000 AU with authentic astronomical boundary rings'
+    );
+
+    // 26.7: Phosphor sweep intensity calculation
+    const pingDirect = computeSweepPhosphorIntensity(90, 90, 60);
+    const pingTrailing = computeSweepPhosphorIntensity(110, 90, 60);
+    const pingOpposite = computeSweepPhosphorIntensity(270, 90, 60);
+
+    assert(
+      Math.abs(pingDirect - 1.0) < 0.01 &&
+      pingTrailing > 0.2 && pingTrailing < 0.8 &&
+      pingOpposite === 0.0,
+      'Test 26.7: computeSweepPhosphorIntensity models smooth phosphor fade without abrupt cutoffs'
+    );
+
+    // 26.8: Secular perturbation simulation utilities
+    const particles = generateSecularTestParticles();
+    const statsInit = calculateClusteringMetric(particles);
+    assert(
+      particles.length === 20 &&
+      statsInit.meanResultantLength > 0.80 &&
+      statsInit.circularStdDeg < 45.0,
+      'Test 26.8: Secular perturbation model computes orbital precession rates and circular clustering statistics'
+    );
+
+    // 26.9: Secular simulation stepping (with vs without P9)
+    const initState = {
+      timeMyr: 0,
+      particles,
+      planetNine: p9Derived,
+      withPlanetNine: true,
+      clusteringMetric: statsInit.meanResultantLength,
+      dispersionStdDeg: statsInit.circularStdDeg
+    };
+    const steppedWithP9 = stepSecularSimulation(initState, 2.0, p9Derived, true);
+    let dispersedState = initState;
+    for (let i = 0; i < 20; i++) {
+      dispersedState = stepSecularSimulation(dispersedState, 10.0, p9Derived, false);
+    }
+
+    assert(
+      steppedWithP9.timeMyr === 2.0 &&
+      steppedWithP9.clusteringMetric > 0.80 &&
+      dispersedState.timeMyr === 200.0 &&
+      dispersedState.clusteringMetric < steppedWithP9.clusteringMetric,
+      'Test 26.9: Secular simulation exhibits libration under Planet Nine and differential dispersion when perturber is removed'
+    );
+
+    // 26.10: CosmicRadarHUD UI controls & sweep state
+    assert(
+      radarTs.includes('isSweepRunning') &&
+      radarTs.includes('sweepSpeedMultiplier') &&
+      radarTs.includes('handleResetView'),
+      'Test 26.10: CosmicRadarHUD.tsx renders interactive sweep controls with play, pause, speed multipliers, and reset'
+    );
+
+    // 26.11: Category filtering
+    assert(
+      radarTs.includes("toggleCategory('planets')") &&
+      radarTs.includes("toggleCategory('asteroids')") &&
+      radarTs.includes("toggleCategory('distant-tnos')") &&
+      radarTs.includes("toggleCategory('hypothetical-p9')"),
+      'Test 26.11: CosmicRadarHUD.tsx provides category filtering for Planets, Asteroids, eTNOs, and Planet Nine'
+    );
+
+    // 26.12: Strict hypothetical labeling of Planet Nine
+    assert(
+      radarTs.includes('Hypothetical Planet Nine') &&
+      radarTs.includes('Planet X (Mathematical Prediction)') &&
+      radarTs.includes('HYPOTHETICAL TARGET') &&
+      radarTs.includes('simulated position. Not an observed astronomical detection'),
+      'Test 26.12: CosmicRadarHUD.tsx strictly labels Planet Nine as hypothetical without claiming observed visual detection'
+    );
+
+    // 26.13: Target Telemetry Inspector
+    assert(
+      radarTs.includes('selectedTarget.distSunAU') &&
+      radarTs.includes('selectedTarget.distEarthAU') &&
+      radarTs.includes('selectedTarget.orbitalSpeedKmS') &&
+      radarTs.includes('selectedTarget.dataSource'),
+      'Test 26.13: CosmicRadarHUD.tsx displays target telemetry inspector with heliocentric coordinates, speed, and provenance'
+    );
+
+    // 26.14: Cross-navigation to Observatory, Planet X Lab, and Asteroid Watch
+    assert(
+      radarTs.includes("onNavigate('observatory')") &&
+      radarTs.includes("onNavigate('planet-x')") &&
+      radarTs.includes("onNavigate('asteroid-watch')"),
+      'Test 26.14: CosmicRadarHUD.tsx provides cross-navigation links to Live Cosmic Observatory, Planet X Lab, and Asteroid Watch'
+    );
+
+    // 26.15: Dedicated Planet X Lab mode with real-time sliders
+    assert(
+      radarTs.includes("radarMode === 'planet-x-lab'") &&
+      radarTs.includes("handleApplyP9Preset('batyginBrown2021')") &&
+      radarTs.includes("handleUpdateP9Param('massEarth'") &&
+      radarTs.includes("handleUpdateP9Param('perihelionAU'") &&
+      radarTs.includes("handleUpdateP9Param('eccentricity'"),
+      'Test 26.15: CosmicRadarHUD.tsx features dedicated Planet X Lab mode with real-time hypothesis parameter sliders'
+    );
+
+    // 26.16: App.tsx deep linking and hash navigation
+    assert(
+      appTs.includes("clean === 'radar' || clean === 'deep-space-radar'") &&
+      appTs.includes("candidate === 'radar' || candidate === 'deep-space-radar'") &&
+      appTs.includes("document.getElementById('deep-space-radar')"),
+      'Test 26.16: App.tsx routes #radar and #deep-space-radar directly to the deep-space radar instrument'
+    );
+
+    // 26.17: Transparent disclaimer of tracking visualization
+    assert(
+      radarTs.includes('Astronomical Tracking Notice:') &&
+      radarTs.includes('Not an active radio radar receiver') &&
+      radarTs.includes('ICRF/J2000'),
+      'Test 26.17: CosmicRadarHUD explicitly disclaims active radar reception and documents tracking visualization methodology'
+    );
+  } catch (err) {
+    assert(false, `Test 26: Combined Deep-Space Radar & Planet X Suite failed: ${err.message}`);
+  }
+
   console.log('\n====================================================');
   console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('====================================================');

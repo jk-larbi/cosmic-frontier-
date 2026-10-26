@@ -21,6 +21,16 @@ import {
   type KeplerianElements
 } from '../utils/orbitalMotion';
 import {
+  createAsteroidGeometry,
+  createAsteroidMaterial,
+  updateAsteroidTumble,
+  getAsteroidPhysicalInfo
+} from '../utils/asteroidMeshGenerator';
+import {
+  VERIFIED_NEO_PRESETS,
+  VERIFIED_FALLBACK_APPROACHES
+} from '../data/verifiedAsteroidPresets';
+import {
   Play,
   Pause,
   RotateCcw,
@@ -38,7 +48,12 @@ import {
   Clock,
   Disc,
   RefreshCw,
-  Compass
+  Compass,
+  Crosshair,
+  Layers,
+  ShieldAlert,
+  Orbit,
+  ArrowRight
 } from 'lucide-react';
 
 interface LiveCosmicObservatoryProps {
@@ -47,6 +62,7 @@ interface LiveCosmicObservatoryProps {
 
 type ScaleMode = 'inner' | 'full' | 'outer' | 'exoplanet' | 'sky';
 type RenderEngine = '3d' | '2d';
+type CameraViewPreset = 'perspective' | 'top-down' | 'edge-on';
 
 // Historical & Future Astronomical Milestone Presets
 const PRESET_EPOCHS = [
@@ -83,6 +99,22 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1); // 1 = 1 day/s, 7 = 7 days/s, etc.
   const [simulatedDate, setSimulatedDate] = useState<Date>(new Date());
   const [dateInputVal, setDateInputVal] = useState<string>(new Date().toISOString().slice(0, 16));
+
+  // Collapsible inspector panel & UI interaction state
+  const [isInfoPanelOpen, setIsInfoPanelOpen] = useState(true);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [cameraPreset, setCameraPreset] = useState<CameraViewPreset>('perspective');
+  const [sceneReadyEpoch, setSceneReadyEpoch] = useState<number>(0);
+
+  // Fast refs for 60fps Three.js interaction loop
+  const selectedObjectIdRef = useRef<string>(selectedObjectId);
+  selectedObjectIdRef.current = selectedObjectId;
+
+  const isInfoPanelOpenRef = useRef<boolean>(isInfoPanelOpen);
+  isInfoPanelOpenRef.current = isInfoPanelOpen;
+
+  const showLabelsRef = useRef<boolean>(showLabels);
+  showLabelsRef.current = showLabels;
 
   // Refs for 3D and 2D viewports
   const mount3DRef = useRef<HTMLDivElement | null>(null);
@@ -162,13 +194,15 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
   // Filtered objects based on category and search
   const filteredObjects = useMemo(() => {
     if (!observatoryData?.objects) return [];
+    const searchClean = searchQuery.trim().toLowerCase();
     return observatoryData.objects.filter(obj => {
       const matchesCategory = selectedCategory === 'all' || obj.category === selectedCategory;
-      const matchesSearch = !searchQuery.trim() || 
-        obj.name.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-        obj.designation.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-        obj.classification.toLowerCase().includes(searchQuery.toLowerCase().trim());
-      return matchesCategory && matchesSearch;
+      if (!matchesCategory) return false;
+      if (!searchClean) return true;
+      const nameMatch = typeof obj.name === 'string' && obj.name.toLowerCase().includes(searchClean);
+      const desMatch = typeof obj.designation === 'string' && obj.designation.toLowerCase().includes(searchClean);
+      const classMatch = typeof obj.classification === 'string' && obj.classification.toLowerCase().includes(searchClean);
+      return nameMatch || desMatch || classMatch;
     });
   }, [observatoryData, selectedCategory, searchQuery]);
 
@@ -203,6 +237,79 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     };
     return propagateElementsClient(kepler, simulatedDate);
   }, [selectedObject, simulatedDate]);
+
+  // Sourced close-approach encounter records for asteroids & small bodies
+  const selectedCloseApproach = useMemo(() => {
+    if (!selectedObject) return null;
+    const targetDes = (selectedObject.designation || selectedObject.id || '').trim().toLowerCase();
+    if (!targetDes) return null;
+    
+    // Check verified presets
+    for (const [key, preset] of Object.entries(VERIFIED_NEO_PRESETS)) {
+      const pKey = key.toLowerCase();
+      const pName = ((preset.fullName || preset.name || preset.shortName || '') as string).toLowerCase();
+      if (pKey === targetDes || (pName && pName.includes(targetDes)) || (targetDes && targetDes.includes(pKey))) {
+        if (preset.closeApproach) return preset.closeApproach;
+      }
+    }
+    // Check fallback approaches
+    for (const app of VERIFIED_FALLBACK_APPROACHES) {
+      const aDes = ((app.designation || '') as string).toLowerCase();
+      const aName = ((app.fullName || app.designation || '') as string).toLowerCase();
+      if (aDes === targetDes || (aName && aName.includes(targetDes)) || (targetDes && aDes && targetDes.includes(aDes))) {
+        return app;
+      }
+    }
+    return null;
+  }, [selectedObject]);
+
+  // Procedural & physical profile for small bodies
+  const selectedPhysicalInfo = useMemo(() => {
+    if (!selectedObject) return null;
+    return getAsteroidPhysicalInfo(selectedObject.designation || selectedObject.id);
+  }, [selectedObject]);
+
+  // Autocomplete suggestions for quick search
+  const searchSuggestions = useMemo(() => {
+    if (!searchQuery.trim() || !observatoryData?.objects) return [];
+    const q = searchQuery.toLowerCase().trim();
+    return observatoryData.objects.filter(o => {
+      const nameMatch = typeof o.name === 'string' && o.name.toLowerCase().includes(q);
+      const desMatch = typeof o.designation === 'string' && o.designation.toLowerCase().includes(q);
+      const classMatch = typeof o.classification === 'string' && o.classification.toLowerCase().includes(q);
+      return nameMatch || desMatch || classMatch;
+    }).slice(0, 8);
+  }, [searchQuery, observatoryData]);
+
+  // Handle selecting an autocomplete suggestion
+  const handleSelectSuggestion = (objId: string) => {
+    setSelectedObjectId(objId);
+    setIsSearchFocused(false);
+    setSearchQuery('');
+    if (threeStateRef.current) {
+      threeStateRef.current.focusedObjectId = objId;
+      const grp = threeStateRef.current.objectsMap.get(objId);
+      if (grp) {
+        threeStateRef.current.lookAtTarget.copy(grp.position);
+      }
+    }
+  };
+
+  // Camera view angle presets
+  const handleSetCameraAngle = (angle: CameraViewPreset) => {
+    setCameraPreset(angle);
+    if (!threeStateRef.current) return;
+    if (angle === 'top-down') {
+      threeStateRef.current.targetPhi = 0.04;
+      threeStateRef.current.targetTheta = 0;
+    } else if (angle === 'edge-on') {
+      threeStateRef.current.targetPhi = Math.PI / 2;
+      threeStateRef.current.targetTheta = 0;
+    } else {
+      threeStateRef.current.targetPhi = 0.45;
+      threeStateRef.current.targetTheta = 0;
+    }
+  };
 
   // Preset Epoch Handler (smooth jump without scene reconstruction)
   const handleSelectPreset = (iso: string) => {
@@ -393,15 +500,66 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     const orbitLinesGroup = new THREE.Group();
     scene.add(orbitLinesGroup);
 
-    // 6. Camera Orbit Interaction Setup with smooth inertial easing
+    // Dynamic 3D Targeting Reticle for Selected Object
+    const reticleGroup = new THREE.Group();
+    reticleGroup.name = 'selection-reticle';
+    reticleGroup.visible = false;
+
+    // Reticle inner primary ring
+    const reticleRingGeo = new THREE.RingGeometry(1.3, 1.45, 48);
+    const reticleRingMat = new THREE.MeshBasicMaterial({
+      color: 0x38BDF8,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending
+    });
+    reticleGroup.add(new THREE.Mesh(reticleRingGeo, reticleRingMat));
+
+    // Reticle outer dashed/bracket ring
+    const reticleOuterGeo = new THREE.RingGeometry(2.0, 2.12, 48, 1, 0, Math.PI * 1.85);
+    const reticleOuterMat = new THREE.MeshBasicMaterial({
+      color: 0x0284C7,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.55,
+      blending: THREE.AdditiveBlending
+    });
+    const reticleOuterMesh = new THREE.Mesh(reticleOuterGeo, reticleOuterMat);
+    reticleGroup.add(reticleOuterMesh);
+
+    // Precision 4-axis crosshair ticks
+    const tickMat = new THREE.LineBasicMaterial({
+      color: 0x38BDF8,
+      transparent: true,
+      opacity: 0.95
+    });
+    const tickPoints = [
+      new THREE.Vector3(0, 1.5, 0), new THREE.Vector3(0, 2.3, 0),
+      new THREE.Vector3(0, -1.5, 0), new THREE.Vector3(0, -2.3, 0),
+      new THREE.Vector3(1.5, 0, 0), new THREE.Vector3(2.3, 0, 0),
+      new THREE.Vector3(-1.5, 0, 0), new THREE.Vector3(-2.3, 0, 0)
+    ];
+    const tickGeo = new THREE.BufferGeometry().setFromPoints(tickPoints);
+    reticleGroup.add(new THREE.LineSegments(tickGeo, tickMat));
+
+    scene.add(reticleGroup);
+
+    // 6. Camera Orbit Interaction Setup with smooth inertial easing & Raycaster selection
     let isDragging = false;
     let prevMouseX = 0;
     let prevMouseY = 0;
+    let clickStartX = 0;
+    let clickStartY = 0;
+    let clickStartTime = 0;
 
     const onMouseDown = (e: MouseEvent) => {
       isDragging = true;
       prevMouseX = e.clientX;
       prevMouseY = e.clientY;
+      clickStartX = e.clientX;
+      clickStartY = e.clientY;
+      clickStartTime = performance.now();
     };
 
     const onMouseMove = (e: MouseEvent) => {
@@ -415,8 +573,45 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       threeStateRef.current.targetPhi = Math.max(0.05, Math.min(Math.PI - 0.05, threeStateRef.current.targetPhi - deltaY * 0.007));
     };
 
-    const onMouseUp = () => {
+    const onMouseUp = (e: MouseEvent) => {
       isDragging = false;
+      const moveDist = Math.hypot(e.clientX - clickStartX, e.clientY - clickStartY);
+      const pressDuration = performance.now() - clickStartTime;
+
+      // Click detected (not a pan or rotate drag)
+      if (moveDist < 7 && pressDuration < 380 && threeStateRef.current) {
+        const rect = domElement.getBoundingClientRect();
+        const mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        threeStateRef.current.raycaster.setFromCamera(
+          new THREE.Vector2(mouseX, mouseY),
+          threeStateRef.current.camera
+        );
+        const candidateMeshes: { mesh: THREE.Object3D; id: string }[] = [];
+        threeStateRef.current.objectsMap.forEach((grp, id) => {
+          grp.traverse(child => {
+            if (child instanceof THREE.Mesh && !child.name.includes('corona') && !child.name.includes('ring')) {
+              candidateMeshes.push({ mesh: child, id });
+            }
+          });
+        });
+        const intersects = threeStateRef.current.raycaster.intersectObjects(
+          candidateMeshes.map(c => c.mesh),
+          false
+        );
+        if (intersects.length > 0) {
+          const hitMesh = intersects[0].object;
+          const match = candidateMeshes.find(c => c.mesh === hitMesh);
+          if (match) {
+            setSelectedObjectId(match.id);
+            threeStateRef.current.focusedObjectId = match.id;
+            const targetGrp = threeStateRef.current.objectsMap.get(match.id);
+            if (targetGrp) {
+              threeStateRef.current.lookAtTarget.copy(targetGrp.position);
+            }
+          }
+        }
+      }
     };
 
     const onWheel = (e: WheelEvent) => {
@@ -454,7 +649,10 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       focusedObjectId: null
     };
 
-    // Responsive Resize Handler
+    // Trigger scene population immediately
+    setSceneReadyEpoch(prev => prev + 1);
+
+    // Responsive Resize Handler with ResizeObserver
     const handleResize = () => {
       if (!container || !threeStateRef.current) return;
       const w = container.clientWidth || 800;
@@ -464,6 +662,21 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       threeStateRef.current.renderer.setSize(w, h);
     };
     window.addEventListener('resize', handleResize);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+      resizeObserver.observe(container);
+    }
+
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      console.warn('[LiveCosmicObservatory] WebGL context lost, switching to 2D radar fallback.');
+      setRenderEngine('2d');
+    };
+    domElement.addEventListener('webglcontextlost', handleContextLost, false);
 
     // Single Unified 60fps Animation & Keplerian Propagation Loop
     let animId: number;
@@ -533,9 +746,20 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
             grp.position.set(a * Math.cos(phase), 0, a * Math.sin(phase));
           }
 
-          // Gentle, believable axial rotation
+          // Believable axial rotation and tumbling
           if (!isReducedMotion) {
-            grp.rotation.y += deltaSec * 0.35;
+            const mesh = grp.getObjectByName(`${id}-mesh`) as THREE.Mesh | undefined;
+            if (mesh && mesh.userData?.isSmallBody) {
+              updateAsteroidTumble(mesh, deltaSec, mesh.userData.designation || id);
+            } else {
+              grp.rotation.y += deltaSec * 0.35;
+            }
+          }
+
+          // Dynamic billboard label visibility
+          const label = grp.getObjectByName(`${id}-label`);
+          if (label) {
+            label.visible = showLabelsRef.current;
           }
         }
 
@@ -561,6 +785,22 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         camera.position.z = threeState.lookAtCurrent.z + sinPhiRadius * Math.cos(threeState.currentTheta);
         camera.lookAt(threeState.lookAtCurrent);
 
+        // Update 3D Targeting Reticle position & tracking
+        const activeSelectedId = selectedObjectIdRef.current;
+        const targetGroup = threeState.objectsMap.get(activeSelectedId);
+        if (targetGroup) {
+          reticleGroup.visible = true;
+          reticleGroup.position.copy(targetGroup.position);
+          reticleGroup.quaternion.copy(camera.quaternion);
+          const distToTarget = camera.position.distanceTo(targetGroup.position);
+          const dynamicScale = Math.max(0.65, Math.min(distToTarget * 0.045, 120));
+          reticleOuterMesh.rotation.z += deltaSec * 0.6;
+          const pulse = 1.0 + Math.sin(now * 0.005) * 0.04;
+          reticleGroup.scale.set(dynamicScale * pulse, dynamicScale * pulse, dynamicScale * pulse);
+        } else {
+          reticleGroup.visible = false;
+        }
+
         renderer.render(scene, camera);
       }
       animId = requestAnimationFrame(renderLoop);
@@ -571,10 +811,14 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       domElement.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
       domElement.removeEventListener('wheel', onWheel);
+      domElement.removeEventListener('webglcontextlost', handleContextLost);
 
       // Deep GPU resource disposal to prevent WebGL context exhaustion & memory leaks
       scene.traverse((obj) => {
@@ -637,20 +881,31 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         group = new THREE.Group();
         group.name = obj.id;
 
-        // Base Mesh Sphere
+        // Base Mesh Sizing
         let meshRadius = 0.9;
         if (obj.id === 'sun') meshRadius = 3.2;
         else if (['jupiter', 'saturn'].includes(obj.id)) meshRadius = 2.0;
         else if (['uranus', 'neptune'].includes(obj.id)) meshRadius = 1.5;
-        else if (['ceres', 'vesta', 'eros', 'apophis'].includes(obj.id)) meshRadius = 0.55;
+        else if (['ceres', 'vesta', 'eros', 'apophis'].includes(obj.id)) meshRadius = 0.65;
         else if (obj.category === 'exoplanets') meshRadius = 1.1;
         else if (obj.category === 'deep-sky') meshRadius = 1.6;
         else if (obj.category === 'spherex-targets') meshRadius = 1.2;
 
-        const sphereGeo = new THREE.SphereGeometry(meshRadius, 32, 32);
+        const isSmallBody = obj.category === 'asteroids-comets' ||
+                            obj.category === 'distant-tnos' ||
+                            ['ceres', 'vesta', 'eros', 'apophis', 'halley', 'churyumov', 'bennu', 'ryugu', 'toutatis'].includes((obj.id || '').toLowerCase());
+
+        let sphereGeo: THREE.BufferGeometry;
         let mat: THREE.Material;
 
-        if (obj.id === 'sun') {
+        if (isSmallBody) {
+          const isPha = (typeof obj.classification === 'string' && obj.classification.toLowerCase().includes('hazardous')) ||
+            ['apophis', '99942', 'bennu', '101955', 'toutatis', '4179'].includes((obj.id || '').toLowerCase());
+          // Authentic procedural 3D asteroid geometry with craters & ridges
+          sphereGeo = createAsteroidGeometry(obj.designation || obj.id, meshRadius);
+          mat = createAsteroidMaterial(obj.designation || obj.id, isPha);
+        } else if (obj.id === 'sun') {
+          sphereGeo = new THREE.SphereGeometry(meshRadius, 32, 32);
           const sunTex = createSunTexture();
           mat = new THREE.MeshBasicMaterial({ map: sunTex });
 
@@ -675,8 +930,10 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
           });
           group.add(new THREE.Mesh(outerCoronaGeo, outerCoronaMat));
         } else if (obj.motionType === 'observation-footprint') {
+          sphereGeo = new THREE.SphereGeometry(meshRadius, 32, 32);
           mat = new THREE.MeshBasicMaterial({ color: obj.color, wireframe: true });
         } else if (obj.category === 'solar-system' && NASA_JPL_TEXTURE_MAPS[obj.id]) {
+          sphereGeo = new THREE.SphereGeometry(meshRadius, 32, 32);
           const stdMat = new THREE.MeshStandardMaterial({
             roughness: 0.7,
             metalness: 0.1
@@ -688,6 +945,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
           stdMat.map = initialTex;
           mat = stdMat;
         } else {
+          sphereGeo = new THREE.SphereGeometry(meshRadius, 32, 32);
           mat = new THREE.MeshStandardMaterial({
             color: new THREE.Color(obj.color || '#38BDF8'),
             roughness: 0.65,
@@ -697,7 +955,35 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
         const sphereMesh = new THREE.Mesh(sphereGeo, mat);
         sphereMesh.name = `${obj.id}-mesh`;
+        sphereMesh.userData = { isSmallBody, designation: obj.designation || obj.id };
         group.add(sphereMesh);
+
+        // 3D Billboard Label Sprite
+        const labelCanvas = document.createElement('canvas');
+        labelCanvas.width = 256;
+        labelCanvas.height = 64;
+        const lctx = labelCanvas.getContext('2d');
+        if (lctx) {
+          lctx.clearRect(0, 0, 256, 64);
+          lctx.fillStyle = obj.id === selectedObjectId ? '#38BDF8' : '#94A3B8';
+          lctx.font = `${obj.id === selectedObjectId ? 'bold ' : 'normal '}22px monospace`;
+          lctx.textAlign = 'center';
+          lctx.textBaseline = 'middle';
+          lctx.fillText(obj.name.split(' ')[0], 128, 32);
+        }
+        const labelTex = new THREE.CanvasTexture(labelCanvas);
+        const labelMat = new THREE.SpriteMaterial({
+          map: labelTex,
+          transparent: true,
+          opacity: 0.85,
+          depthTest: false
+        });
+        const labelSprite = new THREE.Sprite(labelMat);
+        labelSprite.name = `${obj.id}-label`;
+        labelSprite.scale.set(5.5, 1.4, 1);
+        labelSprite.position.set(0, meshRadius + 1.2, 0);
+        labelSprite.visible = showLabels;
+        group.add(labelSprite);
 
         // Saturn's Ring System
         if (obj.id === 'saturn') {
@@ -715,6 +1001,11 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
         scene.add(group);
         objectsMap.set(obj.id, group);
+      } else {
+        const existingLabel = group.getObjectByName(`${obj.id}-label`);
+        if (existingLabel) {
+          existingLabel.visible = showLabels;
+        }
       }
 
       // Initial Cartesian position
@@ -789,7 +1080,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
         orbitLinesGroup.add(orbitLine);
       }
     });
-  }, [renderEngine, observatoryData, filteredObjects, scaleMode, showOrbits, selectedObjectId]);
+  }, [renderEngine, observatoryData, filteredObjects, scaleMode, showOrbits, selectedObjectId, sceneReadyEpoch]);
 
   // Focus Camera Smoothly on Selected Object
   const handleFocusSelected = () => {
@@ -818,6 +1109,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
     threeStateRef.current.targetTheta = 0;
     threeStateRef.current.targetPhi = 0.45;
     threeStateRef.current.targetDistance = scaleMode === 'outer' ? 240 : scaleMode === 'full' ? 140 : 95;
+    setCameraPreset('perspective');
   };
 
   // =========================================================================
@@ -1159,9 +1451,9 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
       </div>
 
       {/* 2. MAIN OBSERVATORY WORKSPACE (VIEWPORT + INSPECTOR) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* VIEWPORT & INTERACTIVE CANVAS (Col Span 2) */}
-        <div className="lg:col-span-2 space-y-4">
+      <div className={`grid grid-cols-1 ${isInfoPanelOpen ? 'lg:grid-cols-3' : 'lg:grid-cols-1'} gap-6 items-start transition-all duration-300`}>
+        {/* VIEWPORT & INTERACTIVE CANVAS */}
+        <div className={`${isInfoPanelOpen ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-4 transition-all duration-300`}>
           <div className="p-4 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-3">
             {/* Viewport Control Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2.5">
@@ -1209,6 +1501,37 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                 ))}
               </div>
 
+              {/* Camera Perspective Angle Presets */}
+              <div className="hidden sm:flex rounded-lg bg-[#050B1A] p-0.5 border border-[#1E293B] text-xs font-mono">
+                <button
+                  onClick={() => handleSetCameraAngle('perspective')}
+                  className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                    cameraPreset === 'perspective' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+                  }`}
+                  title="3D Perspective view"
+                >
+                  Perspective
+                </button>
+                <button
+                  onClick={() => handleSetCameraAngle('top-down')}
+                  className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                    cameraPreset === 'top-down' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+                  }`}
+                  title="Top-down Ecliptic North Pole view"
+                >
+                  Top-Down
+                </button>
+                <button
+                  onClick={() => handleSetCameraAngle('edge-on')}
+                  className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                    cameraPreset === 'edge-on' ? 'bg-[#0E1B38] text-[#38BDF8] font-bold border border-[#38BDF8]/40' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+                  }`}
+                  title="Edge-on orbital plane view"
+                >
+                  Edge-On
+                </button>
+              </div>
+
               {/* Display Layer & Camera Controls */}
               <div className="flex items-center gap-1.5">
                 <button
@@ -1246,6 +1569,17 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                   <Compass className="w-3.5 h-3.5 text-[#38BDF8]" />
                   <span>Reset</span>
                 </button>
+
+                <button
+                  onClick={() => setIsInfoPanelOpen(!isInfoPanelOpen)}
+                  className={`px-2.5 py-1 rounded-lg border text-xs font-mono transition-all cursor-pointer flex items-center gap-1.5 ${
+                    isInfoPanelOpen ? 'bg-[#0E1B38] text-[#38BDF8] border-[#38BDF8]/40' : 'bg-[#050B1A] text-[#94A3B8] hover:text-[#F8FAFC] border-[#1E293B]'
+                  }`}
+                  title={isInfoPanelOpen ? 'Collapse inspector panel for full widescreen 3D' : 'Open inspector panel'}
+                >
+                  <Layers className="w-3.5 h-3.5 text-[#38BDF8]" />
+                  <span className="hidden sm:inline">Inspector: {isInfoPanelOpen ? 'OPEN' : 'COLLAPSED'}</span>
+                </button>
               </div>
             </div>
 
@@ -1255,6 +1589,18 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                 <div ref={mount3DRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
               ) : (
                 <canvas ref={canvas2DRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+              )}
+
+              {/* Floating Re-Open Inspector Button when Collapsed */}
+              {!isInfoPanelOpen && (
+                <button
+                  onClick={() => setIsInfoPanelOpen(true)}
+                  className="absolute top-3 right-3 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#050B1A]/90 hover:bg-[#0E1B38] backdrop-blur-md border border-[#38BDF8]/40 hover:border-[#38BDF8] text-xs font-mono font-semibold text-[#38BDF8] shadow-lg transition-all cursor-pointer z-10"
+                  title="Expand object telemetry inspector"
+                >
+                  <Crosshair className="w-3.5 h-3.5" />
+                  <span>Inspect Object ({selectedObject?.name.split(' ')[0] || 'Selected'})</span>
+                </button>
               )}
 
               {/* Viewport Info Overlay (Top Left) */}
@@ -1303,10 +1649,10 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
             <div className="p-4 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 {/* Play, Pause, Step Buttons */}
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                   <button
                     onClick={() => setIsPlaying(!isPlaying)}
-                    className={`px-4 py-2 rounded-lg text-xs font-mono font-bold flex items-center gap-2 transition-all cursor-pointer shadow-sm ${
+                    className={`px-3.5 py-2 rounded-lg text-xs font-mono font-bold flex items-center gap-2 transition-all cursor-pointer shadow-sm ${
                       isPlaying
                         ? 'bg-amber-500 text-[#050B1A] hover:bg-amber-400'
                         : 'bg-[#38BDF8] text-[#050B1A] hover:bg-[#0284C7]'
@@ -1314,6 +1660,14 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                   >
                     {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     <span>{isPlaying ? 'Pause Motion' : 'Play Motion'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleStepDays(-30)}
+                    className="px-2 py-2 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] text-[11px] font-mono text-[#94A3B8] hover:text-[#F8FAFC] transition-all cursor-pointer"
+                    title="Step backward 30 days (1 month)"
+                  >
+                    -30d
                   </button>
 
                   <button
@@ -1333,6 +1687,14 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                   </button>
 
                   <button
+                    onClick={() => handleStepDays(30)}
+                    className="px-2 py-2 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] text-[11px] font-mono text-[#94A3B8] hover:text-[#F8FAFC] transition-all cursor-pointer"
+                    title="Step forward 30 days (1 month)"
+                  >
+                    +30d
+                  </button>
+
+                  <button
                     onClick={() => handleSelectPreset(new Date().toISOString())}
                     className="p-2 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] text-[#94A3B8] hover:text-[#F8FAFC] transition-all cursor-pointer"
                     title="Reset to Present (Current UTC)"
@@ -1345,7 +1707,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-mono text-[#64748B] hidden sm:inline">Speed:</span>
                   {[
-                    { label: '1x', val: 0.05 },
+                    { label: '0.1x', val: 0.1 },
                     { label: '1d/s', val: 1 },
                     { label: '7d/s', val: 7 },
                     { label: '30d/s', val: 30 },
@@ -1354,7 +1716,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                     <button
                       key={s.label}
                       onClick={() => setPlaybackSpeed(s.val)}
-                      className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all cursor-pointer tabular-nums ${
+                      className={`px-2 py-1 rounded-md text-xs font-mono transition-all cursor-pointer tabular-nums ${
                         playbackSpeed === s.val
                           ? 'bg-[#0E1B38] text-[#38BDF8] border border-[#38BDF8]/40 font-bold'
                           : 'bg-[#050B1A] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#1E293B]'
@@ -1374,6 +1736,35 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                     onChange={handleDateInputChange}
                     className="px-2.5 py-1.5 rounded-lg bg-[#030712] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] focus:outline-none focus:border-[#38BDF8]"
                   />
+                </div>
+              </div>
+
+              {/* Continuous Timeline Scrubber (2000 - 2065) */}
+              <div className="space-y-1 pt-1 border-t border-[#1E293B]/60">
+                <div className="flex items-center justify-between text-[10px] font-mono text-[#64748B]">
+                  <span>Timeline Scrubbing</span>
+                  <span className="text-[#38BDF8] font-bold">{simulatedDate.getUTCFullYear()} ({simulatedDate.toISOString().slice(0, 10)})</span>
+                  <span>2000 – 2065</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-[#64748B]">2000</span>
+                  <input
+                    type="range"
+                    min={new Date('2000-01-01').getTime()}
+                    max={new Date('2065-01-01').getTime()}
+                    value={simulatedDate.getTime()}
+                    onChange={(e) => {
+                      const time = Number(e.target.value);
+                      const newDate = new Date(time);
+                      setSimulatedDate(newDate);
+                      simulatedTimeRef.current = time;
+                      setDateInputVal(newDate.toISOString().slice(0, 16));
+                      setIsPlaying(false);
+                    }}
+                    className="w-full h-1.5 bg-[#030712] rounded-lg appearance-none cursor-pointer accent-[#38BDF8] border border-[#1E293B]"
+                    aria-label="Simulation timeline scrubber"
+                  />
+                  <span className="text-[10px] font-mono text-[#64748B]">2065</span>
                 </div>
               </div>
 
@@ -1397,7 +1788,7 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
 
         {/* 4. SELECTED OBJECT INSPECTION PANEL (Col Span 1) */}
         <div className="space-y-4">
-          {/* Quick Search Input */}
+          {/* Quick Search Input with Autocomplete Suggestions */}
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
             <input
@@ -1405,8 +1796,36 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               placeholder="Search 63 supported astronomical objects..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0B1630] border border-[#1E293B] text-xs font-mono text-[#F8FAFC] placeholder-[#64748B] focus:outline-none focus:border-[#38BDF8]"
             />
+
+            {/* Autocomplete Dropdown List */}
+            {isSearchFocused && searchSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1.5 p-1.5 rounded-xl bg-[#050B1A]/95 backdrop-blur-md border border-[#38BDF8]/40 shadow-2xl z-30 max-h-64 overflow-y-auto space-y-1">
+                <div className="px-2.5 py-1 text-[10px] font-mono text-[#64748B] uppercase tracking-wider flex justify-between">
+                  <span>Suggested Matches</span>
+                  <span>{searchSuggestions.length} Found</span>
+                </div>
+                {searchSuggestions.map(s => (
+                  <button
+                    key={s.id}
+                    onMouseDown={() => handleSelectSuggestion(s.id)}
+                    className="w-full px-2.5 py-2 rounded-lg text-left text-xs font-mono hover:bg-[#0E1B38] transition-all flex items-center justify-between group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color || '#38BDF8' }} />
+                      <span className="font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] truncate">{s.name}</span>
+                      <span className="text-[10px] text-[#64748B] truncate">({s.designation})</span>
+                    </div>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#1E293B] text-[#94A3B8] shrink-0 uppercase">
+                      {s.category.replace('-', ' ')}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Carousel Selector */}
@@ -1546,6 +1965,17 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                     </div>
                   </div>
                 )}
+
+                {realtimeSelectedState && (
+                  <div className="col-span-2 p-2.5 rounded-lg bg-[#050B1A] border border-[#1E293B]">
+                    <span className="text-[10px] text-[#64748B]">Heliocentric Position Vector (J2000):</span>
+                    <div className="font-bold text-[#F8FAFC] mt-0.5 tabular-nums text-[11px] flex items-center justify-between">
+                      <span>X: {realtimeSelectedState.heliocentricAU.x >= 0 ? '+' : ''}{realtimeSelectedState.heliocentricAU.x.toFixed(4)} AU</span>
+                      <span>Y: {realtimeSelectedState.heliocentricAU.y >= 0 ? '+' : ''}{realtimeSelectedState.heliocentricAU.y.toFixed(4)} AU</span>
+                      <span>Z: {realtimeSelectedState.heliocentricAU.z >= 0 ? '+' : ''}{realtimeSelectedState.heliocentricAU.z.toFixed(4)} AU</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Sky Coordinates (RA / Dec) */}
@@ -1566,6 +1996,133 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               <p className="text-xs text-[#A7B4CC] leading-relaxed p-3 rounded-lg bg-[#050B1A] border border-[#1E293B]">
                 {selectedObject.description}
               </p>
+
+              {/* Physical Dimensions & Morphology */}
+              <div className="p-3.5 rounded-xl bg-[#050B1A] border border-[#1E293B] space-y-2.5 text-xs font-mono">
+                <div className="flex items-center justify-between text-[#38BDF8] font-bold text-[11px]">
+                  <span className="flex items-center gap-1.5">
+                    <Orbit className="w-3.5 h-3.5" />
+                    <span>Physical Dimensions & Morphology</span>
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#1E293B] text-[#94A3B8]">
+                    {selectedObject.classification}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="p-2 rounded-lg bg-[#030712] border border-[#1E293B]/70">
+                    <span className="text-[10px] text-[#64748B]">Diameter:</span>
+                    <div className="font-bold text-[#F8FAFC] truncate">
+                      {selectedPhysicalInfo?.physicalDiameterText || (selectedObject.radiusKm ? `${typeof selectedObject.radiusKm === 'number' ? (selectedObject.radiusKm * 2).toLocaleString() : selectedObject.radiusKm} km` : 'Not available')}
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-[#030712] border border-[#1E293B]/70">
+                    <span className="text-[10px] text-[#64748B]">Rotation Period:</span>
+                    <div className="font-bold text-[#F8FAFC] truncate">
+                      {selectedPhysicalInfo?.rotationPeriodText || 'Not available'}
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-[#030712] border border-[#1E293B]/70">
+                    <span className="text-[10px] text-[#64748B]">Spectral Class / Type:</span>
+                    <div className="font-bold text-[#38BDF8] truncate">
+                      {selectedPhysicalInfo?.spectralType || (selectedObject.category === 'solar-system' ? 'Major Planet' : 'Not available')}
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-[#030712] border border-[#1E293B]/70">
+                    <span className="text-[10px] text-[#64748B]">Geometric Albedo:</span>
+                    <div className="font-bold text-[#F5C451] tabular-nums">
+                      {selectedPhysicalInfo?.albedo !== undefined ? selectedPhysicalInfo.albedo.toFixed(3) : 'Not available'}
+                    </div>
+                  </div>
+                </div>
+                {selectedPhysicalInfo?.morphologyDescription && (
+                  <p className="text-[10px] text-[#94A3B8] leading-relaxed italic border-t border-[#1E293B]/60 pt-1.5">
+                    {selectedPhysicalInfo.morphologyDescription}
+                  </p>
+                )}
+              </div>
+
+              {/* Sourced Close-Approach Encounter & Planetary Defense */}
+              {selectedCloseApproach && (
+                <div className="p-4 rounded-xl bg-linear-to-b from-[#050B1A] to-[#0E1B38] border border-amber-500/40 space-y-3 text-xs font-mono">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
+                      <ShieldAlert className="w-4 h-4 shrink-0" />
+                      <span>CNEOS Close-Approach Telemetry</span>
+                    </div>
+                    {selectedCloseApproach.isPotentiallyHazardous && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                        PHA (Potentially Hazardous)
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="p-2 rounded-lg bg-[#030712] border border-[#1E293B]">
+                      <span className="text-[10px] text-[#64748B]">Approach Date:</span>
+                      <div className="font-bold text-[#F8FAFC]">
+                        {selectedCloseApproach.closeApproachDate}
+                      </div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#030712] border border-[#1E293B]">
+                      <span className="text-[10px] text-[#64748B]">Nominal Distance:</span>
+                      <div className="font-bold text-amber-300">
+                        {selectedCloseApproach.missDistanceKm.toLocaleString()} km
+                      </div>
+                      <div className="text-[10px] text-[#94A3B8]">
+                        {selectedCloseApproach.missDistanceLunar.toFixed(2)} LD ({selectedCloseApproach.missDistanceAU.toFixed(6)} AU)
+                      </div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#030712] border border-[#1E293B]">
+                      <span className="text-[10px] text-[#64748B]">Relative Velocity (v_rel):</span>
+                      <div className="font-bold text-[#F5C451]">
+                        {selectedCloseApproach.relativeVelocityKmS} km/s
+                      </div>
+                      <div className="text-[10px] text-[#94A3B8]">
+                        ~{Math.round(selectedCloseApproach.relativeVelocityKmS * 3600).toLocaleString()} km/h
+                      </div>
+                    </div>
+                    <div className="p-2 rounded-lg bg-[#030712] border border-[#1E293B]">
+                      <span className="text-[10px] text-[#64748B]">Distance Uncertainty Range:</span>
+                      <div className="font-bold text-[#F8FAFC]">
+                        {selectedCloseApproach.distMinKm.toLocaleString()} - {selectedCloseApproach.distMaxKm.toLocaleString()} km
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedCloseApproach.impactRisk && (
+                    <div className="p-2 rounded-lg bg-[#030712] border border-[#1E293B] space-y-1">
+                      <div className="text-[10px] text-[#64748B] flex items-center justify-between">
+                        <span>Sentry Risk Assessment:</span>
+                        <a
+                          href={selectedCloseApproach.impactRisk.sentryUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#38BDF8] hover:underline flex items-center gap-1"
+                        >
+                          <span>Sentry Portal</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      </div>
+                      <p className="text-[11px] text-[#F8FAFC] leading-relaxed">
+                        {selectedCloseApproach.impactRisk.assessment}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="text-[10px] text-[#94A3B8] leading-relaxed bg-[#030712]/50 p-2 rounded-lg border border-[#1E293B]/40">
+                    <span className="font-bold text-[#64748B]">PHA Criteria: </span>
+                    Absolute magnitude H ≤ 22.0 (estimated diameter ≥ 140 m) and Earth MOID ≤ 0.05 AU (7.48M km / 19.5 LD).
+                  </div>
+
+                  <button
+                    onClick={() => onNavigate('asteroid-motion')}
+                    className="w-full py-2 px-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-200 text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>View in Asteroid Motion Viewer</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
 
               {/* Authentic NASA/JPL Surface Texture Map Provenance */}
               {NASA_JPL_TEXTURE_MAPS[selectedObject.id] && (
@@ -1594,12 +2151,36 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
               )}
 
               {/* Mandatory Scientific Transparency Disclaimer */}
-              <div className="p-3 rounded-lg bg-linear-to-r from-[#050B1A] to-[#0E1B38] border border-[#38BDF8]/30 space-y-1.5">
+              <div className="p-3 rounded-lg bg-linear-to-r from-[#050B1A] to-[#0E1B38] border border-[#38BDF8]/30 space-y-2">
                 <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-[#38BDF8]">
                   <Info className="w-3.5 h-3.5 shrink-0" />
-                  <span>Scientific Modeling Notice</span>
+                  <span>Scientific Modeling & Provenance</span>
                 </div>
-                <p className="text-[11px] text-[#94A3B8] leading-relaxed italic">
+                <div className="grid grid-cols-1 gap-1 text-[10px] font-mono text-[#A7B4CC]">
+                  <div className="flex justify-between border-b border-[#1E293B]/60 pb-0.5">
+                    <span className="text-[#64748B]">Coordinate Frame:</span>
+                    <span>{selectedObject.coordinateFrame || 'ICRF / J2000 Heliocentric Ecliptic'}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-[#1E293B]/60 pb-0.5">
+                    <span className="text-[#64748B]">Reference Epoch:</span>
+                    <span>{selectedObject.calculationEpoch || 'J2000.0 (JD 2451545.0)'}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-[#1E293B]/60 pb-0.5">
+                    <span className="text-[#64748B]">Computation Method:</span>
+                    <span>
+                      {selectedObject.motionType === 'analytical-ephemeris'
+                        ? 'NASA/JPL Standish (1992) analytical perturbation elements'
+                        : selectedObject.motionType === 'keplerian-orbit'
+                        ? 'Two-body osculating Keplerian propagation'
+                        : 'Direct catalog reference coordinates'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#64748B]">Measurement Uncertainty:</span>
+                    <span className="italic text-[#94A3B8]">Not available</span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-[#94A3B8] leading-relaxed italic pt-1 border-t border-[#1E293B]/60">
                   {selectedObject.scientificDisclaimer}
                 </p>
               </div>
@@ -1628,13 +2209,23 @@ export const LiveCosmicObservatory: FC<LiveCosmicObservatoryProps> = ({ onNaviga
                   <span>3D Universe</span>
                 </button>
 
-                <button
-                  onClick={() => onNavigate('ai-guide')}
-                  className="py-2.5 px-3 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-amber-400 text-xs font-mono font-semibold text-amber-300 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Ask AI Guide</span>
-                </button>
+                {selectedObject.category === 'asteroids-comets' || selectedCloseApproach ? (
+                  <button
+                    onClick={() => onNavigate('asteroid-motion')}
+                    className="py-2.5 px-3 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-amber-500/40 hover:border-amber-400 text-xs font-mono font-semibold text-amber-300 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Orbit className="w-3.5 h-3.5" />
+                    <span>Motion Viewer</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onNavigate('ai-guide')}
+                    className="py-2.5 px-3 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-amber-400 text-xs font-mono font-semibold text-amber-300 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Ask AI Guide</span>
+                  </button>
+                )}
               </div>
             </div>
           ) : (

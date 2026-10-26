@@ -704,3 +704,47 @@ export interface AsteroidMotionResponse {
   };
   provenance: AsteroidMotionProvenance;
 }
+
+export interface HorizonsVectorQueryParams {
+  target?: string;
+  date?: string;
+  refresh?: boolean;
+}
+
+export interface HorizonsVectorResponse {
+  target: string;
+  inputTarget: string;
+  requestedDateIso: string;
+  epochJd: number | null;
+  calendarDateTdb: string;
+  coordinateFrame: string;
+  origin: string;
+  timeScale: string;
+  units: {
+    position: string;
+    velocity: string;
+    distance: string;
+  };
+  positionKm: { x: number; y: number; z: number } | null;
+  positionAU: { x: number; y: number; z: number } | null;
+  velocityKmS: { vx: number; vy: number; vz: number } | null;
+  speedKmS: number | null;
+  rangeKm: number | null;
+  rangeAU: number | null;
+  rangeLunar: number | null;
+  rangeRateKmS: number | null;
+  provenance: {
+    source: string;
+    apiEndpoint?: string;
+    retrievalStatus: 'live' | 'cached' | 'archive' | 'unavailable';
+    isLive: boolean;
+    retrievalTimestamp: string | null;
+    lastSuccessfulRetrieval: string | null;
+    lastRefreshAttempt: {
+      timestamp: string;
+      success: boolean;
+      error?: string;
+    } | null;
+    cacheAgeSeconds?: number | null;
+  };
+}

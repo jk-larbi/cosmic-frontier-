@@ -44,6 +44,13 @@ export function App() {
     } else if (clean === 'data-centre' || clean === 'data-center') {
       targetPage = 'data-centre';
       targetHash = queryString ? `data-centre?${queryString}` : 'data-centre';
+    } else if (clean === 'radar' || clean === 'deep-space-radar') {
+      targetPage = 'home';
+      targetHash = 'deep-space-radar';
+      setTimeout(() => {
+        const el = document.getElementById('deep-space-radar');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
     } else if (clean === 'asteroids' || clean === 'asteroid-watch') {
       targetPage = 'asteroid-watch';
       if (queryString) {
@@ -74,16 +81,22 @@ export function App() {
 
     if (targetPage === 'home') {
       const homeUrl = import.meta.env.BASE_URL || '/';
-      if (window.location.hash) {
-        window.location.hash = '';
-      }
-      if (window.location.pathname !== homeUrl && window.history?.pushState) {
-        window.history.pushState(null, '', homeUrl);
+      if (targetHash === 'deep-space-radar' || targetHash === 'radar') {
+        window.location.hash = targetHash;
+      } else {
+        if (window.location.hash) {
+          window.location.hash = '';
+        }
+        if (window.location.pathname !== homeUrl && window.history?.pushState) {
+          window.history.pushState(null, '', homeUrl);
+        }
       }
     } else if (targetHash) {
       window.location.hash = targetHash;
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (targetHash !== 'deep-space-radar' && targetHash !== 'radar') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   // Sync with browser hash and path on initial load and hash change
@@ -117,6 +130,12 @@ export function App() {
         setCurrentPage('planet-x');
       } else if (candidate === 'data-centre' || candidate === 'data-center') {
         setCurrentPage('data-centre');
+      } else if (candidate === 'radar' || candidate === 'deep-space-radar') {
+        setCurrentPage('home');
+        setTimeout(() => {
+          const el = document.getElementById('deep-space-radar');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 150);
       } else if (candidate === 'asteroids' || candidate === 'asteroid-watch') {
         setCurrentPage('asteroid-watch');
       } else if (candidate === 'exoplanet' || candidate === 'exoplanets') {

@@ -8,6 +8,7 @@ import { GoogleGenAI } from '@google/genai';
 import { findVerifiedAnswer, VERIFIED_KNOWLEDGE_BASE } from './knowledge.js';
 import { getCompleteEphemeris, AU_KM, LD_KM } from './ephemerisEngine.js';
 import { getAsteroidOrbitData } from './asteroidMotionEngine.js';
+import { getHorizonsVector } from './horizonsService.js';
 import { getVerifiedServerImage, searchNasaImagesApi } from './verifiedImages.js';
 
 dotenv.config();
@@ -708,6 +709,20 @@ app.get('/api/data/asteroid/orbit', async (req, res) => {
   } catch (err) {
     console.error('[Asteroid Motion] Error computing orbit:', err.message);
     return res.status(500).json({ error: 'Failed to compute asteroid orbital motion' });
+  }
+});
+
+// 4c. GET /api/data/horizons/vector - Authoritative NASA/JPL Horizons Cartesian state vectors
+app.get('/api/data/horizons/vector', async (req, res) => {
+  try {
+    const { target = '399', date, refresh, forceLive } = req.query;
+    const targetDate = date ? new Date(date) : new Date();
+    const isRefresh = refresh === 'true' || forceLive === 'true';
+    const vectorData = await getHorizonsVector(target, targetDate, { forceLive: isRefresh, isDateExplicit: !!date });
+    return res.json(vectorData);
+  } catch (err) {
+    console.error('[Horizons API] Error retrieving vector:', err.message);
+    return res.status(500).json({ error: 'Failed to retrieve Horizons state vector', details: err.message });
   }
 });
 

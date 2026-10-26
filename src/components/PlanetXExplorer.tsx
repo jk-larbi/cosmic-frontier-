@@ -487,9 +487,9 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Cross-Navigation to Live Space & Asteroid Watch */}
+        {/* Cross-Navigation to Mission Control, Radar & Asteroid Watch */}
         {onNavigate && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <div 
               onClick={() => onNavigate('mission-control')}
               className="p-3.5 rounded-xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] cursor-pointer transition-all flex items-center justify-between group"
@@ -497,10 +497,23 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
               <div className="flex items-center gap-2.5">
                 <Globe className="w-4 h-4 text-[#38BDF8]" />
                 <span className="text-xs font-mono font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
-                  Explore Planetary Ephemerides in Mission Control
+                  Planetary Ephemerides
                 </span>
               </div>
               <ArrowRight className="w-4 h-4 text-[#A7B4CC] group-hover:translate-x-1 group-hover:text-[#38BDF8] transition-all" />
+            </div>
+
+            <div 
+              onClick={() => (onNavigate as any)('radar')}
+              className="p-3.5 rounded-xl bg-[#0B1630] border border-[#1E293B] hover:border-[#8B5CF6] cursor-pointer transition-all flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-2.5">
+                <Orbit className="w-4 h-4 text-[#8B5CF6]" />
+                <span className="text-xs font-mono font-bold text-[#F8FAFC] group-hover:text-[#8B5CF6] transition-colors">
+                  Deep-Space Radar Scope
+                </span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#A7B4CC] group-hover:translate-x-1 group-hover:text-[#8B5CF6] transition-all" />
             </div>
 
             <div 
@@ -510,7 +523,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
               <div className="flex items-center gap-2.5">
                 <Radio className="w-4 h-4 text-emerald-400" />
                 <span className="text-xs font-mono font-bold text-[#F8FAFC] group-hover:text-emerald-400 transition-colors">
-                  Monitor Real Earth Close-Approaches
+                  Earth Close-Approaches
                 </span>
               </div>
               <ArrowRight className="w-4 h-4 text-[#A7B4CC] group-hover:translate-x-1 group-hover:text-emerald-400 transition-all" />

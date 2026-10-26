@@ -6,7 +6,7 @@ export const DEFAULT_OBSERVATORY_SNAPSHOT: ObservatoryApiResponse = {
   "julianDate": 2461339.0804,
   "retrievalTimestamp": "2026-10-25T13:55:43.003Z",
   "coordinateFrame": "ICRF / J2000 Ecliptic & Geocentric Equatorial",
-  "statusLabel": "LIVE DATA",
+  "statusLabel": "ARCHIVED BASELINE (Offline Fallback)",
   "totalCount": 63,
   "allAvailableCount": 63,
   "categories": {
@@ -28,7 +28,7 @@ export const DEFAULT_OBSERVATORY_SNAPSHOT: ObservatoryApiResponse = {
       "color": "#F5C451",
       "radiusKm": 696340,
       "motionType": "analytical-ephemeris",
-      "dataStatus": "LIVE DATA",
+      "dataStatus": "ARCHIVED BASELINE (Keplerian Ephemeris)",
       "isHypothetical": false,
       "heliocentricAU": {
         "x": 0,
