@@ -94,7 +94,7 @@ Key facts:
     ],
     links: [
       {
-        label: 'Open Planet X Explorer',
+        label: 'Open Planet X Investigation Lab',
         page: 'planet-x',
         reason: 'View orbital models of extreme TNOs and examine the clustering evidence.'
       }
@@ -118,7 +118,7 @@ Key facts:
     ],
     links: [
       {
-        label: 'Investigate Observations in Planet X Explorer',
+        label: 'Investigate Observations in Planet X Investigation Lab',
         page: 'planet-x',
         reason: 'Test your blink-comparison skills on astronomical candidate search fields.'
       }
@@ -147,7 +147,7 @@ Key facts:
     ],
     links: [
       {
-        label: 'Compare Orbits in Planet X Explorer',
+        label: 'Compare Orbits in Planet X Investigation Lab',
         page: 'planet-x',
         reason: 'See orbital distances in AU for terrestrial planets, gas giants, and distant eTNOs.'
       }

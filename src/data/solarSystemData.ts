@@ -297,13 +297,17 @@ export const SOLAR_SYSTEM_OBJECTS: SolarSystemObject[] = [
     longitudeOfAscendingNodeDeg: 301.0
   },
   // Hypothetical Planet X (Planet Nine)
+  // Mathematical dynamical reference: Batygin, K. & Brown, M. E. (2021), 'The Orbit of Planet Nine', The Astronomical Journal, 162:219, DOI: 10.3847/1538-3881/ac2056
+  // Simulation nominal configuration (illustrative 1-sigma parameter set):
+  // a = 420 AU, e = 0.43, q = 240 AU, Q = 600 AU, i = 18°, mass = 5–8 M⊕
+  // Published median estimates: a = 380 (+140/-80) AU, q = 300 (+85/-60) AU, i = 16° ± 5°, mass = 6.2 (+2.2/-1.3) M⊕
   {
     id: 'planet-x',
     name: 'Planet X (Hypothetical Planet Nine)',
     type: 'Hypothetical Planet',
     semiMajorAxisAU: 420.0,
     orbitalPeriodYears: 8600,
-    eccentricity: 0.60,
+    eccentricity: 0.43,
     inclinationDeg: 18.0,
     perihelionAU: 240.0,
     aphelionAU: 600.0,
@@ -314,9 +318,9 @@ export const SOLAR_SYSTEM_OBJECTS: SolarSystemObject[] = [
     isHypothetical: true,
     statusLabel: 'Hypothetical (Unconfirmed)',
     discoverers: 'Proposed mathematically by Konstantin Batygin & Mike Brown (Caltech)',
-    dataSource: 'Dynamical Modeling Reference: Batygin & Brown (2016, 2021) The Astronomical Journal',
+    dataSource: 'Dynamical Reference: Batygin & Brown (2021) The Astronomical Journal, 162:219 (DOI: 10.3847/1538-3881/ac2056); Batygin & Brown (2016)',
     description: 'A hypothetical planet proposed to explain the orbital clustering of extreme trans-Neptunian objects. It has NOT been visually detected or confirmed.',
-    scientificContext: 'Its existence is inferred from gravitational clustering patterns. If it exists, its orbit is modeled to be anti-aligned with the clustered distant objects to keep them dynamically stable.',
+    scientificContext: 'Inferred from gravitational clustering of extreme TNOs. The orbit shown in this simulation (a = 420 AU, e = 0.43, q = 240 AU, i = 18°) is an illustrative nominal configuration drawn from within the 1-σ posterior distribution of Batygin & Brown (2021). The published median estimates are: a = 380 (+140/-80) AU, q = 300 (+85/-60) AU, i = 16° ± 5°, mass = 6.2 (+2.2/-1.3) M⊕ (The Astronomical Journal, 162:219).',
     argumentOfPerihelionDeg: 150.0,
     longitudeOfAscendingNodeDeg: 95.0
   }

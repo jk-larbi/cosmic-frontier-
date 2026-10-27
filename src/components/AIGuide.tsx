@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, type FC, type FormEvent } from 'react';
 import type { GuideMessage, AppPage } from '../types';
 import { STARTER_QUESTIONS, findVerifiedAnswer } from '../data/guideKnowledge';
+import { getApiUrl } from '../config/api';
 import { 
   Sparkles, 
   Send, 
@@ -62,7 +63,7 @@ export const AIGuide: FC<AIGuideProps> = ({ onNavigate }) => {
     let isMounted = true;
     async function checkStatus() {
       try {
-        const res = await fetch('/api/status');
+        const res = await fetch(getApiUrl('/api/status'));
         if (res.ok) {
           const data = await res.json();
           if (isMounted) {
@@ -139,7 +140,7 @@ export const AIGuide: FC<AIGuideProps> = ({ onNavigate }) => {
     }));
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch(getApiUrl('/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -181,7 +182,7 @@ export const AIGuide: FC<AIGuideProps> = ({ onNavigate }) => {
       let fallbackSuggestions = STARTER_QUESTIONS.slice(0, 4);
       let fallbackLinks = [
         { label: 'SPHEREx Explorer', page: 'spherex' as AppPage, reason: 'Inspect 102 infrared spectral channels and interstellar ices' },
-        { label: 'Planet X Explorer', page: 'planet-x' as AppPage, reason: 'Review extreme TNO orbits and gravitational clustering models' }
+        { label: 'Planet X Investigation Lab', page: 'planet-x' as AppPage, reason: 'Review extreme TNO orbits and gravitational clustering models' }
       ];
       let fallbackRef = 'NASA Astrophysics & Minor Planet Center Educational Archive';
 
@@ -244,7 +245,7 @@ You can explore any of our core educational questions or inspect our interactive
             <span>Educational Astronomy Assistant</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#F8FAFC] tracking-tight">
-            COSMIC AI GUIDE
+            Cosmic AI Guide
           </h1>
           <p className="text-sm sm:text-base text-[#A7B4CC] mt-1">
             Your friendly guide to the universe.
@@ -293,7 +294,7 @@ You can explore any of our core educational questions or inspect our interactive
               title="NASA Open Data API authenticated via api.nasa.gov"
             >
               <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+                <span className="beacon-pulse absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
               </span>
               <span>NASA API: Active</span>
@@ -383,7 +384,7 @@ You can explore any of our core educational questions or inspect our interactive
               return (
                 <div
                   key={msg.id}
-                  className={`flex gap-3 sm:gap-4 ${isAssistant ? 'items-start' : 'items-start flex-row-reverse'}`}
+                  className={`flex gap-3 sm:gap-4 ${isAssistant ? 'items-start' : 'items-start flex-row-reverse'} animate-message-enter`}
                 >
                   {/* Clean SVG/Lucide Avatar (No emoji avatars) */}
                   <div

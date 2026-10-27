@@ -1,5 +1,6 @@
 import { useState, useEffect, type FC } from 'react';
 import type { NasaApodData, NasaMissionPhoto, AppPage } from '../types';
+import { getApiUrl } from '../config/api';
 import { 
   Telescope, 
   ExternalLink, 
@@ -33,7 +34,7 @@ export const NasaLiveDispatch: FC<NasaLiveDispatchProps> = ({ onNavigate }) => {
     try {
       setErrorNotice(null);
       // Fetch APOD
-      const apodRes = await fetch('/api/nasa/apod');
+      const apodRes = await fetch(getApiUrl('/api/nasa/apod'));
       if (apodRes.ok) {
         const json = await apodRes.json();
         if (json.data) {
@@ -43,7 +44,7 @@ export const NasaLiveDispatch: FC<NasaLiveDispatchProps> = ({ onNavigate }) => {
       }
 
       // Fetch SPHEREx photos
-      const spherexRes = await fetch('/api/nasa/spherex');
+      const spherexRes = await fetch(getApiUrl('/api/nasa/spherex'));
       if (spherexRes.ok) {
         const json = await spherexRes.json();
         if (json.photos) {
@@ -69,7 +70,7 @@ export const NasaLiveDispatch: FC<NasaLiveDispatchProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="rounded-3xl bg-gradient-to-b from-[#0B1630] via-[#070D1E] to-[#040814] border border-[#1E293B] hover:border-[#38BDF8]/40 p-6 sm:p-8 space-y-6 shadow-2xl transition-all relative overflow-hidden">
+    <div className="rounded-2xl bg-linear-to-b from-[#0B1630] via-[#070D1E] to-[#040814] border border-[#1E293B] hover:border-[#38BDF8]/40 p-6 sm:p-8 space-y-6 shadow-2xl transition-all relative overflow-hidden">
       {/* Background glow accent */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-[#38BDF8]/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#8B5CF6]/5 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
@@ -79,7 +80,7 @@ export const NasaLiveDispatch: FC<NasaLiveDispatchProps> = ({ onNavigate }) => {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="flex h-2.5 w-2.5 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+              <span className="beacon-pulse absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#10B981]"></span>
             </span>
             <span className="text-[11px] font-mono uppercase tracking-widest text-[#10B981] font-bold">

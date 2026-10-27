@@ -6,6 +6,7 @@ import {
   CANDIDATE_CASES 
 } from '../data/evidenceData';
 import type { SolarSystemObject, EvidenceTopic, CandidateCase, AppPage } from '../types';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
 import { 
   Orbit, 
   ZoomIn, 
@@ -462,10 +463,10 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
           <span>Outer Solar System Dynamics</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">
-          Planet X Explorer
+          Planet X Investigation Lab
         </h1>
         <p className="text-base sm:text-lg text-[#F5C451] font-medium">
-          Explore the outer solar system. Investigate the unknown.
+          Evidence-Based Investigation of the Planet Nine Hypothesis
         </p>
         <p className="text-sm text-[#A7B4CC] leading-relaxed max-w-3xl">
           Beyond Neptune lies a vast, frozen frontier populated by icy trans-Neptunian objects. By studying how these distant bodies orbit the Sun, astronomers search for clues to an undiscovered planet that might be shaping their trajectories from the outer darkness.
@@ -486,9 +487,9 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Cross-Navigation to Live Space & Asteroid Watch */}
+        {/* Cross-Navigation to Mission Control, Radar & Asteroid Watch */}
         {onNavigate && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <div 
               onClick={() => onNavigate('mission-control')}
               className="p-3.5 rounded-xl bg-[#0B1630] border border-[#1E293B] hover:border-[#38BDF8] cursor-pointer transition-all flex items-center justify-between group"
@@ -496,10 +497,23 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
               <div className="flex items-center gap-2.5">
                 <Globe className="w-4 h-4 text-[#38BDF8]" />
                 <span className="text-xs font-mono font-bold text-[#F8FAFC] group-hover:text-[#38BDF8] transition-colors">
-                  Explore Planetary Ephemerides in Mission Control
+                  Planetary Ephemerides
                 </span>
               </div>
               <ArrowRight className="w-4 h-4 text-[#A7B4CC] group-hover:translate-x-1 group-hover:text-[#38BDF8] transition-all" />
+            </div>
+
+            <div 
+              onClick={() => (onNavigate as any)('radar')}
+              className="p-3.5 rounded-xl bg-[#0B1630] border border-[#1E293B] hover:border-[#8B5CF6] cursor-pointer transition-all flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-2.5">
+                <Orbit className="w-4 h-4 text-[#8B5CF6]" />
+                <span className="text-xs font-mono font-bold text-[#F8FAFC] group-hover:text-[#8B5CF6] transition-colors">
+                  Deep-Space Radar Scope
+                </span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#A7B4CC] group-hover:translate-x-1 group-hover:text-[#8B5CF6] transition-all" />
             </div>
 
             <div 
@@ -509,7 +523,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
               <div className="flex items-center gap-2.5">
                 <Radio className="w-4 h-4 text-emerald-400" />
                 <span className="text-xs font-mono font-bold text-[#F8FAFC] group-hover:text-emerald-400 transition-colors">
-                  Monitor Real Earth Close-Approaches
+                  Earth Close-Approaches
                 </span>
               </div>
               <ArrowRight className="w-4 h-4 text-[#A7B4CC] group-hover:translate-x-1 group-hover:text-emerald-400 transition-all" />
@@ -672,7 +686,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               onClick={handleCanvasClick}
-              className={`w-full h-[440px] sm:h-[500px] block select-none focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/40 ${
+              className={`w-full h-110 sm:h-125 block select-none focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]/40 ${
                 isPanning ? 'cursor-grabbing' : 'cursor-grab'
               }`}
             />
@@ -756,8 +770,19 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
               )}
             </div>
 
+            {/* Visual Representation */}
+            <div className="rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A]">
+              <AstronomicalImage
+                target={selectedObject}
+                targetType={selectedObject.isHypothetical ? 'small-body' : selectedObject.type.includes('Planet') ? 'planet' : 'small-body'}
+                aspectRatio="16/9"
+                showBadge={true}
+                className="w-full h-36 object-cover"
+              />
+            </div>
+
             {/* Approximate Orbital Properties Only When Verified */}
-            <div className="grid grid-cols-2 gap-2.5 text-xs font-mono">
+            <div className="grid grid-cols-2 gap-2.5 text-xs font-mono tabular-nums">
               <div className="p-2.5 rounded-xl bg-[#050B1A] border border-[#1E293B]">
                 <span className="text-[10px] text-[#A7B4CC] block">Semi-Major Axis:</span>
                 <span className="text-[#F8FAFC] font-bold text-sm">
@@ -801,6 +826,37 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
               {selectedObject.description}
             </p>
 
+            {/* If Planet X, show explicit Nominal Simulation vs. Published Median comparison */}
+            {selectedObject.id === 'planet-x' && (
+              <div className="p-3.5 rounded-xl bg-[#050B1A] border border-[#8B5CF6]/40 space-y-2 text-xs">
+                <div className="flex items-center justify-between border-b border-[#1E293B] pb-1.5">
+                  <span className="text-[10px] font-mono text-[#8B5CF6] uppercase font-bold">
+                    Dynamical Model Parameter Tiers
+                  </span>
+                  <span className="text-[10px] font-mono text-[#A7B4CC]">
+                    Batygin & Brown (2021)
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-[11px] font-mono">
+                  <div className="flex justify-between items-start">
+                    <span className="text-[#A7B4CC]">Simulation Nominal:</span>
+                    <span className="text-[#F8FAFC] text-right font-medium">a = 420 AU, e = 0.43, q = 240 AU, i = 18°</span>
+                  </div>
+                  <div className="flex justify-between items-start">
+                    <span className="text-[#8B5CF6]">Published Median (1-σ):</span>
+                    <span className="text-[#38BDF8] text-right font-medium">a = 380⁺¹⁴⁰₋₈₀ AU, q = 300⁺⁸⁵₋₆₀ AU, i = 16°±5°</span>
+                  </div>
+                  <div className="flex justify-between items-start">
+                    <span className="text-[#A7B4CC]">Predicted Mass (1-σ):</span>
+                    <span className="text-[#F5C451] text-right font-medium">6.2⁺²˙²₋₁˙³ M⊕ (Model: 5–8 M⊕)</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-[#A7B4CC] leading-relaxed pt-1 border-t border-[#1E293B]">
+                  Academic Distinction: The simulation displays an illustrative nominal configuration drawn from within the 1-σ posterior distribution, rather than the single median value. Citation: Batygin, K. & Brown, M. E. (2021), <em>The Astronomical Journal</em>, 162:219 (DOI: 10.3847/1538-3881/ac2056).
+                </p>
+              </div>
+            )}
+
             <div className="p-3 rounded-xl bg-[#050B1A]/80 border border-[#1E293B] space-y-1 text-xs">
               <span className="text-[10px] font-bold uppercase font-mono text-[#F5C451]">
                 Why this object is relevant:
@@ -821,7 +877,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
       </div>
 
       {/* 5. THE EVIDENCE INVESTIGATION PANEL (SECTION 6) */}
-      <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-8">
+      <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-8">
         <div className="max-w-2xl space-y-2">
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#38BDF8] font-mono">
             <Compass className="w-4 h-4" />
@@ -862,7 +918,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
       </div>
 
       {/* 6. EVIDENCE AND UNCERTAINTY SECTION (SECTION 7) */}
-      <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-6">
+      <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-6">
         <div className="max-w-3xl space-y-2">
           <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC]">
             What Does the Evidence Tell Us?
@@ -934,7 +990,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
       </div>
 
       {/* 7. CANDIDATE INVESTIGATION EDUCATIONAL WORKFLOW (SECTION 8) */}
-      <div className="rounded-3xl bg-gradient-to-r from-[#0B1630] to-[#0E1B38] border border-[#8B5CF6]/30 p-8 sm:p-10 space-y-8 shadow-2xl">
+      <div className="rounded-2xl bg-linear-to-r from-[#0B1630] to-[#0E1B38] border border-[#8B5CF6]/30 p-8 sm:p-10 space-y-8 shadow-2xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 text-xs font-mono text-[#8B5CF6] uppercase tracking-wider font-bold">
@@ -945,7 +1001,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
               Candidate Investigation: How Astronomers Find Moving Objects
             </h2>
             <p className="text-xs sm:text-sm text-[#A7B4CC] max-w-2xl">
-              Distant Solar System objects are discovered by taking photographs of the sky separated by weeks or months. Stars remain stationary, while orbiting bodies shift noticeably against the celestial background.
+              Distant Solar System objects are discovered by taking photographs of the sky separated by weeks or months. Stars remain stationary, while orbiting bodies shift noticeably against the celestial background. This interactive blink comparator is an educational simulation illustrating Clyde Tombaugh’s discovery method, not live telescope data.
             </p>
           </div>
 
@@ -1015,7 +1071,7 @@ export const PlanetXExplorer: FC<PlanetXExplorerProps> = ({ onNavigate }) => {
         {/* Interactive Blink Comparator Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-xl bg-[#050B1A] border border-[#1E293B] text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[#A7B4CC]">Blink Comparator (Tombaugh Technique):</span>
+            <span className="font-mono text-[#A7B4CC]">Blink Comparator (Educational Simulation • Tombaugh Technique):</span>
             <button
               onClick={() => setIsBlinkingAuto(!isBlinkingAuto)}
               className={`px-3 py-1 rounded-lg font-mono text-xs transition-all flex items-center gap-1.5 ${

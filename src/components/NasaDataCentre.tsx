@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, type FC } from 'react';
 import type { CatalogCategory, CatalogItem, AppPage } from '../types';
 import { fetchCatalogItems } from '../services/astronomyDataService';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
+import { AstronomicalImageGallery } from './astronomy-images/AstronomicalImageGallery';
 import { 
   Database, 
   Search, 
@@ -84,6 +86,16 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
       item.properties.some(p => String(p.value).toLowerCase().includes(q) || p.label.toLowerCase().includes(q))
     );
   }, [items, searchQuery]);
+
+  // Keyboard dismissal on Escape
+  useEffect(() => {
+    if (!activeModalItem) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveModalItem(null);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [activeModalItem]);
 
   return (
     <div className="min-h-screen bg-[#050B1A] text-[#F8FAFC] pb-24">
@@ -275,7 +287,7 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
               return (
                 <div
                   key={item.id}
-                  className="group flex flex-col justify-between bg-[#0B1630] hover:bg-[#0E1B38] border border-[#1E293B] hover:border-[#38BDF8]/40 rounded-2xl p-6 transition-all shadow-lg hover:shadow-2xl"
+                  className="card-interactive group flex flex-col justify-between bg-[#0B1630] hover:bg-[#0E1B38] border border-[#1E293B] hover:border-[#38BDF8]/40 rounded-2xl p-6 transition-all shadow-lg hover:shadow-2xl"
                 >
                   <div>
                     {/* Category & Status Badges */}
@@ -286,6 +298,24 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
                       <span className={`text-[10px] font-medium px-2.5 py-0.5 rounded-full border ${statusColorClass}`}>
                         {item.dataStatus}
                       </span>
+                    </div>
+
+                    {/* Visual Thumbnail */}
+                    <div className="mb-3 rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A] relative shadow-inner">
+                      <AstronomicalImage
+                        target={item}
+                        targetType={
+                          item.category === 'planets' ? 'planet' 
+                          : item.category === 'exoplanets' ? 'exoplanet'
+                          : item.category === 'small-bodies' ? 'small-body'
+                          : item.category === 'galaxies' ? 'galaxy'
+                          : item.category === 'stars' ? 'star'
+                          : 'observation'
+                        }
+                        aspectRatio="16/9"
+                        showBadge={true}
+                        className="w-full h-36 object-cover"
+                      />
                     </div>
 
                     {/* Object Name & Subtitle */}
@@ -306,7 +336,7 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
                       {item.properties.slice(0, 4).map((prop, idx) => (
                         <div key={idx} className="bg-[#050B1A]/60 rounded-lg p-2 border border-[#1E293B]/60">
                           <span className="text-[10px] text-[#64748B] block truncate">{prop.label}</span>
-                          <span className="font-semibold text-[#F8FAFC] truncate block mt-0.5">
+                          <span className="font-semibold text-[#F8FAFC] truncate block mt-0.5 font-mono tabular-nums">
                             {prop.value} {prop.unit && <span className="text-[10px] text-[#94A3B8] font-normal">{prop.unit}</span>}
                           </span>
                         </div>
@@ -347,7 +377,7 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
       {/* Detail Inspection Modal */}
       {activeModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl bg-[#0B1630] border border-[#1E293B] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-2xl bg-[#0B1630] border border-[#1E293B] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-enter">
             {/* Modal Header */}
             <div className="px-6 py-5 border-b border-[#1E293B] flex items-start justify-between gap-4">
               <div>
@@ -373,6 +403,21 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-6 text-sm">
+              {/* Astronomical Visual & Gallery */}
+              <div className="space-y-2">
+                <AstronomicalImageGallery
+                  target={activeModalItem}
+                  targetType={
+                    activeModalItem.category === 'planets' ? 'planet'
+                    : activeModalItem.category === 'exoplanets' ? 'exoplanet'
+                    : activeModalItem.category === 'small-bodies' ? 'small-body'
+                    : activeModalItem.category === 'galaxies' ? 'galaxy'
+                    : activeModalItem.category === 'stars' ? 'star'
+                    : 'observation'
+                  }
+                />
+              </div>
+
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[#64748B] mb-2">Scientific Overview</h4>
                 <p className="text-[#CBD5E1] leading-relaxed text-xs sm:text-sm">
@@ -392,7 +437,7 @@ export const NasaDataCentre: FC<NasaDataCentreProps> = ({ onNavigate }) => {
                         <th className="py-2.5 px-4 font-medium">Standard Unit</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#1E293B]">
+                    <tbody className="divide-y divide-[#1E293B] tabular-nums">
                       {activeModalItem.properties.map((prop, idx) => (
                         <tr key={idx} className="hover:bg-[#0B1630]/60">
                           <td className="py-2.5 px-4 text-[#94A3B8] font-medium">{prop.label}</td>

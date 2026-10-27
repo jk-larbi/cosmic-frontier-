@@ -9,6 +9,21 @@
   --accent-gold: #F5C451;
   --text-primary: #F8FAFC;
   --text-secondary: #A7B4CC;
+  --border-subtle: #1E293B;
+  --border-muted: #152238;
+
+  /* Standard Motion Design Tokens */
+  --motion-duration-micro: 120ms;
+  --motion-duration-fast: 200ms;
+  --motion-duration-normal: 300ms;
+  --motion-duration-panel: 450ms;
+  --motion-duration-transit: 600ms;
+  --motion-duration-scene: 750ms;
+
+  --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --motion-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-ease-snappy: cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 body {
@@ -18,6 +33,20 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular numbers for non-jittering telemetry & coordinates */
+.tabular-nums, .font-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scientific code & coordinate font */
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-feature-settings: "tnum" 1;
 }
 
 /* Subtle starfield effect */
@@ -33,31 +62,202 @@ body {
   background-size: 1000px 600px;
 }
 
-/* Subtle glow utility classes */
+/* Refined scientific glow utility classes (restrained opacity) */
 .glow-blue {
-  box-shadow: 0 0 25px -5px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 0 20px -5px rgba(56, 189, 248, 0.18);
 }
 
 .glow-purple {
-  box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.25);
+  box-shadow: 0 0 20px -5px rgba(139, 92, 246, 0.18);
 }
 
 .glow-gold {
-  box-shadow: 0 0 25px -5px rgba(245, 196, 81, 0.3);
+  box-shadow: 0 0 20px -5px rgba(245, 196, 81, 0.2);
+}
+
+/* Accessible focus visible ring */
+:focus-visible {
+  outline: 2px solid #38BDF8;
+  outline-offset: 2px;
 }
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: #050B1A;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1A284A;
+  background: #1E293B;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #253866;
+  background: #334155;
+}
+
+/* =========================================================================
+   MOTION DESIGN SYSTEM KEYFRAMES & UTILITIES
+   ========================================================================= */
+
+/* Calm scientific beacon breathing (replaces harsh animate-ping) */
+@keyframes beaconBreathe {
+  0%, 100% {
+    transform: scale(0.96);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1.0;
+  }
+}
+
+.beacon-pulse {
+  animation: beaconBreathe 2.4s ease-in-out infinite;
+}
+
+/* Linear radar sweep line */
+@keyframes radarSweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.radar-sweep {
+  animation: radarSweep 6s linear infinite;
+}
+
+/* Page entrance */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-enter {
+  animation: pageEnter var(--motion-duration-fast) var(--motion-ease-enter) forwards;
+}
+
+/* Dialog / Modal enter */
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.985) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-enter {
+  animation: modalEnter var(--motion-duration-normal) var(--motion-ease-enter) forwards;
+}
+
+/* AI Guide / Chat message entrance */
+@keyframes messageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-message-enter {
+  animation: messageEnter var(--motion-duration-fast) var(--motion-ease-enter) forwards;
+}
+
+/* Interactive Card Hover Feedback */
+.card-interactive {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-enter),
+              border-color var(--motion-duration-fast) ease,
+              box-shadow var(--motion-duration-fast) ease,
+              background-color var(--motion-duration-fast) ease;
+  will-change: transform;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+}
+
+/* Accessible Interactive Button Feedback */
+.button-interactive {
+  transition: transform var(--motion-duration-micro) var(--motion-ease-snappy),
+              background-color var(--motion-duration-micro) ease,
+              border-color var(--motion-duration-micro) ease,
+              box-shadow var(--motion-duration-micro) ease;
+}
+
+.button-interactive:active {
+  transform: scale(0.98);
+}
+
+/* Cross-fade view container */
+.view-crossfade {
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-in-out);
+}
+
+/* =========================================================================
+   ACCESSIBILITY: PREFERS-REDUCED-MOTION & MANUAL OVERRIDE
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .beacon-pulse,
+  .radar-sweep,
+  .animate-spin,
+  .animate-pulse,
+  .animate-bounce,
+  .animate-ping {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .card-interactive:hover,
+  .button-interactive:active {
+    transform: none !important;
+  }
+}
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+.reduce-motion .beacon-pulse,
+.reduce-motion .radar-sweep,
+.reduce-motion .animate-spin,
+.reduce-motion .animate-pulse,
+.reduce-motion .animate-bounce,
+.reduce-motion .animate-ping {
+  animation: none !important;
+  transform: none !important;
+}
+
+.reduce-motion .card-interactive:hover,
+.reduce-motion .button-interactive:active {
+  transform: none !important;
 }

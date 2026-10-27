@@ -1,11 +1,14 @@
 {
   "metadata": {
     "source": "NASA/IPAC Infrared Science Archive (IRSA) & SPHEREx Project Science Office",
-    "sourceUrl": "https://irsa.ipac.caltech.edu/",
-    "retrievalDateUTC": "2026-10-23T23:00:00Z",
+    "sourceUrl": "https://irsa.ipac.caltech.edu/Missions/spherex.html",
+    "retrievalDateUTC": "2026-10-24T22:00:00Z",
     "mission": "SPHEREx (Spectro-Photometer for the History of the Universe, Epoch of Reionization and Ices Explorer)",
-    "dataStatus": "Mission Specification & ObsCore Schema",
-    "description": "Verified SPHEREx spectral channels, focal plane detector arrays, and IRSA TAP Obscore product schemas."
+    "missionStatus": "Operational in Orbit (Launched March 2025; Quick Release 3 active since September 2026)",
+    "activeRelease": "Quick Release 3 (QR3)",
+    "releaseDoi": "10.26131/IRSA662",
+    "dataStatus": "Operational In-Flight Mission Products & IRSA TAP/SIA Schema (Quick Release 3)",
+    "description": "Verified SPHEREx in-flight spectral channels, detector arrays, Quick Release 3 Level 2 products, and IRSA TAP Obscore schemas."
   },
   "telescopeSpecifications": {
     "apertureDiameterCm": 20.0,
@@ -21,6 +24,20 @@
     "detectors": "Six 2048×2048 Teledyne Hawaii-2RG (H2RG) arrays with Linear Variable Filters (LVFs)",
     "orbit": "Sun-synchronous low Earth polar terminator orbit (altitude ~650 km)",
     "surveyCoverage": "All-sky 4π steradians surveyed every 6 months (4 complete all-sky maps over 2-year primary mission)"
+  },
+  "dataAccessProtocols": {
+    "irsaSiaUrl": "https://irsa.ipac.caltech.edu/SIA?COLLECTION=spherex_qr3",
+    "irsaTapUrl": "https://irsa.ipac.caltech.edu/TAP",
+    "awsS3Bucket": "s3://nasa-irsa-spherex/qr3/level2/",
+    "awsS3Region": "us-east-1",
+    "fitsStructure": [
+      { "hdu": 1, "extension": "IMAGE", "description": "Calibrated Spectral Image flux in MJy/sr" },
+      { "hdu": 2, "extension": "FLAGS", "description": "Pixel status & data quality bit-mask flags" },
+      { "hdu": 3, "extension": "VARIANCE", "description": "Variance map for photometric uncertainty propagation" },
+      { "hdu": 4, "extension": "ZODIACAL", "description": "Modeled zodiacal light foreground estimate" },
+      { "hdu": 5, "extension": "PSF", "description": "Exposure-averaged Point Spread Function model" },
+      { "hdu": 6, "extension": "WCS", "description": "Spatial and spectral wavelength World Coordinate System" }
+    ]
   },
   "primaryScienceTracers": [
     {
@@ -57,7 +74,7 @@
       "spherex.plane",
       "spherex.provenance_input"
     ],
-    "pipelineDataStatus": "Pre-Flight Calibration & Simulated Mission Cubes (Scheduled for post-launch operational release)"
+    "pipelineDataStatus": "In-Flight Quick Release 3 (QR3) Calibrated Spectral Images & Level 2 Products"
   }
 }
 

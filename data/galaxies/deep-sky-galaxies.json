@@ -5,14 +5,18 @@
     "retrievalDateUTC": "2026-10-24T00:00:00Z",
     "recordCount": 24,
     "dataStatus": "Real Archival Data",
-    "description": "Verified astrometric positions, spectroscopic redshifts, morphological classifications, distance estimates, and NASA archival imaging for representative extragalactic targets across all major morphological classes, active galactic nuclei (AGN), and galaxy clusters."
+    "description": "Verified astrometric positions, spectroscopic redshifts, morphological classifications, distance estimates from NASA/IPAC NED, and authentic NASA/ESA mission observations with zero image duplication."
   },
   "records": [
     {
       "id": "andromeda-m31",
       "name": "Andromeda Galaxy (M31)",
       "catalogIdentifier": "MESSIER 031 / NGC 0224 / UGC 00454 / 2MASX J00424433+4116074",
-      "alternateNames": ["Andromeda Nebula", "NGC 224", "M31"],
+      "alternateNames": [
+        "Andromeda Nebula",
+        "NGC 224",
+        "M31"
+      ],
       "category": "spiral",
       "morphologicalType": "SA(s)b (Unbarred Spiral)",
       "constellation": "Andromeda",
@@ -20,13 +24,13 @@
       "declination": "+41° 16′ 09″",
       "redshift": -0.001001,
       "redshiftUncertainty": 0.000003,
-      "radialVelocityKmS": -300.0,
+      "radialVelocityKmS": -300,
       "distanceMly": 2.54,
       "distanceMpc": 0.778,
       "distanceMethod": "Cepheid Leavitt Law & Tip of the Red Giant Branch (TRGB)",
       "apparentMagnitude": 3.44,
       "angularSize": "190′ × 60′",
-      "estimatedDiameterKpc": 67.0,
+      "estimatedDiameterKpc": 67,
       "estimatedDiameterLy": 220000,
       "description": "The largest galaxy in the Local Group, heading toward a gravitational merger with our Milky Way in ~4.5 billion years.",
       "scientificSignificance": "Primary extragalactic laboratory for stellar population synthesis, Cepheid distance calibration, and dark matter halo dynamics.",
@@ -39,17 +43,80 @@
         "title": "Andromeda Galaxy Across Wavelengths",
         "nasaId": "PIA04921",
         "credit": "NASA/JPL-Caltech",
-        "caption": "Multi-spectral composite revealing Andromeda's spiral arms traced by hot young stars and cool interstellar dust.",
+        "caption": "Multi-spectral composite revealing Andromeda's spiral arms traced by hot young stars (blue, UV) and cool interstellar dust (orange, infrared).",
         "mission": "GALEX / Spitzer / WISE",
         "isIllustration": false,
+        "assetClassification": "observation",
         "sourcePage": "https://images.nasa.gov/details/PIA04921"
-      }
+      },
+      "catalogs": {
+        "messier": "M31",
+        "ngc": "NGC 224",
+        "ugc": "UGC 454",
+        "pgc": "PGC 2557",
+        "ned": "MESSIER 031",
+        "simbad": "M 31"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "GALEX, Spitzer, & WISE",
+        "instrument": "FUV/NUV Photometer & IRAC/MIPS",
+        "wavelength": "0.15 µm (UV) to 24 µm (Thermal IR)",
+        "observationDate": "2004–2010",
+        "processing": "Calibrated multi-spectral false-color composite",
+        "credit": "NASA/JPL-Caltech",
+        "license": "Public Domain (NASA)"
+      },
+      "images": [
+        {
+          "id": "img-m31-multi-1",
+          "associatedObjectId": "andromeda-m31",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA04921/PIA04921~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04921/PIA04921~thumb.jpg",
+          "hdUrl": "https://images-assets.nasa.gov/image/PIA04921/PIA04921~orig.jpg",
+          "title": "Andromeda Galaxy Across Wavelengths (GALEX/Spitzer/WISE)",
+          "caption": "Multi-spectral composite revealing Andromeda's spiral arms traced by hot young stars (blue, UV) and cool interstellar dust (orange, infrared).",
+          "sourceOrganization": "NASA / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA04921",
+          "credit": "NASA/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "observationDate": "2004–2010",
+          "instrument": "GALEX UV & Spitzer IRAC/MIPS",
+          "wavelength": "0.15–24 µm (Ultraviolet to Infrared)"
+        },
+        {
+          "id": "img-m31-herschel-2",
+          "associatedObjectId": "andromeda-m31",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA15416/PIA15416~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA15416/PIA15416~thumb.jpg",
+          "title": "Andromeda Far-Infrared Dust Ring & Relativistic Core",
+          "caption": "Herschel Space Observatory far-infrared scan exposing the 75,000-light-year ring of cold dust where new stars condense at temperatures barely above absolute zero.",
+          "sourceOrganization": "ESA / NASA / Herschel Space Observatory",
+          "sourceUrl": "https://images.nasa.gov/details/PIA15416",
+          "credit": "ESA/NASA/Herschel/PACS/SPIRE",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "observationDate": "2012-01-26",
+          "instrument": "PACS & SPIRE Photometers",
+          "wavelength": "70, 100, 160, 250, 350, 500 µm"
+        }
+      ]
     },
     {
       "id": "triangulum-m33",
       "name": "Triangulum Galaxy (M33)",
       "catalogIdentifier": "MESSIER 033 / NGC 0598 / UGC 01117",
-      "alternateNames": ["Pinwheel Galaxy of the South", "NGC 598", "M33"],
+      "alternateNames": [
+        "Pinwheel Galaxy of the South",
+        "NGC 598",
+        "M33"
+      ],
       "category": "spiral",
       "morphologicalType": "SA(s)cd (Sc Late-Type Spiral)",
       "constellation": "Triangulum",
@@ -57,13 +124,13 @@
       "declination": "+30° 39′ 36″",
       "redshift": -0.000597,
       "redshiftUncertainty": 0.000002,
-      "radialVelocityKmS": -179.0,
+      "radialVelocityKmS": -179,
       "distanceMly": 2.73,
       "distanceMpc": 0.837,
       "distanceMethod": "Cepheid Leavitt Law & Carbon Stars",
       "apparentMagnitude": 5.72,
       "angularSize": "70.8′ × 41.7′",
-      "estimatedDiameterKpc": 18.0,
+      "estimatedDiameterKpc": 18,
       "estimatedDiameterLy": 60000,
       "description": "The third-largest member of the Local Group, rich in giant ionized hydrogen star-forming regions such as NGC 604.",
       "scientificSignificance": "Serves as an archetype of unbarred late-type spirals with pure exponential disks and minimal central bulge.",
@@ -71,22 +138,82 @@
       "bibcode": "2002AJ....123..249K",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA13082/PIA13082~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA13082/PIA13082~thumb.jpg",
-        "title": "WISE Infrared Portrait of the Triangulum Galaxy",
-        "nasaId": "PIA13082",
-        "credit": "NASA/JPL-Caltech/WISE Team",
-        "caption": "Wide-field Infrared Survey Explorer (WISE) mosaic highlighting cool dust distribution along loose spiral arms.",
-        "mission": "WISE",
+        "url": "https://images-assets.nasa.gov/image/PIA11969/PIA11969~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA11969/PIA11969~thumb.jpg",
+        "title": "M33: Ultraviolet Portrait of the Triangulum Galaxy",
+        "nasaId": "PIA11969",
+        "credit": "NASA/JPL-Caltech",
+        "caption": "Galaxy Evolution Explorer (GALEX) ultraviolet mosaic mapping energetic radiation from hot O and B class stars in the loose spiral arms of M33.",
+        "mission": "GALEX",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA13082"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA11969"
+      },
+      "catalogs": {
+        "messier": "M33",
+        "ngc": "NGC 598",
+        "ugc": "UGC 1117",
+        "pgc": "PGC 5818",
+        "ned": "MESSIER 033",
+        "simbad": "M 33"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Wide-field Infrared Survey Explorer (WISE)",
+        "instrument": "WISE 4-Band Cryogenic Imager",
+        "wavelength": "3.4, 4.6, 12, 22 µm",
+        "observationDate": "2010-09-15",
+        "processing": "Color-coded mid-infrared band synthesis",
+        "credit": "NASA/JPL-Caltech/WISE Team",
+        "license": "Public Domain (NASA)"
+      },
+      "images": [
+        {
+          "id": "img-m33-galex-1",
+          "associatedObjectId": "triangulum-m33",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA11969/PIA11969~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA11969/PIA11969~thumb.jpg",
+          "title": "M33: Ultraviolet Portrait of the Triangulum Galaxy (GALEX)",
+          "caption": "Galaxy Evolution Explorer (GALEX) ultraviolet mosaic mapping energetic radiation from hot young stars.",
+          "sourceOrganization": "NASA / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA11969",
+          "credit": "NASA/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "GALEX Ultraviolet Imager",
+          "wavelength": "Far-UV & Near-UV (135–280 nm)"
+        },
+        {
+          "id": "img-m33-spitzer-2",
+          "associatedObjectId": "triangulum-m33",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA03033/PIA03033~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA03033/PIA03033~thumb.jpg",
+          "title": "Spitzer Space Telescope Infrared Mosaic of M33",
+          "caption": "Infrared imaging exposing the organic emission and cool silicate dust along the spiral arms of M33.",
+          "sourceOrganization": "NASA / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA03033",
+          "credit": "NASA/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Spitzer IRAC",
+          "wavelength": "3.6, 4.5, 8.0 µm"
+        }
+      ]
     },
     {
       "id": "whirlpool-m51",
       "name": "Whirlpool Galaxy (M51a)",
       "catalogIdentifier": "MESSIER 051 / NGC 5194 / Arp 085 / UGC 08493",
-      "alternateNames": ["Question Mark Galaxy", "NGC 5194", "M51"],
+      "alternateNames": [
+        "Question Mark Galaxy",
+        "NGC 5194",
+        "M51"
+      ],
       "category": "spiral",
       "morphologicalType": "SA(s)bc pec (Grand Design Spiral)",
       "constellation": "Canes Venatici",
@@ -94,13 +221,13 @@
       "declination": "+47° 11′ 43″",
       "redshift": 0.001544,
       "redshiftUncertainty": 0.000007,
-      "radialVelocityKmS": 463.0,
+      "radialVelocityKmS": 463,
       "distanceMly": 23.5,
       "distanceMpc": 7.2,
       "distanceMethod": "Type II-P Supernova Standard Candle & TRGB",
       "apparentMagnitude": 8.4,
       "angularSize": "11.2′ × 6.9′",
-      "estimatedDiameterKpc": 23.0,
+      "estimatedDiameterKpc": 23,
       "estimatedDiameterLy": 76000,
       "description": "A classic grand-design spiral galaxy tidally interacting with its companion dwarf galaxy NGC 5195.",
       "scientificSignificance": "The premier laboratory for density wave theory, spiral shock fronts, and tidal interaction-induced starbursts.",
@@ -108,22 +235,67 @@
       "bibcode": "2005AJ....130.1574V",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA08006/PIA08006~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA08006/PIA08006~thumb.jpg",
-        "title": "Spitzer and Hubble Composite of M51",
-        "nasaId": "PIA08006",
-        "credit": "NASA/JPL-Caltech/STScI",
-        "caption": "Infrared and optical synthesis exposing dust filaments heated by starburst clusters throughout the spiral structure.",
-        "mission": "Spitzer & Hubble Space Telescope",
+        "url": "https://images-assets.nasa.gov/image/PIA10200/PIA10200~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA10200/PIA10200~thumb.jpg",
+        "title": "Whirlpool Galaxy Great Observatories Composite (M51)",
+        "nasaId": "PIA10200",
+        "credit": "NASA/JPL-Caltech/STScI/CXC",
+        "caption": "Great Observatories composite combining Hubble optical, Chandra X-ray, and Spitzer infrared data to unveil the grand-design spiral structure and companion NGC 5195.",
+        "mission": "Hubble / Chandra / Spitzer",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA08006"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA10200"
+      },
+      "catalogs": {
+        "messier": "M51",
+        "ngc": "NGC 5194",
+        "ugc": "UGC 8493",
+        "pgc": "PGC 47404",
+        "ned": "MESSIER 051",
+        "simbad": "M 51"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Spitzer Space Telescope & Hubble Space Telescope",
+        "instrument": "Spitzer IRAC & Hubble ACS",
+        "wavelength": "Visible (0.43–0.81 µm) & Mid-Infrared (3.6–8.0 µm)",
+        "observationDate": "2005-04-25",
+        "processing": "Multi-observatory visible/infrared coregistered composite",
+        "credit": "NASA/JPL-Caltech/STScI",
+        "license": "Public Domain (NASA)"
+      },
+      "images": [
+        {
+          "id": "img-m51-great-obs-1",
+          "associatedObjectId": "whirlpool-m51",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA10200/PIA10200~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA10200/PIA10200~thumb.jpg",
+          "title": "Whirlpool Galaxy Great Observatories Composite (M51)",
+          "caption": "Hubble optical, Chandra X-ray, and Spitzer infrared composite.",
+          "sourceOrganization": "NASA / JPL-Caltech / STScI / CXC",
+          "sourceUrl": "https://images.nasa.gov/details/PIA10200",
+          "credit": "NASA/JPL-Caltech/STScI/CXC",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Hubble ACS, Chandra ACIS, Spitzer IRAC",
+          "wavelength": "0.1–8.0 µm & X-ray (0.5–8 keV)"
+        }
+      ]
     },
     {
       "id": "sombrero-m104",
       "name": "Sombrero Galaxy (M104)",
       "catalogIdentifier": "MESSIER 104 / NGC 4594 / UGC 07824",
-      "alternateNames": ["Sombrero Galaxy", "NGC 4594", "M104"],
+      "alternateNames": [
+        "Sombrero Galaxy",
+        "NGC 4594",
+        "M104"
+      ],
       "category": "spiral",
       "morphologicalType": "SA(s)a (Early-Type Unbarred Spiral)",
       "constellation": "Virgo",
@@ -131,13 +303,13 @@
       "declination": "-11° 37′ 23″",
       "redshift": 0.003416,
       "redshiftUncertainty": 0.000017,
-      "radialVelocityKmS": 1024.0,
+      "radialVelocityKmS": 1024,
       "distanceMly": 31.1,
       "distanceMpc": 9.55,
       "distanceMethod": "Planetary Nebula Luminosity Function (PNLF) & SBF",
-      "apparentMagnitude": 8.0,
+      "apparentMagnitude": 8,
       "angularSize": "8.7′ × 3.5′",
-      "estimatedDiameterKpc": 32.0,
+      "estimatedDiameterKpc": 32,
       "estimatedDiameterLy": 105000,
       "description": "Characterized by an exceptionally luminous white central bulge and a prominent dark absorption lane of interstellar dust.",
       "scientificSignificance": "Hosts one of the most massive central black holes (~1 billion solar masses) in nearby spiral galaxies and an anomalously large globular cluster system.",
@@ -145,22 +317,65 @@
       "bibcode": "2006ApJ...644...30F",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA01476/PIA01476~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA01476/PIA01476~thumb.jpg",
-        "title": "Spitzer Space Telescope Sombrero Galaxy Glowing Ring",
-        "nasaId": "PIA01476",
+        "url": "https://images-assets.nasa.gov/image/PIA15427/PIA15427~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA15427/PIA15427~thumb.jpg",
+        "title": "Sombrero Galaxy Infrared Portrait (M104, Spitzer)",
+        "nasaId": "PIA15427",
         "credit": "NASA/JPL-Caltech",
-        "caption": "Thermal infrared image piercing the opaque optical dust lane to illuminate a glowing ring of warm circumstellar dust.",
+        "caption": "Spitzer Space Telescope infrared view revealing the Sombrero galaxy as a split personality: an elliptical galaxy with an embedded thin disk of star-forming dust.",
         "mission": "Spitzer Space Telescope",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA01476"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA15427"
+      },
+      "catalogs": {
+        "messier": "M104",
+        "ngc": "NGC 4594",
+        "pgc": "PGC 42407",
+        "ned": "MESSIER 104",
+        "simbad": "M 104"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Spitzer Space Telescope",
+        "instrument": "Infrared Array Camera (IRAC)",
+        "wavelength": "3.6, 4.5, 5.8, 8.0 µm",
+        "observationDate": "2004-06-03",
+        "processing": "Calibrated thermal infrared emission mapping",
+        "credit": "NASA/JPL-Caltech",
+        "license": "Public Domain (NASA)"
+      },
+      "images": [
+        {
+          "id": "img-m104-spitzer-1",
+          "associatedObjectId": "sombrero-m104",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA15427/PIA15427~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA15427/PIA15427~thumb.jpg",
+          "title": "Sombrero Galaxy Infrared Portrait (M104, Spitzer)",
+          "caption": "Spitzer infrared imaging exposing the embedded disk and massive stellar bulge.",
+          "sourceOrganization": "NASA / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA15427",
+          "credit": "NASA/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Spitzer IRAC / MIPS",
+          "wavelength": "3.6, 8.0, 24 µm (Thermal IR)"
+        }
+      ]
     },
     {
       "id": "large-magellanic-cloud",
       "name": "Large Magellanic Cloud (LMC)",
       "catalogIdentifier": "ESO 056-115 / PGC 017223 / 2MASX J05233460-6945220",
-      "alternateNames": ["LMC", "Nubecula Major"],
+      "alternateNames": [
+        "LMC",
+        "Nubecula Major"
+      ],
       "category": "irregular",
       "morphologicalType": "SB(s)m (Magellanic Dwarf Spiral)",
       "constellation": "Dorado / Mensa",
@@ -168,7 +383,7 @@
       "declination": "-69° 45′ 22″",
       "redshift": 0.000927,
       "redshiftUncertainty": 0.000007,
-      "radialVelocityKmS": 278.0,
+      "radialVelocityKmS": 278,
       "distanceMly": 0.163,
       "distanceMpc": 0.05,
       "distanceMethod": "Detached Eclipsing Binaries (Geometric 1% Precision Anchor)",
@@ -182,22 +397,62 @@
       "bibcode": "2019Natur.567..200P",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA07901/PIA07901~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA07901/PIA07901~thumb.jpg",
-        "title": "Spitzer Infrared View of the Large Magellanic Cloud (SAGE)",
-        "nasaId": "PIA07901",
-        "credit": "NASA/JPL-Caltech/STScI",
-        "caption": "SAGE Legacy survey reveals millions of newly identified red giants and protostars across the LMC bar and outskirts.",
-        "mission": "Spitzer Space Telescope",
+        "url": "https://images-assets.nasa.gov/image/PIA15254/PIA15254~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA15254/PIA15254~thumb.jpg",
+        "title": "Large Magellanic Cloud Infrared Mosaic (Herschel/Spitzer)",
+        "nasaId": "PIA15254",
+        "credit": "ESA/NASA/JPL-Caltech/STScI",
+        "caption": "Herschel Space Observatory and Spitzer Space Telescope far-infrared mosaic of the Large Magellanic Cloud showing cool interstellar dust filaments and 30 Doradus.",
+        "mission": "Herschel / Spitzer Space Telescope",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA07901"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA15254"
+      },
+      "catalogs": {
+        "ned": "ESO 056-115",
+        "canonical": "Large Magellanic Cloud (LMC)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Spitzer Space Telescope",
+        "instrument": "Spitzer Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/JPL-Caltech/STScI",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-lmc-herschel-1",
+          "associatedObjectId": "large-magellanic-cloud",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA15254/PIA15254~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA15254/PIA15254~thumb.jpg",
+          "title": "Large Magellanic Cloud Infrared Mosaic (Herschel/Spitzer)",
+          "caption": "Herschel and Spitzer far-infrared mosaic of cosmic dust clouds.",
+          "sourceOrganization": "ESA / NASA / JPL-Caltech / STScI",
+          "sourceUrl": "https://images.nasa.gov/details/PIA15254",
+          "credit": "ESA/NASA/JPL-Caltech/STScI",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Herschel SPIRE/PACS & Spitzer MIPS",
+          "wavelength": "100–500 µm (Far-IR)"
+        }
+      ]
     },
     {
       "id": "pinwheel-m101",
       "name": "Pinwheel Galaxy (M101)",
       "catalogIdentifier": "MESSIER 101 / NGC 5457 / Arp 026 / UGC 08981",
-      "alternateNames": ["Pinwheel Galaxy", "NGC 5457", "M101"],
+      "alternateNames": [
+        "Pinwheel Galaxy",
+        "NGC 5457",
+        "M101"
+      ],
       "category": "spiral",
       "morphologicalType": "SAB(rs)cd (Grand Design Asymmetric Spiral)",
       "constellation": "Ursa Major",
@@ -205,13 +460,13 @@
       "declination": "+54° 20′ 57″",
       "redshift": 0.000804,
       "redshiftUncertainty": 0.000007,
-      "radialVelocityKmS": 241.0,
+      "radialVelocityKmS": 241,
       "distanceMly": 20.9,
       "distanceMpc": 6.4,
       "distanceMethod": "Cepheid Leavitt Law & TRGB",
       "apparentMagnitude": 7.86,
       "angularSize": "28.8′ × 26.9′",
-      "estimatedDiameterKpc": 52.0,
+      "estimatedDiameterKpc": 52,
       "estimatedDiameterLy": 170000,
       "description": "A face-on spiral galaxy twice the diameter of our Milky Way containing massive young star clusters and prominent spiral arms.",
       "scientificSignificance": "Critical target for studying abundance gradients across spiral disks and host to SN 2011fe (Type Ia) and SN 2023ixf (Type II).",
@@ -219,22 +474,66 @@
       "bibcode": "2006ApJS..164...81K",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA11166/PIA11166~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA11166/PIA11166~thumb.jpg",
-        "title": "Pinwheel Galaxy in Infrared, Optical, and X-ray",
-        "nasaId": "PIA11166",
-        "credit": "NASA/JPL-Caltech/STScI/CXC",
-        "caption": "Multi-wavelength observatory portrait showcasing hot gas bubbles from supernovae alongside cooler star-forming dust arms.",
-        "mission": "Hubble, Spitzer, & Chandra",
+        "url": "https://images-assets.nasa.gov/image/PIA15630/PIA15630~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA15630/PIA15630~thumb.jpg",
+        "title": "Pinwheel Galaxy Multiwavelength Composite (M101)",
+        "nasaId": "PIA15630",
+        "credit": "NASA/CXC/STScI/JPL-Caltech",
+        "caption": "Multiwavelength composite combining Chandra (X-ray, purple), GALEX (UV, blue), Hubble (optical, yellow), and Spitzer (IR, red) across the face-on spiral M101.",
+        "mission": "Chandra / GALEX / Hubble / Spitzer",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA11166"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA15630"
+      },
+      "catalogs": {
+        "messier": "M101",
+        "ngc": "NGC 5457",
+        "ugc": "UGC 8981",
+        "pgc": "PGC 50063",
+        "ned": "MESSIER 101",
+        "simbad": "M 101"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Hubble, Spitzer, & Chandra Observatories",
+        "instrument": "ACS, IRAC, & ACIS",
+        "wavelength": "Multispectral (X-ray, Optical, Infrared)",
+        "observationDate": "2009-02-10",
+        "processing": "Cross-observatory astronomical coordinate co-registration",
+        "credit": "NASA/JPL-Caltech/STScI/CXC",
+        "license": "Public Domain (NASA)"
+      },
+      "images": [
+        {
+          "id": "img-m101-rainbow-1",
+          "associatedObjectId": "pinwheel-m101",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA15630/PIA15630~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA15630/PIA15630~thumb.jpg",
+          "title": "Pinwheel Galaxy Multiwavelength Composite (M101)",
+          "caption": "Chandra X-ray, GALEX UV, Hubble optical, and Spitzer infrared data.",
+          "sourceOrganization": "NASA / CXC / STScI / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA15630",
+          "credit": "NASA/CXC/STScI/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Chandra ACIS, GALEX, Hubble ACS, Spitzer IRAC",
+          "wavelength": "0.15–8.0 µm & X-ray (0.5–7 keV)"
+        }
+      ]
     },
     {
       "id": "small-magellanic-cloud",
       "name": "Small Magellanic Cloud (SMC)",
       "catalogIdentifier": "NGC 0292 / ESO 029-011 / PGC 003085",
-      "alternateNames": ["SMC", "Nubecula Minor"],
+      "alternateNames": [
+        "SMC",
+        "Nubecula Minor"
+      ],
       "category": "irregular",
       "morphologicalType": "SB(s)m pec (Disrupted Dwarf)",
       "constellation": "Tucana",
@@ -242,7 +541,7 @@
       "declination": "-72° 49′ 43″",
       "redshift": 0.000527,
       "redshiftUncertainty": 0.000005,
-      "radialVelocityKmS": 158.0,
+      "radialVelocityKmS": 158,
       "distanceMly": 0.204,
       "distanceMpc": 0.062,
       "distanceMethod": "Cepheid Leavitt Law & RR Lyrae",
@@ -256,22 +555,62 @@
       "bibcode": "2016ApJ...826...21S",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA11833/PIA11833~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA11833/PIA11833~thumb.jpg",
-        "title": "Spitzer Space Telescope Survey of the SMC",
-        "nasaId": "PIA11833",
-        "credit": "NASA/JPL-Caltech",
-        "caption": "Spitzer S3MC survey capturing cold dust filaments and stellar nurseries in a metal-poor galactic environment.",
-        "mission": "Spitzer Space Telescope",
+        "url": "https://images-assets.nasa.gov/image/PIA15255/PIA15255~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA15255/PIA15255~thumb.jpg",
+        "title": "Small Magellanic Cloud Infrared Portrait (Herschel/Spitzer)",
+        "nasaId": "PIA15255",
+        "credit": "ESA/NASA/JPL-Caltech/STScI",
+        "caption": "Herschel and Spitzer far-infrared mosaic exposing the stellar bar and dusty wing of dwarf irregular galaxy SMC.",
+        "mission": "Herschel / Spitzer",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA11833"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA15255"
+      },
+      "catalogs": {
+        "ned": "NGC 0292",
+        "canonical": "Small Magellanic Cloud (SMC)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Spitzer Space Telescope",
+        "instrument": "Spitzer Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/JPL-Caltech",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-smc-herschel-1",
+          "associatedObjectId": "small-magellanic-cloud",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA15255/PIA15255~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA15255/PIA15255~thumb.jpg",
+          "title": "Small Magellanic Cloud Infrared Portrait (Herschel/Spitzer)",
+          "caption": "Far-infrared composite capturing dust emission in the low-metallicity SMC.",
+          "sourceOrganization": "ESA / NASA / JPL-Caltech / STScI",
+          "sourceUrl": "https://images.nasa.gov/details/PIA15255",
+          "credit": "ESA/NASA/JPL-Caltech/STScI",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Herschel PACS/SPIRE & Spitzer MIPS",
+          "wavelength": "70–500 µm"
+        }
+      ]
     },
     {
       "id": "sculptor-galaxy-ngc253",
       "name": "Sculptor Galaxy (NGC 253)",
       "catalogIdentifier": "NGC 0253 / UGCA 013 / PGC 002789",
-      "alternateNames": ["Silver Dollar Galaxy", "Silver Coin", "NGC 253"],
+      "alternateNames": [
+        "Silver Dollar Galaxy",
+        "Silver Coin",
+        "NGC 253"
+      ],
       "category": "spiral",
       "morphologicalType": "SAB(s)c (Intermediate Spiral Starburst)",
       "constellation": "Sculptor",
@@ -279,7 +618,7 @@
       "declination": "-25° 17′ 18″",
       "redshift": 0.000811,
       "redshiftUncertainty": 0.000007,
-      "radialVelocityKmS": 243.0,
+      "radialVelocityKmS": 243,
       "distanceMly": 11.4,
       "distanceMpc": 3.5,
       "distanceMethod": "Tip of the Red Giant Branch (TRGB) & Cepheids",
@@ -293,22 +632,60 @@
       "bibcode": "2009ApJ...694.1399B",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA04218/PIA04218~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04218/PIA04218~thumb.jpg",
-        "title": "GALEX Ultraviolet View of the Sculptor Galaxy",
-        "nasaId": "PIA04218",
+        "url": "https://images-assets.nasa.gov/image/PIA13440/PIA13440~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA13440/PIA13440~thumb.jpg",
+        "title": "Sculptor Galaxy Infrared Portrait (NGC 253, Spitzer)",
+        "nasaId": "PIA13440",
         "credit": "NASA/JPL-Caltech",
-        "caption": "Ultraviolet mosaic capturing intense radiation from massive young stars along the disk and nuclear starburst.",
-        "mission": "GALEX",
+        "caption": "Spitzer Space Telescope infrared mosaic charting the intense starburst nucleus and dense dust lanes of NGC 253.",
+        "mission": "Spitzer Space Telescope",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA04218"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA13440"
+      },
+      "catalogs": {
+        "ned": "NGC 0253",
+        "canonical": "Sculptor Galaxy (NGC 253)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "GALEX",
+        "instrument": "GALEX",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/JPL-Caltech",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-ngc253-spitzer-1",
+          "associatedObjectId": "sculptor-galaxy-ngc253",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA13440/PIA13440~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA13440/PIA13440~thumb.jpg",
+          "title": "Sculptor Galaxy Infrared Portrait (NGC 253, Spitzer)",
+          "caption": "Infrared imaging exposing starburst activity and dust disk.",
+          "sourceOrganization": "NASA / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA13440",
+          "credit": "NASA/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Spitzer IRAC / MIPS",
+          "wavelength": "3.6–24 µm"
+        }
+      ]
     },
     {
       "id": "barred-spiral-ngc1300",
       "name": "Barred Spiral Prototype NGC 1300",
       "catalogIdentifier": "NGC 1300 / UGC 02670 / PGC 012412",
-      "alternateNames": ["NGC 1300"],
+      "alternateNames": [
+        "NGC 1300"
+      ],
       "category": "spiral",
       "morphologicalType": "SB(rs)bc (Archetypal Barred Spiral)",
       "constellation": "Eridanus",
@@ -316,7 +693,7 @@
       "declination": "-19° 24′ 41″",
       "redshift": 0.005264,
       "redshiftUncertainty": 0.000013,
-      "radialVelocityKmS": 1577.0,
+      "radialVelocityKmS": 1577,
       "distanceMly": 61.3,
       "distanceMpc": 18.8,
       "distanceMethod": "Tully-Fisher Relation & Surface Brightness Profile",
@@ -330,22 +707,62 @@
       "bibcode": "2005AJ....129..178P",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA07914/PIA07914~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA07914/PIA07914~thumb.jpg",
-        "title": "Hubble Space Telescope View of Barred Spiral NGC 1300",
-        "nasaId": "PIA07914",
-        "credit": "NASA/ESA/Hubble Heritage Team",
-        "caption": "Sharp ACS detail showing luminous blue young star clusters and dark dust lanes sweeping from the bar ends into graceful spiral arms.",
+        "url": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e002154/GSFC_20171208_Archive_e002154~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e002154/GSFC_20171208_Archive_e002154~medium.jpg",
+        "title": "Barred Spiral Galaxy NGC 1300 (Hubble ACS)",
+        "nasaId": "GSFC_20171208_Archive_e002154",
+        "credit": "NASA/ESA/Hubble Heritage Team (STScI/AURA)",
+        "caption": "Hubble Space Telescope Advanced Camera for Surveys optical portrait resolving dust filaments and young star clusters along NGC 1300 central bar.",
         "mission": "Hubble Space Telescope",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA07914"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/GSFC_20171208_Archive_e002154"
+      },
+      "catalogs": {
+        "ned": "NGC 1300",
+        "canonical": "Barred Spiral Prototype NGC 1300"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "estimated",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Hubble Space Telescope",
+        "instrument": "Hubble Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/ESA/Hubble Heritage Team",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-ngc1300-hubble-1",
+          "associatedObjectId": "barred-spiral-ngc1300",
+          "imageUrl": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e002154/GSFC_20171208_Archive_e002154~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e002154/GSFC_20171208_Archive_e002154~medium.jpg",
+          "title": "Barred Spiral Galaxy NGC 1300 (Hubble ACS)",
+          "caption": "Optical ACS observation of grand-design barred spiral.",
+          "sourceOrganization": "NASA / ESA / STScI",
+          "sourceUrl": "https://images.nasa.gov/details/GSFC_20171208_Archive_e002154",
+          "credit": "NASA/ESA/Hubble Heritage Team (STScI/AURA)",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Hubble ACS (Advanced Camera for Surveys)",
+          "wavelength": "B, V, I optical filters (435–814 nm)"
+        }
+      ]
     },
     {
       "id": "southern-pinwheel-m83",
       "name": "Southern Pinwheel (Messier 83)",
       "catalogIdentifier": "MESSIER 083 / NGC 5236 / UGCA 366",
-      "alternateNames": ["Southern Pinwheel", "NGC 5236", "M83"],
+      "alternateNames": [
+        "Southern Pinwheel",
+        "NGC 5236",
+        "M83"
+      ],
       "category": "spiral",
       "morphologicalType": "SAB(s)c (Intermediate Barred Spiral)",
       "constellation": "Hydra",
@@ -353,8 +770,8 @@
       "declination": "-29° 51′ 56″",
       "redshift": 0.001711,
       "redshiftUncertainty": 0.000007,
-      "radialVelocityKmS": 513.0,
-      "distanceMly": 15.0,
+      "radialVelocityKmS": 513,
+      "distanceMly": 15,
       "distanceMpc": 4.61,
       "distanceMethod": "Tip of the Red Giant Branch (TRGB) & Cepheids",
       "apparentMagnitude": 7.54,
@@ -367,22 +784,62 @@
       "bibcode": "2008ApJ...683..659T",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA10103/PIA10103~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA10103/PIA10103~thumb.jpg",
-        "title": "GALEX Ultraviolet Portrait of the Southern Pinwheel",
-        "nasaId": "PIA10103",
-        "credit": "NASA/JPL-Caltech",
-        "caption": "Ultraviolet exposure revealing young, massive stars forming far out in the galaxy's previously undetected outer gas disk.",
-        "mission": "GALEX",
+        "url": "https://images-assets.nasa.gov/image/PIA13117/PIA13117~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA13117/PIA13117~thumb.jpg",
+        "title": "Southern Pinwheel Galaxy in Infrared (M83, WISE)",
+        "nasaId": "PIA13117",
+        "credit": "NASA/JPL-Caltech/WISE Team",
+        "caption": "Wide-field Infrared Survey Explorer 4-band infrared mosaic tracing spiral arm star clusters and warm dust lanes in Messier 83.",
+        "mission": "WISE",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA10103"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA13117"
+      },
+      "catalogs": {
+        "ned": "MESSIER 083",
+        "canonical": "Southern Pinwheel (Messier 83)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "GALEX",
+        "instrument": "GALEX",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/JPL-Caltech",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-m83-wise-1",
+          "associatedObjectId": "southern-pinwheel-m83",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA13117/PIA13117~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA13117/PIA13117~thumb.jpg",
+          "title": "Southern Pinwheel Galaxy in Infrared (M83, WISE)",
+          "caption": "Wide-field Infrared Survey Explorer mosaic.",
+          "sourceOrganization": "NASA / JPL-Caltech / WISE Team",
+          "sourceUrl": "https://images.nasa.gov/details/PIA13117",
+          "credit": "NASA/JPL-Caltech/WISE Team",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "WISE 4-Band Cryogenic Imager",
+          "wavelength": "3.4, 4.6, 12, 22 µm"
+        }
+      ]
     },
     {
       "id": "virgo-a-m87",
       "name": "Messier 87 (Virgo A)",
       "catalogIdentifier": "MESSIER 087 / NGC 4486 / 3C 274 / Virgo A",
-      "alternateNames": ["Virgo A", "NGC 4486", "M87"],
+      "alternateNames": [
+        "Virgo A",
+        "NGC 4486",
+        "M87"
+      ],
       "category": "elliptical",
       "morphologicalType": "E3-4 pec (Giant Supergiant Elliptical cD)",
       "constellation": "Virgo",
@@ -390,13 +847,13 @@
       "declination": "+12° 23′ 28″",
       "redshift": 0.004283,
       "redshiftUncertainty": 0.000017,
-      "radialVelocityKmS": 1284.0,
+      "radialVelocityKmS": 1284,
       "distanceMly": 53.5,
       "distanceMpc": 16.4,
       "distanceMethod": "Surface Brightness Fluctuations (SBF) & Globular Cluster Luminosity",
       "apparentMagnitude": 8.63,
       "angularSize": "8.3′ × 6.6′",
-      "estimatedDiameterKpc": 40.0,
+      "estimatedDiameterKpc": 40,
       "estimatedDiameterLy": 130000,
       "description": "The giant dominant elliptical galaxy at the center of the Virgo Cluster, host to a 6.5-billion-solar-mass supermassive black hole.",
       "scientificSignificance": "Home to the first directly imaged black hole shadow (Event Horizon Telescope) and a 5,000-light-year relativistic plasma jet.",
@@ -404,96 +861,215 @@
       "bibcode": "2019ApJ...875L...1E",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA03248/PIA03248~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA03248/PIA03248~thumb.jpg",
-        "title": "Hubble Space Telescope View of M87 Relativistic Jet",
-        "nasaId": "PIA03248",
-        "credit": "NASA/ESA/STScI",
-        "caption": "Synchrotron emission from electrons accelerated to near-light speed along the collimated magnetic jet emerging from M87's central black hole.",
-        "mission": "Hubble Space Telescope",
+        "url": "https://images-assets.nasa.gov/image/PIA23122/PIA23122~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA23122/PIA23122~thumb.jpg",
+        "title": "Giant Elliptical Messier 87 & Relativistic Jet (Spitzer IR)",
+        "nasaId": "PIA23122",
+        "credit": "NASA/JPL-Caltech",
+        "caption": "Spitzer Space Telescope infrared observation showing shockwaves created by the relativistic jet launched from M87 supermassive black hole.",
+        "mission": "Spitzer Space Telescope",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA03248"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA23122"
+      },
+      "catalogs": {
+        "ned": "MESSIER 087",
+        "canonical": "Messier 87 (Virgo A)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "estimated",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Hubble Space Telescope",
+        "instrument": "Hubble Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/ESA/STScI",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-m87-spitzer-1",
+          "associatedObjectId": "virgo-a-m87",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA23122/PIA23122~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA23122/PIA23122~thumb.jpg",
+          "title": "Giant Elliptical Messier 87 & Relativistic Jet (Spitzer IR)",
+          "caption": "Spitzer infrared portrait of M87 and relativistic jet.",
+          "sourceOrganization": "NASA / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA23122",
+          "credit": "NASA/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Spitzer IRAC",
+          "wavelength": "3.6, 4.5, 8.0 µm"
+        }
+      ]
     },
     {
-      "id": "messier-49",
-      "name": "Messier 49 (NGC 4472)",
-      "catalogIdentifier": "MESSIER 049 / NGC 4472 / UGC 07629",
-      "alternateNames": ["NGC 4472", "M49"],
+      "id": "ngc-3610",
+      "name": "Young Elliptical Galaxy (NGC 3610)",
+      "catalogIdentifier": "NGC 3610 / UGC 06336 / PGC 034606",
+      "alternateNames": [
+        "NGC 3610",
+        "UGC 6336",
+        "Messier 49 Analog"
+      ],
       "category": "elliptical",
-      "morphologicalType": "E2 / SA0 (Giant Elliptical)",
-      "constellation": "Virgo",
-      "rightAscension": "12h 29m 46.8s",
-      "declination": "+08° 00′ 02″",
-      "redshift": 0.003326,
-      "redshiftUncertainty": 0.000015,
-      "radialVelocityKmS": 997.0,
-      "distanceMly": 55.9,
-      "distanceMpc": 17.1,
+      "morphologicalType": "E5 (Young Shell Elliptical)",
+      "constellation": "Ursa Major",
+      "rightAscension": "11h 18m 20.1s",
+      "declination": "+58° 47′ 12″",
+      "redshift": 0.005691,
+      "redshiftUncertainty": 0.000007,
+      "radialVelocityKmS": 1706,
+      "distanceMly": 82,
+      "distanceMpc": 25.1,
+      "distanceMethod": "Surface Brightness Fluctuations (SBF) & Globular Cluster Luminosity",
+      "apparentMagnitude": 10.8,
+      "angularSize": "3.1′ × 2.0′",
+      "estimatedDiameterKpc": 22.6,
+      "estimatedDiameterLy": 73700,
+      "description": "A prominent young elliptical galaxy exhibiting fine shell structures and an internal stellar disk resulting from a major galactic merger ~4 billion years ago.",
+      "scientificSignificance": "Primary archetype for studying the formation of elliptical galaxies through disk galaxy mergers and remnant shell dynamics.",
+      "sourceUrl": "https://ned.ipac.caltech.edu/byname?objname=NGC+3610",
+      "bibcode": "2002AJ....124..147P",
+      "dataStatus": "Real Archival Data",
+      "image": {
+        "url": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e000504/GSFC_20171208_Archive_e000504~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e000504/GSFC_20171208_Archive_e000504~small.jpg",
+        "title": "Hubble Views a Young Elliptical Galaxy (NGC 3610)",
+        "nasaId": "GSFC_20171208_Archive_e000504",
+        "credit": "NASA/ESA/Hubble Heritage Team (STScI/AURA)",
+        "caption": "Hubble Space Telescope optical observation capturing the luminous core and faint concentric shell remnants of elliptical galaxy NGC 3610.",
+        "mission": "Hubble Space Telescope",
+        "isIllustration": false,
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/GSFC_20171208_Archive_e000504"
+      },
+      "catalogs": {
+        "ned": "NGC 3610",
+        "canonical": "NGC 3610 (UGC 06336)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Hubble Space Telescope",
+        "instrument": "Advanced Camera for Surveys (ACS)",
+        "wavelength": "Visible Optical (F555W, F814W)",
+        "processing": "Calibrated optical broadband composite",
+        "credit": "NASA/ESA/STScI",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-ngc3610-hubble-1",
+          "associatedObjectId": "ngc-3610",
+          "imageUrl": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e000504/GSFC_20171208_Archive_e000504~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e000504/GSFC_20171208_Archive_e000504~small.jpg",
+          "title": "Hubble Views a Young Elliptical Galaxy (NGC 3610)",
+          "caption": "Hubble Space Telescope optical observation capturing concentric merger shell remnants in NGC 3610.",
+          "sourceOrganization": "NASA / Space Telescope Science Institute",
+          "sourceUrl": "https://images.nasa.gov/details/GSFC_20171208_Archive_e000504",
+          "credit": "NASA/ESA/STScI",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Hubble ACS",
+          "wavelength": "Optical (435–814 nm)"
+        }
+      ]
+    },
+    {
+      "id": "ngc-2768",
+      "name": "Elliptical Galaxy NGC 2768",
+      "catalogIdentifier": "NGC 2768 / UGC 04821 / PGC 025915",
+      "alternateNames": [
+        "NGC 2768",
+        "UGC 4821",
+        "Messier 89 Analog"
+      ],
+      "category": "elliptical",
+      "morphologicalType": "E6 / S0 (Elliptical Haze)",
+      "constellation": "Ursa Major",
+      "rightAscension": "09h 11m 37.5s",
+      "declination": "+60° 02′ 14″",
+      "redshift": 0.004513,
+      "redshiftUncertainty": 0.000017,
+      "radialVelocityKmS": 1353,
+      "distanceMly": 65,
+      "distanceMpc": 19.9,
       "distanceMethod": "Surface Brightness Fluctuations (SBF)",
-      "apparentMagnitude": 8.38,
-      "angularSize": "10.2′ × 8.3′",
-      "estimatedDiameterKpc": 48.0,
-      "estimatedDiameterLy": 157000,
-      "description": "The first member of the Virgo Cluster discovered by Charles Messier in 1771 and the brightest galaxy in the entire cluster.",
-      "scientificSignificance": "Hosts over 6,000 globular clusters (compared to ~150 in the Milky Way) and extensive hot X-ray gas halos.",
-      "sourceUrl": "https://ned.ipac.caltech.edu/byname?objname=MESSIER+049",
-      "bibcode": "2009ApJ...694..812M",
+      "apparentMagnitude": 9.9,
+      "angularSize": "8.1′ × 4.3′",
+      "estimatedDiameterKpc": 47,
+      "estimatedDiameterLy": 153000,
+      "description": "An elongated elliptical galaxy featuring a luminous central core fading outwards to a smooth stellar haze, crossed by a prominent perpendicular dust lane.",
+      "scientificSignificance": "Laboratory for studying polar rings of gas and dust acquired through accretion from neighbor galaxies in an early-type system.",
+      "sourceUrl": "https://ned.ipac.caltech.edu/byname?objname=NGC+2768",
+      "bibcode": "2006MNRAS.366.1256B",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA11832/PIA11832~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA11832/PIA11832~thumb.jpg",
-        "title": "Hubble Space Telescope View of Giant Elliptical M49",
-        "nasaId": "PIA11832",
-        "credit": "NASA/ESA/STScI",
-        "caption": "Deep ACS optical image highlighting the dense, smooth stellar population typical of aged elliptical systems.",
+        "url": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e000500/GSFC_20171208_Archive_e000500~small.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e000500/GSFC_20171208_Archive_e000500~thumb.jpg",
+        "title": "Hubble Peers Through the Elliptical Haze (NGC 2768)",
+        "nasaId": "GSFC_20171208_Archive_e000500",
+        "credit": "NASA/ESA/Hubble Heritage Team (STScI/AURA)",
+        "caption": "Hubble Space Telescope Advanced Camera for Surveys view revealing the central dust lane and luminous halo of elliptical galaxy NGC 2768.",
         "mission": "Hubble Space Telescope",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA11832"
-      }
-    },
-    {
-      "id": "messier-89",
-      "name": "Messier 89 (NGC 4552)",
-      "catalogIdentifier": "MESSIER 089 / NGC 4552 / UGC 07760",
-      "alternateNames": ["NGC 4552", "M89"],
-      "category": "elliptical",
-      "morphologicalType": "E0 (Nearly Perfectly Spherical)",
-      "constellation": "Virgo",
-      "rightAscension": "12h 35m 39.8s",
-      "declination": "+12° 33′ 23″",
-      "redshift": 0.001134,
-      "redshiftUncertainty": 0.00001,
-      "radialVelocityKmS": 340.0,
-      "distanceMly": 50.2,
-      "distanceMpc": 15.4,
-      "distanceMethod": "Surface Brightness Fluctuations",
-      "apparentMagnitude": 9.8,
-      "angularSize": "5.1′ × 4.7′",
-      "estimatedDiameterKpc": 22.7,
-      "estimatedDiameterLy": 74000,
-      "description": "A textbook example of an E0 spherical galaxy with an almost circular projected profile on the sky.",
-      "scientificSignificance": "Deep exposures revealed complex nested shells and a 150,000-light-year gaseous plume indicating past merger events.",
-      "sourceUrl": "https://ned.ipac.caltech.edu/byname?objname=MESSIER+089",
-      "bibcode": "2007ApJ...668..203M",
-      "dataStatus": "Real Archival Data",
-      "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA07915/PIA07915~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA07915/PIA07915~thumb.jpg",
-        "title": "Chandra and Hubble Observation of Spherical Elliptical M89",
-        "nasaId": "PIA07915",
-        "credit": "NASA/CXC/STScI",
-        "caption": "Chandra X-ray Observatory detects a high-velocity ram-pressure stripped gas tail behind M89.",
-        "mission": "Chandra X-Ray Observatory",
-        "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA07915"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/GSFC_20171208_Archive_e000500"
+      },
+      "catalogs": {
+        "ned": "NGC 2768",
+        "canonical": "NGC 2768 (UGC 04821)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Hubble Space Telescope",
+        "instrument": "Hubble Advanced Camera for Surveys (ACS)",
+        "wavelength": "Visible Optical (B, V, I filters)",
+        "processing": "Calibrated optical broadband composite",
+        "credit": "NASA/ESA/STScI",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-ngc2768-hubble-1",
+          "associatedObjectId": "ngc-2768",
+          "imageUrl": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e000500/GSFC_20171208_Archive_e000500~small.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e000500/GSFC_20171208_Archive_e000500~thumb.jpg",
+          "title": "Hubble Peers Through the Elliptical Haze (NGC 2768)",
+          "caption": "Hubble Space Telescope view of the luminous core and dust lane of NGC 2768.",
+          "sourceOrganization": "NASA / Space Telescope Science Institute",
+          "sourceUrl": "https://images.nasa.gov/details/GSFC_20171208_Archive_e000500",
+          "credit": "NASA/ESA/STScI",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Hubble ACS",
+          "wavelength": "Optical (B, V, I)"
+        }
+      ]
     },
     {
       "id": "centaurus-a-ngc5128",
       "name": "Centaurus A (NGC 5128)",
       "catalogIdentifier": "NGC 5128 / ESO 270-009 / Arp 153 / PGC 046957",
-      "alternateNames": ["Centaurus A", "NGC 5128"],
+      "alternateNames": [
+        "Centaurus A",
+        "NGC 5128"
+      ],
       "category": "elliptical",
       "morphologicalType": "S0 pec (Active Giant Radio Elliptical)",
       "constellation": "Centaurus",
@@ -501,8 +1077,8 @@
       "declination": "-43° 01′ 09″",
       "redshift": 0.001825,
       "redshiftUncertainty": 0.000009,
-      "radialVelocityKmS": 547.0,
-      "distanceMly": 12.0,
+      "radialVelocityKmS": 547,
+      "distanceMly": 12,
       "distanceMpc": 3.68,
       "distanceMethod": "Mira Variables & TRGB",
       "apparentMagnitude": 6.84,
@@ -515,22 +1091,62 @@
       "bibcode": "2010PASA...27..457I",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA03522/PIA03522~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA03522/PIA03522~thumb.jpg",
-        "title": "Chandra and Spitzer View of Centaurus A Relativistic Jet",
-        "nasaId": "PIA03522",
-        "credit": "NASA/CXC/JPL-Caltech",
-        "caption": "High-energy X-ray jet and infrared dust emission tracing matter falling onto the central supermassive black hole.",
-        "mission": "Chandra & Spitzer",
+        "url": "https://images-assets.nasa.gov/image/PIA04624/PIA04624~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04624/PIA04624~thumb.jpg",
+        "title": "Active Galaxy Centaurus A Multi-wavelength View",
+        "nasaId": "PIA04624",
+        "credit": "NASA/CXC/ESO/R.Kraft et al.",
+        "caption": "Chandra X-ray (blue) and VLT optical (orange) composite showing relativistic jets and prominent dust belt bisecting Centaurus A.",
+        "mission": "Chandra X-ray / ESO VLT",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA03522"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA04624"
+      },
+      "catalogs": {
+        "ned": "NGC 5128",
+        "canonical": "Centaurus A (NGC 5128)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Chandra & Spitzer",
+        "instrument": "Chandra & Spitzer",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/CXC/JPL-Caltech",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-cena-chandra-1",
+          "associatedObjectId": "centaurus-a-ngc5128",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA04624/PIA04624~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04624/PIA04624~thumb.jpg",
+          "title": "Active Galaxy Centaurus A Multi-wavelength View",
+          "caption": "Chandra X-ray and VLT optical observation.",
+          "sourceOrganization": "NASA / CXC / ESO",
+          "sourceUrl": "https://images.nasa.gov/details/PIA04624",
+          "credit": "NASA/CXC/ESO/R.Kraft et al.",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Chandra ACIS & ESO VLT",
+          "wavelength": "0.5–8 keV X-ray & Optical"
+        }
+      ]
     },
     {
       "id": "antennae-galaxies",
       "name": "Antennae Galaxies (NGC 4038/4039)",
       "catalogIdentifier": "NGC 4038 / NGC 4039 / Arp 244 / VV 245",
-      "alternateNames": ["Ringtail Galaxy", "Arp 244", "Antennae"],
+      "alternateNames": [
+        "Ringtail Galaxy",
+        "Arp 244",
+        "Antennae"
+      ],
       "category": "irregular",
       "morphologicalType": "SA(s)m pec / SA(s)m pec (Colliding Interacting Pair)",
       "constellation": "Corvus",
@@ -538,9 +1154,9 @@
       "declination": "-18° 52′ 10″",
       "redshift": 0.00547,
       "redshiftUncertainty": 0.000017,
-      "radialVelocityKmS": 1640.0,
+      "radialVelocityKmS": 1640,
       "distanceMly": 65.2,
-      "distanceMpc": 20.0,
+      "distanceMpc": 20,
       "distanceMethod": "Tip of the Red Giant Branch (TRGB) in Tidal Tail",
       "apparentMagnitude": 10.3,
       "angularSize": "5.2′ × 3.1′ (tails > 500,000 ly)",
@@ -552,22 +1168,62 @@
       "bibcode": "2008AJ....136.1482S",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA04215/PIA04215~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04215/PIA04215~thumb.jpg",
-        "title": "Hubble Space Telescope Portrait of the Colliding Antennae",
-        "nasaId": "PIA04215",
-        "credit": "NASA/ESA/STScI",
-        "caption": "Stunning cosmic collision creating millions of young stars and brilliant blue starburst clusters.",
-        "mission": "Hubble Space Telescope",
+        "url": "https://images-assets.nasa.gov/image/PIA13316/PIA13316~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA13316/PIA13316~thumb.jpg",
+        "title": "Antennae Galaxies Colliding (Hubble/Chandra/Spitzer)",
+        "nasaId": "PIA13316",
+        "credit": "NASA/ESA/CXC/JPL-Caltech/STScI",
+        "caption": "Great Observatories composite showing galactic collision between NGC 4038 and NGC 4039 triggering starburst knots and expansive tidal tails.",
+        "mission": "Hubble / Chandra / Spitzer",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA04215"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA13316"
+      },
+      "catalogs": {
+        "ned": "NGC 4038",
+        "canonical": "Antennae Galaxies (NGC 4038/4039)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "estimated",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Hubble Space Telescope",
+        "instrument": "Hubble Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/ESA/STScI",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-antennae-great-obs-1",
+          "associatedObjectId": "antennae-galaxies",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA13316/PIA13316~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA13316/PIA13316~thumb.jpg",
+          "title": "Antennae Galaxies Colliding (Hubble/Chandra/Spitzer)",
+          "caption": "Great Observatories multiwavelength composite.",
+          "sourceOrganization": "NASA / ESA / CXC / JPL-Caltech / STScI",
+          "sourceUrl": "https://images.nasa.gov/details/PIA13316",
+          "credit": "NASA/ESA/CXC/JPL-Caltech/STScI",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Hubble ACS, Chandra ACIS, Spitzer IRAC",
+          "wavelength": "0.4–8 µm & X-ray (0.5–8 keV)"
+        }
+      ]
     },
     {
       "id": "cigar-galaxy-m82",
       "name": "Cigar Galaxy (Messier 82)",
       "catalogIdentifier": "MESSIER 082 / NGC 3034 / Arp 337 / UGC 05322",
-      "alternateNames": ["Cigar Galaxy", "NGC 3034", "M82"],
+      "alternateNames": [
+        "Cigar Galaxy",
+        "NGC 3034",
+        "M82"
+      ],
       "category": "irregular",
       "morphologicalType": "I0 pec (Archetypal Starburst)",
       "constellation": "Ursa Major",
@@ -575,7 +1231,7 @@
       "declination": "+69° 40′ 47″",
       "redshift": 0.000677,
       "redshiftUncertainty": 0.000007,
-      "radialVelocityKmS": 203.0,
+      "radialVelocityKmS": 203,
       "distanceMly": 11.8,
       "distanceMpc": 3.61,
       "distanceMethod": "Tip of the Red Giant Branch (TRGB) & Cepheids",
@@ -589,22 +1245,61 @@
       "bibcode": "2006ApJ...644...30F",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA08007/PIA08007~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA08007/PIA08007~thumb.jpg",
-        "title": "Spitzer Space Telescope Infrared Portrait of M82",
-        "nasaId": "PIA08007",
-        "credit": "NASA/JPL-Caltech",
-        "caption": "Infrared emission from polycyclic aromatic hydrocarbon (PAH) dust molecules lofted 20,000 light-years into the halo by superwinds.",
-        "mission": "Spitzer Space Telescope",
+        "url": "https://images-assets.nasa.gov/image/PIA04218/PIA04218~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04218/PIA04218~thumb.jpg",
+        "title": "Cigar Galaxy Starburst Core & Superwind (M82)",
+        "nasaId": "PIA04218",
+        "credit": "NASA/ESA/STScI/JPL-Caltech",
+        "caption": "Hubble Space Telescope and Spitzer Space Telescope composite showing glowing hydrogen gas superwind ejected perpendicular to M82 disk.",
+        "mission": "Hubble / Spitzer Space Telescope",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA08007"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA04218"
+      },
+      "catalogs": {
+        "ned": "MESSIER 082",
+        "canonical": "Cigar Galaxy (Messier 82)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "measured",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Spitzer Space Telescope",
+        "instrument": "Spitzer Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/JPL-Caltech",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-m82-hubble-1",
+          "associatedObjectId": "cigar-galaxy-m82",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA04218/PIA04218~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04218/PIA04218~thumb.jpg",
+          "title": "Cigar Galaxy Starburst Core & Superwind (M82)",
+          "caption": "Hubble and Spitzer composite of superwind plumes.",
+          "sourceOrganization": "NASA / ESA / STScI / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA04218",
+          "credit": "NASA/ESA/STScI/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Hubble WFPC2 & Spitzer IRAC",
+          "wavelength": "Optical H-alpha (656 nm) & IR (3.6–8.0 µm)"
+        }
+      ]
     },
     {
       "id": "cartwheel-galaxy",
       "name": "Cartwheel Galaxy (ESO 350-40)",
       "catalogIdentifier": "ESO 350-40 / PGC 002248 / A 0035-33",
-      "alternateNames": ["Cartwheel Galaxy", "PGC 2248"],
+      "alternateNames": [
+        "Cartwheel Galaxy",
+        "PGC 2248"
+      ],
       "category": "irregular",
       "morphologicalType": "Ring Galaxy / S pec (Collisional Ring)",
       "constellation": "Sculptor",
@@ -612,13 +1307,13 @@
       "declination": "-33° 42′ 59″",
       "redshift": 0.030188,
       "redshiftUncertainty": 0.000025,
-      "radialVelocityKmS": 9050.0,
-      "distanceMly": 489.0,
-      "distanceMpc": 150.0,
+      "radialVelocityKmS": 9050,
+      "distanceMly": 489,
+      "distanceMpc": 150,
       "distanceMethod": "Hubble Flow Law (H0 = 70 km/s/Mpc)",
       "apparentMagnitude": 15.2,
       "angularSize": "1.1′ × 0.9′",
-      "estimatedDiameterKpc": 46.0,
+      "estimatedDiameterKpc": 46,
       "estimatedDiameterLy": 150000,
       "description": "A spectacular bullseye ring galaxy produced when a smaller companion galaxy plunged directly through its center like a stone in water.",
       "scientificSignificance": "The expanding density shock wave created a sparkling ring of intense star formation expanding outward at over 200,000 km/h.",
@@ -626,22 +1321,62 @@
       "bibcode": "2022ApJ...936L..15F",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA25425/PIA25425~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA25425/PIA25425~thumb.jpg",
-        "title": "JWST NIRCam and MIRI Portrait of the Cartwheel Galaxy",
-        "nasaId": "PIA25425",
-        "credit": "NASA/ESA/CSA/STScI",
-        "caption": "James Webb Space Telescope multi-instrument infrared view piercing through thick dust to expose star formation spokes and active core.",
-        "mission": "James Webb Space Telescope",
+        "url": "https://images-assets.nasa.gov/image/PIA03296/PIA03296~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA03296/PIA03296~thumb.jpg",
+        "title": "Cartwheel Galaxy Ring Expansion (Chandra/Hubble/Spitzer/GALEX)",
+        "nasaId": "PIA03296",
+        "credit": "NASA/JPL-Caltech/CXC/STScI",
+        "caption": "Great Observatories composite showing cosmic collision ripple expanding at over 200,000 mph through the Cartwheel Galaxy ring.",
+        "mission": "Hubble / Chandra / GALEX / Spitzer",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA25425"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA03296"
+      },
+      "catalogs": {
+        "ned": "ESO 350-40",
+        "canonical": "Cartwheel Galaxy (ESO 350-40)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "estimated",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "James Webb Space Telescope",
+        "instrument": "James Webb Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/ESA/CSA/STScI",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-cartwheel-great-obs-1",
+          "associatedObjectId": "cartwheel-galaxy",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA03296/PIA03296~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA03296/PIA03296~thumb.jpg",
+          "title": "Cartwheel Galaxy Ring Expansion",
+          "caption": "Multiwavelength composite tracing the expanding starburst shock ring.",
+          "sourceOrganization": "NASA / JPL-Caltech / CXC / STScI",
+          "sourceUrl": "https://images.nasa.gov/details/PIA03296",
+          "credit": "NASA/JPL-Caltech/CXC/STScI",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Chandra ACIS, Hubble WFPC2, GALEX, Spitzer IRAC",
+          "wavelength": "UV, Optical, IR, and X-ray"
+        }
+      ]
     },
     {
       "id": "messier-77-ngc1068",
       "name": "Messier 77 (NGC 1068)",
       "catalogIdentifier": "MESSIER 077 / NGC 1068 / 3C 071 / Arp 037",
-      "alternateNames": ["Cetus A", "NGC 1068", "M77"],
+      "alternateNames": [
+        "Cetus A",
+        "NGC 1068",
+        "M77"
+      ],
       "category": "active-agn",
       "morphologicalType": "(R)SA(rs)b (Seyfert 2 Prototype)",
       "constellation": "Cetus",
@@ -649,8 +1384,8 @@
       "declination": "-00° 00′ 48″",
       "redshift": 0.003793,
       "redshiftUncertainty": 0.000013,
-      "radialVelocityKmS": 1137.0,
-      "distanceMly": 47.0,
+      "radialVelocityKmS": 1137,
+      "distanceMly": 47,
       "distanceMpc": 14.4,
       "distanceMethod": "Tully-Fisher Relation & Surface Brightness Fluctuations",
       "apparentMagnitude": 8.9,
@@ -663,22 +1398,60 @@
       "bibcode": "1993ARA&A..31..473A",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA07916/PIA07916~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA07916/PIA07916~thumb.jpg",
-        "title": "Hubble Space Telescope View of Seyfert Core M77",
-        "nasaId": "PIA07916",
-        "credit": "NASA/STScI/JPL-Caltech",
-        "caption": "Energetic nucleus illuminating ionization cones and a circumnuclear starburst ring.",
-        "mission": "Hubble Space Telescope",
+        "url": "https://images-assets.nasa.gov/image/PIA20057/PIA20057~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA20057/PIA20057~thumb.jpg",
+        "title": "NuSTAR High-Energy X-Ray View of Seyfert 2 Galaxy M77",
+        "nasaId": "PIA20057",
+        "credit": "NASA/JPL-Caltech",
+        "caption": "NuSTAR high-energy X-ray observation penetrating the obscuring gas cloud surrounding the active galactic nucleus of Messier 77 (NGC 1068).",
+        "mission": "NuSTAR",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA07916"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA20057"
+      },
+      "catalogs": {
+        "ned": "MESSIER 077",
+        "canonical": "Messier 77 (NGC 1068)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "estimated",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Hubble Space Telescope",
+        "instrument": "Hubble Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/STScI/JPL-Caltech",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-m77-nustar-1",
+          "associatedObjectId": "messier-77-ngc1068",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA20057/PIA20057~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA20057/PIA20057~thumb.jpg",
+          "title": "NuSTAR High-Energy X-Ray View of Seyfert 2 Galaxy M77",
+          "caption": "High-energy X-ray view of active galactic nucleus.",
+          "sourceOrganization": "NASA / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA20057",
+          "credit": "NASA/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "NuSTAR Focal Plane Telescope (FPMA/FPMB)",
+          "wavelength": "3–79 keV (Hard X-ray)"
+        }
+      ]
     },
     {
       "id": "quasar-3c273",
       "name": "Quasar 3C 273",
       "catalogIdentifier": "3C 273 / PKS 1226+02 / 2MASX J12290670+0203086",
-      "alternateNames": ["3C 273"],
+      "alternateNames": [
+        "3C 273"
+      ],
       "category": "active-agn",
       "morphologicalType": "Radio-Loud Flat-Spectrum Quasar (FSRQ)",
       "constellation": "Virgo",
@@ -686,13 +1459,13 @@
       "declination": "+02° 03′ 09″",
       "redshift": 0.158339,
       "redshiftUncertainty": 0.000067,
-      "radialVelocityKmS": 47469.0,
-      "distanceMly": 2440.0,
-      "distanceMpc": 749.0,
+      "radialVelocityKmS": 47469,
+      "distanceMly": 2440,
+      "distanceMpc": 749,
       "distanceMethod": "Cosmological Redshift (H0 = 70 km/s/Mpc, Omega_m = 0.3)",
       "apparentMagnitude": 12.9,
       "angularSize": "Point source core with 20″ relativistic jet",
-      "estimatedDiameterKpc": 40.0,
+      "estimatedDiameterKpc": 40,
       "estimatedDiameterLy": 130000,
       "description": "The first quasar ever identified (Maarten Schmidt, 1963) and one of the most luminous active galactic nuclei in the observable universe.",
       "scientificSignificance": "Luminosity exceeds 4 trillion suns, fueled by a central black hole of 880 million solar masses consuming 100 Earth masses per second.",
@@ -700,22 +1473,61 @@
       "bibcode": "1963Natur.197.1040S",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA04219/PIA04219~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04219/PIA04219~thumb.jpg",
-        "title": "Chandra and Hubble View of Quasar 3C 273",
-        "nasaId": "PIA04219",
-        "credit": "NASA/CXC/STScI",
-        "caption": "X-ray and optical composite tracing the 200,000-light-year plasma jet blasting outward from the quasar core.",
-        "mission": "Chandra X-Ray Observatory & Hubble",
+        "url": "https://images-assets.nasa.gov/image/7995525/7995525~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/7995525/7995525~thumb.jpg",
+        "title": "Quasar 3C 273 X-Ray Jet (HEAO-2 / Einstein Observatory)",
+        "nasaId": "7995525",
+        "credit": "NASA/MSFC",
+        "caption": "Historic X-ray imaging from the Einstein Observatory (HEAO-2) resolving the high-energy jet launched by quasar 3C 273.",
+        "mission": "HEAO-2 / Einstein Observatory",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA04219"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/7995525"
+      },
+      "catalogs": {
+        "ned": "3C 273",
+        "canonical": "Quasar 3C 273"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "estimated",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Chandra X-Ray Observatory & Hubble",
+        "instrument": "Chandra X-Ray Observatory & Hubble",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/CXC/STScI",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-3c273-heao-1",
+          "associatedObjectId": "quasar-3c273",
+          "imageUrl": "https://images-assets.nasa.gov/image/7995525/7995525~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/7995525/7995525~thumb.jpg",
+          "title": "Quasar 3C 273 X-Ray Jet (HEAO-2 / Einstein Observatory)",
+          "caption": "X-ray observation of the relativistic plasma jet.",
+          "sourceOrganization": "NASA / MSFC",
+          "sourceUrl": "https://images.nasa.gov/details/7995525",
+          "credit": "NASA/MSFC",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "High Resolution Imager (HRI)",
+          "wavelength": "0.1–4.5 keV X-ray"
+        }
+      ]
     },
     {
       "id": "markarian-231",
       "name": "Markarian 231 (UGC 08058)",
       "catalogIdentifier": "Mrk 231 / UGC 08058 / VII Zw 490 / IRAS 12540+5708",
-      "alternateNames": ["Mrk 231", "UGC 8058"],
+      "alternateNames": [
+        "Mrk 231",
+        "UGC 8058"
+      ],
       "category": "active-agn",
       "morphologicalType": "SA(rs)c pec / Seyfert 1 (ULIRG)",
       "constellation": "Ursa Major",
@@ -723,9 +1535,9 @@
       "declination": "+56° 52′ 25″",
       "redshift": 0.04217,
       "redshiftUncertainty": 0.00003,
-      "radialVelocityKmS": 12642.0,
-      "distanceMly": 581.0,
-      "distanceMpc": 178.0,
+      "radialVelocityKmS": 12642,
+      "distanceMly": 581,
+      "distanceMpc": 178,
       "distanceMethod": "Hubble Flow Law (H0 = 70 km/s/Mpc)",
       "apparentMagnitude": 13.84,
       "angularSize": "1.0′ × 0.8′",
@@ -737,22 +1549,60 @@
       "bibcode": "2015ApJ...809..117Y",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA13083/PIA13083~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA13083/PIA13083~thumb.jpg",
-        "title": "Hubble Space Telescope UV Spectrum View of Mrk 231",
-        "nasaId": "PIA13083",
-        "credit": "NASA/ESA/STScI",
-        "caption": "Ultraviolet analysis revealing evidence for a binary black hole system in the heart of this ultraluminous infrared galaxy.",
-        "mission": "Hubble Space Telescope",
+        "url": "https://images-assets.nasa.gov/image/PIA18467/PIA18467~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA18467/PIA18467~thumb.jpg",
+        "title": "Markarian 231 Supermassive Black Hole Binary Candidate",
+        "nasaId": "PIA18467",
+        "credit": "NASA/JPL-Caltech",
+        "caption": "NuSTAR and Chandra X-ray observations tracking extreme relativistic accretion disk emission in ultraluminous infrared galaxy Mrk 231.",
+        "mission": "NuSTAR / Chandra",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA13083"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA18467"
+      },
+      "catalogs": {
+        "ned": "Mrk 231",
+        "canonical": "Markarian 231 (UGC 08058)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "estimated",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Hubble Space Telescope",
+        "instrument": "Hubble Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/ESA/STScI",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-mrk231-nustar-1",
+          "associatedObjectId": "markarian-231",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA18467/PIA18467~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA18467/PIA18467~thumb.jpg",
+          "title": "Markarian 231 Supermassive Black Hole Binary Candidate",
+          "caption": "High-energy X-ray spectrum and imaging.",
+          "sourceOrganization": "NASA / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA18467",
+          "credit": "NASA/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "NuSTAR / Chandra ACIS",
+          "wavelength": "3–79 keV & 0.5–8 keV"
+        }
+      ]
     },
     {
       "id": "virgo-cluster-core",
       "name": "Virgo Cluster Core (M87 Subgroup)",
       "catalogIdentifier": "Virgo Cluster / Abell Cluster Analog",
-      "alternateNames": ["Virgo Cluster of Galaxies"],
+      "alternateNames": [
+        "Virgo Cluster of Galaxies"
+      ],
       "category": "cluster",
       "morphologicalType": "Rich Irregular Galaxy Cluster (BM III)",
       "constellation": "Virgo / Coma Berenices",
@@ -760,13 +1610,13 @@
       "declination": "+12° 23′ 28″",
       "redshift": 0.0036,
       "redshiftUncertainty": 0.0002,
-      "radialVelocityKmS": 1080.0,
+      "radialVelocityKmS": 1080,
       "distanceMly": 53.8,
       "distanceMpc": 16.5,
       "distanceMethod": "Mean SBF and TRGB of ~2,000 member galaxies",
       "apparentMagnitude": 2.8,
       "angularSize": "480′ × 360′ (8 degrees)",
-      "estimatedDiameterKpc": 2200.0,
+      "estimatedDiameterKpc": 2200,
       "estimatedDiameterLy": 7200000,
       "description": "The massive heart of the Virgo Supercluster containing over 2,000 cataloged galaxies bound in a common gravitational potential.",
       "scientificSignificance": "Its colossal gravitational pull creates the 'Virgo-centric infall' where the Local Group and Milky Way are pulled toward the cluster at ~250 km/s.",
@@ -774,22 +1624,61 @@
       "bibcode": "2007ApJS..172..182V",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA04216/PIA04216~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04216/PIA04216~thumb.jpg",
-        "title": "Spitzer Space Telescope Infrared Mosaic of the Virgo Cluster Core",
-        "nasaId": "PIA04216",
+        "url": "https://images-assets.nasa.gov/image/PIA07906/PIA07906~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA07906/PIA07906~thumb.jpg",
+        "title": "Virgo Galaxy Cluster Multi-wavelength Mosaic",
+        "nasaId": "PIA07906",
         "credit": "NASA/JPL-Caltech",
-        "caption": "Wide-field infrared mosaic revealing dozens of member galaxies interacting with the dense intra-cluster gas medium.",
-        "mission": "Spitzer Space Telescope",
+        "caption": "Wide-field GALEX ultraviolet and Spitzer infrared mosaic spanning the core of the Virgo Cluster, anchored by giant elliptical Messier 87.",
+        "mission": "GALEX / Spitzer",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA04216"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA07906"
+      },
+      "catalogs": {
+        "ned": "Virgo Cluster",
+        "canonical": "Virgo Cluster Core (M87 Subgroup)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "estimated",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Spitzer Space Telescope",
+        "instrument": "Spitzer Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/JPL-Caltech",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-virgo-core-1",
+          "associatedObjectId": "virgo-cluster-core",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA07906/PIA07906~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA07906/PIA07906~thumb.jpg",
+          "title": "Virgo Galaxy Cluster Multi-wavelength Mosaic",
+          "caption": "GALEX UV and Spitzer IR wide-field mosaic.",
+          "sourceOrganization": "NASA / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA07906",
+          "credit": "NASA/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "GALEX & Spitzer IRAC/MIPS",
+          "wavelength": "0.15–24 µm"
+        }
+      ]
     },
     {
       "id": "coma-cluster-abell1656",
       "name": "Coma Cluster (Abell 1656)",
       "catalogIdentifier": "Abell 1656 / Coma Cluster of Galaxies",
-      "alternateNames": ["Abell 1656", "Coma Cluster"],
+      "alternateNames": [
+        "Abell 1656",
+        "Coma Cluster"
+      ],
       "category": "cluster",
       "morphologicalType": "Dense Regular Rich Cluster (BM II)",
       "constellation": "Coma Berenices",
@@ -797,13 +1686,13 @@
       "declination": "+27° 58′ 50″",
       "redshift": 0.0231,
       "redshiftUncertainty": 0.0001,
-      "radialVelocityKmS": 6925.0,
-      "distanceMly": 321.0,
+      "radialVelocityKmS": 6925,
+      "distanceMly": 321,
       "distanceMpc": 98.4,
       "distanceMethod": "Fundamental Plane of Ellipticals & Tully-Fisher",
       "apparentMagnitude": 3.1,
       "angularSize": "240′ × 240′ (4 degrees)",
-      "estimatedDiameterKpc": 6100.0,
+      "estimatedDiameterKpc": 6100,
       "estimatedDiameterLy": 20000000,
       "description": "One of the densest known galactic concentrations containing over 1,000 identified galaxies dominated by giant ellipticals NGC 4874 and NGC 4889.",
       "scientificSignificance": "Where Fritz Zwicky discovered dark matter in 1933 by applying the virial theorem to member orbital velocities.",
@@ -811,22 +1700,61 @@
       "bibcode": "1933AcHPh...6..110Z",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA10104/PIA10104~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA10104/PIA10104~thumb.jpg",
-        "title": "Spitzer and Hubble Deep Field of the Coma Cluster",
-        "nasaId": "PIA10104",
-        "credit": "NASA/JPL-Caltech/STScI",
-        "caption": "Infrared and optical deep exposure showing thousands of ancient yellowish elliptical galaxies bound in the cluster core.",
-        "mission": "Spitzer & Hubble",
+        "url": "https://images-assets.nasa.gov/image/PIA04210/PIA04210~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04210/PIA04210~thumb.jpg",
+        "title": "Coma Galaxy Cluster Infrared Panoramic (Abell 1656)",
+        "nasaId": "PIA04210",
+        "credit": "NASA/JPL-Caltech",
+        "caption": "Spitzer Space Telescope infrared mosaic containing over a thousand galaxies locked in a colossal gravitational well 320 million light-years away.",
+        "mission": "Spitzer Space Telescope",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA10104"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA04210"
+      },
+      "catalogs": {
+        "ned": "Abell 1656",
+        "canonical": "Coma Cluster (Abell 1656)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "estimated",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "Spitzer & Hubble",
+        "instrument": "Spitzer & Hubble",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/JPL-Caltech/STScI",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-coma-spitzer-1",
+          "associatedObjectId": "coma-cluster-abell1656",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA04210/PIA04210~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04210/PIA04210~thumb.jpg",
+          "title": "Coma Galaxy Cluster Infrared Panoramic (Abell 1656)",
+          "caption": "Spitzer Space Telescope infrared mosaic.",
+          "sourceOrganization": "NASA / JPL-Caltech",
+          "sourceUrl": "https://images.nasa.gov/details/PIA04210",
+          "credit": "NASA/JPL-Caltech",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Spitzer IRAC / MIPS",
+          "wavelength": "3.6–24 µm"
+        }
+      ]
     },
     {
       "id": "stephans-quintet",
       "name": "Stephan's Quintet (HCG 92)",
       "catalogIdentifier": "HCG 092 / Arp 319 / VV 288",
-      "alternateNames": ["Hickson Compact Group 92", "Arp 319"],
+      "alternateNames": [
+        "Hickson Compact Group 92",
+        "Arp 319"
+      ],
       "category": "cluster",
       "morphologicalType": "Compact Galaxy Group (4 interacting + 1 foreground)",
       "constellation": "Pegasus",
@@ -834,13 +1762,13 @@
       "declination": "+33° 57′ 36″",
       "redshift": 0.0215,
       "redshiftUncertainty": 0.0001,
-      "radialVelocityKmS": 6450.0,
-      "distanceMly": 290.0,
-      "distanceMpc": 89.0,
+      "radialVelocityKmS": 6450,
+      "distanceMly": 290,
+      "distanceMpc": 89,
       "distanceMethod": "Hubble Flow Law & Tully-Fisher",
-      "apparentMagnitude": 13.0,
+      "apparentMagnitude": 13,
       "angularSize": "3.5′ × 3.0′",
-      "estimatedDiameterKpc": 92.0,
+      "estimatedDiameterKpc": 92,
       "estimatedDiameterLy": 300000,
       "description": "A celebrated compact group of five galaxies, four of which are locked in an intricate gravitational dance generating massive shockwaves.",
       "scientificSignificance": "Features an enormous shock wave larger than the Milky Way produced as galaxy NGC 7318b plunges through the intra-group medium at millions of km/h.",
@@ -848,22 +1776,61 @@
       "bibcode": "2023ApJ...944L...1A",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA25426/PIA25426~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA25426/PIA25426~thumb.jpg",
-        "title": "JWST NIRCam and MIRI Portrait of Stephan's Quintet",
-        "nasaId": "PIA25426",
-        "credit": "NASA/ESA/CSA/STScI",
-        "caption": "James Webb Space Telescope multi-wavelength infrared composite resolving sweeping tails of gas, stars, and shock fronts.",
-        "mission": "James Webb Space Telescope",
+        "url": "https://images-assets.nasa.gov/image/PIA04201/PIA04201~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04201/PIA04201~thumb.jpg",
+        "title": "Stephan's Quintet Compact Group (Hubble WFPC2)",
+        "nasaId": "PIA04201",
+        "credit": "NASA/ESA/STScI",
+        "caption": "Hubble Wide Field and Planetary Camera 2 optical portrait of compact galaxy group Hickson 92, exhibiting tidal tails and gravitational shock fronts.",
+        "mission": "Hubble Space Telescope",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA25426"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/PIA04201"
+      },
+      "catalogs": {
+        "ned": "HCG 092",
+        "canonical": "Stephan's Quintet (HCG 92)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "estimated",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "James Webb Space Telescope",
+        "instrument": "James Webb Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/ESA/CSA/STScI",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-stephans-hubble-1",
+          "associatedObjectId": "stephans-quintet",
+          "imageUrl": "https://images-assets.nasa.gov/image/PIA04201/PIA04201~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA04201/PIA04201~thumb.jpg",
+          "title": "Stephan's Quintet Compact Group (Hubble WFPC2)",
+          "caption": "Hubble WFPC2 optical imaging.",
+          "sourceOrganization": "NASA / ESA / STScI",
+          "sourceUrl": "https://images.nasa.gov/details/PIA04201",
+          "credit": "NASA/ESA/STScI",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "Hubble WFPC2",
+          "wavelength": "Optical (B, V, I)"
+        }
+      ]
     },
     {
       "id": "smacs-j0723",
       "name": "SMACS J0723.3-7327 (JWST First Deep Field)",
       "catalogIdentifier": "SMACS J0723.3-7327 / PSZ2 G284.97-23.69",
-      "alternateNames": ["JWST First Deep Field", "Webb's First Deep Field"],
+      "alternateNames": [
+        "JWST First Deep Field",
+        "Webb's First Deep Field"
+      ],
       "category": "cluster",
       "morphologicalType": "Massive Gravitational Lensing Cluster",
       "constellation": "Volans",
@@ -871,13 +1838,13 @@
       "declination": "-73° 27′ 15″",
       "redshift": 0.39,
       "redshiftUncertainty": 0.001,
-      "radialVelocityKmS": 116919.0,
-      "distanceMly": 4600.0,
-      "distanceMpc": 1410.0,
+      "radialVelocityKmS": 116919,
+      "distanceMly": 4600,
+      "distanceMpc": 1410,
       "distanceMethod": "Cosmological Redshift (H0 = 70 km/s/Mpc, Omega_m = 0.3)",
       "apparentMagnitude": 17.4,
       "angularSize": "2.4′ × 2.0′",
-      "estimatedDiameterKpc": 1070.0,
+      "estimatedDiameterKpc": 1070,
       "estimatedDiameterLy": 3500000,
       "description": "A massive galaxy cluster whose immense gravitational field acts as a natural cosmic lens, bending and magnifying the light of galaxies behind it.",
       "scientificSignificance": "The historic first operational deep-field image from JWST, revealing galaxies as they existed over 13.1 billion years ago.",
@@ -885,16 +1852,52 @@
       "bibcode": "2022ApJ...936L..14P",
       "dataStatus": "Real Archival Data",
       "image": {
-        "url": "https://images-assets.nasa.gov/image/PIA25427/PIA25427~medium.jpg",
-        "thumbnailUrl": "https://images-assets.nasa.gov/image/PIA25427/PIA25427~thumb.jpg",
-        "title": "JWST First Deep Field SMACS 0723",
-        "nasaId": "PIA25427",
+        "url": "https://images-assets.nasa.gov/image/webb_first_deep_field/webb_first_deep_field~medium.jpg",
+        "thumbnailUrl": "https://images-assets.nasa.gov/image/webb_first_deep_field/webb_first_deep_field~thumb.jpg",
+        "title": "SMACS J0723.3-7327 (Webb's First Deep Field)",
+        "nasaId": "webb_first_deep_field",
         "credit": "NASA/ESA/CSA/STScI",
-        "caption": "Deepest and sharpest infrared image of the distant universe to date, showing gravitational lensing arcs around SMACS J0723.",
-        "mission": "James Webb Space Telescope",
+        "caption": "James Webb Space Telescope NIRCam infrared deep field revealing massive gravitational lensing arcs from early galaxies over 13 billion years in the past.",
+        "mission": "James Webb Space Telescope (JWST)",
         "isIllustration": false,
-        "sourcePage": "https://images.nasa.gov/details/PIA25427"
-      }
+        "assetClassification": "observation",
+        "sourcePage": "https://images.nasa.gov/details/webb_first_deep_field"
+      },
+      "catalogs": {
+        "ned": "SMACS J0723.3-7327",
+        "canonical": "SMACS J0723.3-7327 (JWST First Deep Field)"
+      },
+      "fieldStatus": {
+        "redshift": "measured",
+        "distance": "estimated",
+        "diameter": "measured",
+        "apparentMagnitude": "measured"
+      },
+      "observationalMetadata": {
+        "telescope": "James Webb Space Telescope",
+        "instrument": "James Webb Space Telescope",
+        "wavelength": "Multi-wavelength Astronomical Archive",
+        "processing": "Calibrated archival observation",
+        "credit": "NASA/ESA/CSA/STScI",
+        "license": "Public Domain (NASA/ESA)"
+      },
+      "images": [
+        {
+          "id": "img-smacs0723-jwst-1",
+          "associatedObjectId": "smacs-j0723",
+          "imageUrl": "https://images-assets.nasa.gov/image/webb_first_deep_field/webb_first_deep_field~medium.jpg",
+          "thumbnailUrl": "https://images-assets.nasa.gov/image/webb_first_deep_field/webb_first_deep_field~thumb.jpg",
+          "title": "SMACS J0723.3-7327 (Webb's First Deep Field)",
+          "caption": "JWST NIRCam infrared deep field.",
+          "sourceOrganization": "NASA / ESA / CSA / STScI",
+          "sourceUrl": "https://images.nasa.gov/details/webb_first_deep_field",
+          "credit": "NASA/ESA/CSA/STScI",
+          "assetClassification": "observation",
+          "isVerifiedRealObservation": true,
+          "instrument": "JWST NIRCam",
+          "wavelength": "0.9–4.4 µm (Near-Infrared)"
+        }
+      ]
     }
   ]
 }

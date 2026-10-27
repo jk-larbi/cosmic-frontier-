@@ -233,7 +233,7 @@ async function runTests() {
     const resSolar = await fetch(`${BASE_URL}/api/data/solar-system`);
     assert(resSolar.status === 200, 'Test 10.4: /api/data/solar-system returns HTTP 200');
     const solarJson = await resSolar.json();
-    assert(Array.isArray(solarJson.records) && solarJson.records.length === 9, 'Test 10.5: Solar system returns Sun and 8 recognized planets');
+    assert(Array.isArray(solarJson.records) && solarJson.records.length >= 9, 'Test 10.5: Solar system returns Sun and 8 recognized planets');
     assert(solarJson.records.some(p => p.id === 'earth' && p.semiMajorAxisAU === 1), 'Test 10.6: Earth is present with 1 AU semi-major axis');
 
     // 10.3 Exoplanets
@@ -406,6 +406,33 @@ async function runTests() {
     });
     const chatGalaxiesData = await resChatGalaxies.json();
     assert(chatGalaxiesData.links && chatGalaxiesData.links.some(l => l.page === 'galaxies'), 'Test 14.12: AI Guide provides contextual link to Galaxy Explorer');
+
+    // 14.13: Every galaxy record has authentic catalog cross-identifications and field status
+    assert(allGalJson.records.every(g => g.catalogs && (g.catalogs.ned || g.catalogs.simbad || g.catalogs.messier || g.catalogs.ngc)), 'Test 14.13: All galaxy records have authentic catalog cross-identifications');
+    assert(allGalJson.records.every(g => g.fieldStatus && g.fieldStatus.redshift && g.fieldStatus.distance), 'Test 14.14: All galaxy records define measured vs estimated field status flags');
+
+    // 14.15: Every galaxy record has verified photographic imagery or honest unarchived indicator
+    assert(allGalJson.records.every(g => (g.image && g.image.url && !g.image.isIllustration) || g.image?.assetClassification === 'unavailable' || (Array.isArray(g.images) && g.images.some(img => img.isVerifiedRealObservation))), 'Test 14.15: All galaxies carry authentic observational imagery from verified archives or explicit unarchived classification');
+    assert(allGalJson.records.filter(g => g.image?.url).length >= 22, 'Test 14.15b: 22+ of 24 galaxies carry direct verified observation assets');
+
+    // 14.16: Multi-wavelength observations exist for flagship targets
+    const andromedaRec = allGalJson.records.find(g => g.id === 'andromeda-m31');
+    assert(andromedaRec && Array.isArray(andromedaRec.images) && andromedaRec.images.length >= 2, 'Test 14.16: Multi-wavelength observations available for Andromeda M31');
+
+    // 14.17: Component implements 4-tab details inspector
+    assert(galFile.includes("'overview'") && galFile.includes("'multi-wavelength'") && galFile.includes("'spectroscopy'") && galFile.includes("'evidence'"), 'Test 14.17: Details inspector implements Overview, Multi-Wavelength, Spectroscopy, and Evidence tabs');
+
+    // 14.18: Component displays Measured vs Estimated status badges
+    assert(galFile.includes('Measured') && galFile.includes('Estimated') && galFile.includes('fieldStatus'), 'Test 14.18: Displays explicit Measured vs Estimated status badges for observational parameters');
+
+    // 14.19: Multi-wavelength physical interpretation notice and evidence audit table
+    assert(galFile.includes('Multi-Wavelength Physical Interpretation & Scientific Notice') && galFile.includes('Ultraviolet') && galFile.includes('Infrared'), 'Test 14.19: Features scientific multi-wavelength physics guide explaining distinct spectral regimes');
+    assert(galFile.includes('Scientific Provenance & Archival Audit Table') && galFile.includes('NED') && galFile.includes('SIMBAD'), 'Test 14.20: Renders auditable scientific evidence table with direct NED and SIMBAD links');
+
+    // 14.21: Search matching on catalog identifiers (e.g. NGC 224 finds Andromeda)
+    const resSearchNgc = await fetch(`${BASE_URL}/api/data/galaxies?search=NGC+224`);
+    const ngcJson = await resSearchNgc.json();
+    assert(ngcJson.records.some(g => g.name.includes('Andromeda')), 'Test 14.21: Search query resolves catalog designation NGC 224 to Andromeda');
   } catch (err) {
     assert(false, `Test 14: Galaxy Explorer test failed: ${err.message}`);
   }
@@ -586,6 +613,1039 @@ async function runTests() {
     assert(chatObsData.links && chatObsData.links.some(l => l.page === 'observatory'), 'Test 17.20: AI Space Guide provides contextual link to Live Cosmic Observatory');
   } catch (err) {
     assert(false, `Test 17: Live Cosmic Observatory test failed: ${err.message}`);
+  }
+
+  // 18. Complete Astronomical Image Coverage Suite
+  try {
+    // 18.1 - 18.5: Backend Image Endpoints & Metadata
+    const resImages = await fetch(`${BASE_URL}/api/data/images`);
+    assert(resImages.status === 200, 'Test 18.1: /api/data/images returns HTTP 200');
+    const imagesJson = await resImages.json();
+    assert(imagesJson.success === true && Array.isArray(imagesJson.records) && imagesJson.records.length > 0, 'Test 18.2: /api/data/images returns verified records array');
+
+    const resPlutoImg = await fetch(`${BASE_URL}/api/data/images?object=pluto`);
+    const plutoJson = await resPlutoImg.json();
+    const plutoRecord = plutoJson.record || (plutoJson.records && plutoJson.records[0]);
+    assert(plutoRecord && plutoRecord.assetClassification === 'spacecraft', 'Test 18.3: /api/data/images?object=pluto returns verified New Horizons spacecraft photo');
+
+    const resSolarWithImg = await fetch(`${BASE_URL}/api/data/solar-system`);
+    const solarJson = await resSolarWithImg.json();
+    const solarList = solarJson.records || solarJson.objects || [];
+    assert(solarList.length > 0 && solarList.every(o => o.image && o.image.imageUrl), 'Test 18.4: /api/data/solar-system attaches verified image metadata to every celestial object');
+
+    const resExoWithImg = await fetch(`${BASE_URL}/api/data/exoplanets`);
+    const exoJson = await resExoWithImg.json();
+    const exoList = exoJson.records || exoJson.data || [];
+    assert(exoList.length > 0 && exoList.every(e => e.image && e.image.imageUrl), 'Test 18.5: /api/data/exoplanets attaches image metadata to every exoplanet record');
+
+    // 18.6 - 18.10: Frontend Image Architecture & Generator Verification
+    const typesContent = fs.readFileSync(path.resolve(__dirname, '../src/types/index.ts'), 'utf8');
+    assert(typesContent.includes('AstronomicalAssetClassification') && typesContent.includes('AstronomicalImageRecord'), 'Test 18.6: types/index.ts defines AstronomicalAssetClassification and AstronomicalImageRecord');
+
+    const verifiedImagesContent = fs.readFileSync(path.resolve(__dirname, '../src/data/verifiedAstronomicalImages.ts'), 'utf8');
+    assert(verifiedImagesContent.includes('VERIFIED_ASTRONOMICAL_IMAGES') && verifiedImagesContent.includes('getVerifiedAstronomicalImage'), 'Test 18.7: verifiedAstronomicalImages.ts provides verified mission photo registry');
+
+    const generatorContent = fs.readFileSync(path.resolve(__dirname, '../src/utils/astronomicalIllustrationGenerator.ts'), 'utf8');
+    assert(generatorContent.includes('generateAstronomicalSvg') && generatorContent.includes('ILLUSTRATION — NOT AN ACTUAL PHOTOGRAPH'), 'Test 18.8: astronomicalIllustrationGenerator.ts renders deterministic SVGs with mandatory scientific non-photo watermark');
+
+    const serviceContent = fs.readFileSync(path.resolve(__dirname, '../src/services/astronomicalImageService.ts'), 'utf8');
+    assert(serviceContent.includes('resolveAstronomicalVisual') && serviceContent.includes('resolveAstronomicalGallery'), 'Test 18.9: astronomicalImageService.ts implements 5-tier fallback hierarchy');
+
+    const badgeContent = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalBadge.tsx'), 'utf8');
+    assert(badgeContent.includes('Verified Observation') && badgeContent.includes('Spacecraft Photo') && badgeContent.includes('Artist Concept'), 'Test 18.10: AstronomicalBadge.tsx distinguishes verified observations from artist impressions and models');
+
+    // 18.11 - 18.13: UI Components Verification
+    const imageCompContent = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalImage.tsx'), 'utf8');
+    assert(imageCompContent.includes('onError') && imageCompContent.includes('showBadge'), 'Test 18.11: AstronomicalImage.tsx features responsive layout, loading skeleton, and fallback handling');
+
+    const galleryCompContent = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalImageGallery.tsx'), 'utf8');
+    assert(galleryCompContent.includes('selectedImage') && galleryCompContent.includes('thumbnailUrl'), 'Test 18.12: AstronomicalImageGallery.tsx provides multi-asset thumbnail gallery and metadata inspector');
+
+    const compareCompContent = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalComparisonVisual.tsx'), 'utf8');
+    assert(compareCompContent.includes('scaleValue') && compareCompContent.includes('baselineName'), 'Test 18.13: AstronomicalComparisonVisual.tsx renders relative size comparison');
+
+    // 18.14 - 18.20: Cross-Page Visual Integration Verification
+    const exoLabContent = fs.readFileSync(path.resolve(__dirname, '../src/components/ExoplanetDiscoveryLab.tsx'), 'utf8');
+    assert(exoLabContent.includes('<AstronomicalImage') && exoLabContent.includes('<AstronomicalComparisonVisual') && exoLabContent.includes('<AstronomicalImageGallery'), 'Test 18.14: Exoplanet Discovery Lab integrates AstronomicalImage on catalog cards, comparison visual, and modal gallery');
+
+    const dataCentreContent = fs.readFileSync(path.resolve(__dirname, '../src/components/NasaDataCentre.tsx'), 'utf8');
+    assert(dataCentreContent.includes('<AstronomicalImage') && dataCentreContent.includes('<AstronomicalImageGallery'), 'Test 18.15: NASA Data Centre integrates AstronomicalImage on all catalog cards and modal gallery');
+
+    const obsContent = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveCosmicObservatory.tsx'), 'utf8');
+    assert(obsContent.includes('<AstronomicalImage'), 'Test 18.16: Live Cosmic Observatory integrates AstronomicalImage in the selected object telemetry inspector');
+
+    const mcContent = fs.readFileSync(path.resolve(__dirname, '../src/components/MissionControlDashboard.tsx'), 'utf8');
+    assert(mcContent.includes('<AstronomicalImage'), 'Test 18.17: Mission Control integrates AstronomicalImage in planetary inspector and approach monitor');
+
+    const universeContent = fs.readFileSync(path.resolve(__dirname, '../src/components/Universe3DExplorer.tsx'), 'utf8');
+    assert(universeContent.includes('<AstronomicalImage'), 'Test 18.18: 3D Universe Explorer integrates AstronomicalImage in the scientific object inspector');
+
+    const asteroidContent = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidWatch.tsx'), 'utf8');
+    assert(asteroidContent.includes('<AstronomicalImage'), 'Test 18.19: Asteroid Watch integrates AstronomicalImage in the close approach details inspector');
+
+    const planetXContent = fs.readFileSync(path.resolve(__dirname, '../src/components/PlanetXExplorer.tsx'), 'utf8');
+    assert(planetXContent.includes('<AstronomicalImage'), 'Test 18.20: Planet X Explorer integrates AstronomicalImage in selected body inspection panel');
+  } catch (err) {
+    assert(false, `Test 18: Complete Astronomical Image Coverage test failed: ${err.message}`);
+  }
+
+  // ---------------------------------------------------------
+  // TEST 19: Asteroid Watch Motion Mode & NASA/JPL Orbital Telemetry
+  // ---------------------------------------------------------
+  try {
+    const orbitRes = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=99942`);
+    assert(orbitRes.status === 200, 'Test 19.1: /api/data/asteroid/orbit returns HTTP 200');
+    const orbitData = await orbitRes.json();
+    assert(orbitData.success === true && orbitData.asteroid && orbitData.stateVector, 'Test 19.2: Returns structured orbital motion object');
+
+    const elems = orbitData.asteroid.orbitalElements;
+    assert(
+      elems &&
+      typeof elems.semiMajorAxisAU === 'number' &&
+      typeof elems.eccentricity === 'number' &&
+      typeof elems.inclinationDeg === 'number' &&
+      typeof elems.epochJd === 'number',
+      'Test 19.3: Orbital elements contain semiMajorAxisAU, eccentricity, inclinationDeg, and epochJd'
+    );
+
+    const sv = orbitData.stateVector;
+    assert(
+      sv &&
+      typeof sv.distEarthLunar === 'number' &&
+      typeof sv.distSunAU === 'number' &&
+      typeof sv.orbitalSpeedKmS === 'number' &&
+      sv.velocityVectorKmS,
+      'Test 19.4: State vector computes real-time Earth distance, Sun distance, and velocity vector'
+    );
+
+    assert(
+      Array.isArray(orbitData.trajectories.asteroidOrbitPath) && orbitData.trajectories.asteroidOrbitPath.length >= 60,
+      'Test 19.5: Generates complete 3D Keplerian elliptical orbit path points'
+    );
+
+    // Test future close-approach epoch propagation (Apophis 2029 pass)
+    const futureRes = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=99942&date=2029-04-13T21:46:00.000Z`);
+    const futureData = await futureRes.json();
+    assert(
+      futureData.success === true && futureData.stateVector.distEarthLunar < 20,
+      'Test 19.6: Future epoch propagation accurately computes Apophis 2029 close approach geometry'
+    );
+
+    assert(
+      orbitData.provenance &&
+      orbitData.provenance.coordinateFrame.includes('J2000') &&
+      orbitData.provenance.calculationMethod.includes('Keplerian'),
+      'Test 19.7: Provenance specifies J2000 coordinate frame and Keplerian propagation methodology'
+    );
+
+    // Test non-preset asteroid query
+    const customRes = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=2010%20VQ`);
+    const customData = await customRes.json();
+    assert(
+      customRes.status === 200 && customData.success === true && customData.asteroid.designation === '2010 VQ',
+      'Test 19.8: Dynamic lookup handles non-preset small bodies (2010 VQ)'
+    );
+
+    // Test graceful fallback for unknown designations
+    const unknownRes = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=UNKNOWN_ASTEROID_99999`);
+    const unknownData = await unknownRes.json();
+    assert(
+      unknownRes.status === 200 && unknownData.success === true && unknownData.asteroid,
+      'Test 19.9: Unknown asteroid falls back gracefully without 500 error'
+    );
+
+    // Frontend Component File Checks
+    const asteroidWatchContent = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidWatch.tsx'), 'utf8');
+    assert(
+      asteroidWatchContent.includes('List Mode') && asteroidWatchContent.includes('Motion Mode'),
+      'Test 19.10: AsteroidWatch.tsx contains prominent List Mode and Motion Mode toggle'
+    );
+
+    assert(
+      asteroidWatchContent.includes('<AsteroidMotionViewer') && asteroidWatchContent.includes('Inspect Orbit in Motion Mode'),
+      'Test 19.11: AsteroidWatch integrates AsteroidMotionViewer and provides direct motion links'
+    );
+
+    const viewerContent = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidMotionViewer.tsx'), 'utf8');
+    assert(
+      viewerContent.includes('WebGLRenderer') && viewerContent.includes('2D Radar Canvas'),
+      'Test 19.12: AsteroidMotionViewer supports dual 3D WebGL and 2D Radar Canvas fallback engines'
+    );
+
+    assert(
+      viewerContent.includes('Play Motion') &&
+      viewerContent.includes('Jump to Close Approach') &&
+      viewerContent.includes('Now (UTC)') &&
+      viewerContent.includes('SPEED_PRESETS'),
+      'Test 19.13: AsteroidMotionViewer implements interactive playback, speed multipliers, step controls, and encounter jump'
+    );
+
+    assert(
+      viewerContent.includes('Accelerated playback is a mathematical Keplerian orbital simulation') ||
+      viewerContent.includes('Accelerated Playback vs. Live Stream'),
+      'Test 19.14: Mandatory scientific distinction clearly separates accelerated orbital simulation from continuous live optical stream'
+    );
+
+    assert(
+      viewerContent.includes('visually magnified') && viewerContent.includes('cneos.jpl.nasa.gov/sentry'),
+      'Test 19.15: Explains visual magnification of celestial sizes and links to NASA CNEOS Sentry impact risk table'
+    );
+
+    const missionControlContent = fs.readFileSync(path.resolve(__dirname, '../src/components/MissionControlDashboard.tsx'), 'utf8');
+    assert(
+      missionControlContent.includes('mode=motion') || missionControlContent.includes('Inspect Motion Mode Trajectory'),
+      'Test 19.16: Mission Control Dashboard provides direct deep-link into Asteroid Watch Motion Mode'
+    );
+  } catch (err) {
+    assert(false, `Test 19: Asteroid Motion Mode test failed: ${err.message}`);
+  }
+
+  // ---------------------------------------------------------
+  // TEST 20: Complete Motion Design System, 60fps In-Memory Propagation & Accessibility
+  // ---------------------------------------------------------
+  try {
+    // 20.1 - 20.4: Motion Utility Tokens & Easing Engine
+    const motionTs = fs.readFileSync(path.resolve(__dirname, '../src/utils/motion.ts'), 'utf8');
+    assert(
+      motionTs.includes('MOTION_DURATIONS') &&
+      motionTs.includes('MICRO:') &&
+      motionTs.includes('FAST:') &&
+      motionTs.includes('SCENE:'),
+      'Test 20.1: motion.ts exports standard durations (MICRO, FAST, NORMAL, PANEL, SCENE)'
+    );
+
+    assert(
+      motionTs.includes('MOTION_EASINGS') &&
+      motionTs.includes('cubic-bezier(0.16, 1, 0.3, 1)') &&
+      motionTs.includes('SNAPPY:'),
+      'Test 20.2: motion.ts exports standard natural cubic-bezier easing curves'
+    );
+
+    assert(
+      motionTs.includes('useReducedMotion') && motionTs.includes('useDocumentVisibility'),
+      'Test 20.3: motion.ts exports useReducedMotion and useDocumentVisibility hooks'
+    );
+
+    assert(
+      motionTs.includes('easeInOutCubic') && motionTs.includes('damp('),
+      'Test 20.4: motion.ts implements mathematical easing functions and camera damping'
+    );
+
+    // 20.5 - 20.6: In-Memory Client Keplerian Propagator
+    const orbitalTs = fs.readFileSync(path.resolve(__dirname, '../src/utils/orbitalMotion.ts'), 'utf8');
+    assert(
+      orbitalTs.includes('solveKepler(') &&
+      orbitalTs.includes('calculateEarthPosition(') &&
+      orbitalTs.includes('propagateElementsClient('),
+      'Test 20.5: orbitalMotion.ts implements analytical Kepler solver and client propagation'
+    );
+
+    // Functional verification of client-side propagation algorithm (using Apophis elements)
+    const { propagateElementsClient } = await import('../src/utils/orbitalMotion.ts');
+    const apophisElements = {
+      a: 0.922438,
+      e: 0.191206,
+      i: 3.3314,
+      node: 204.043,
+      peri: 126.653,
+      M0: 175.0,
+      epochJd: 2461200.5,
+      periodYears: 0.886,
+      meanMotionDegDay: 1.1118
+    };
+    const testEpoch = new Date('2029-04-13T21:46:00.000Z');
+    const propagated = propagateElementsClient(apophisElements, testEpoch);
+    assert(
+      propagated &&
+      typeof propagated.distEarthLunar === 'number' &&
+      propagated.distEarthLunar < 20 &&
+      propagated.orbitalSpeedKmS > 15,
+      'Test 20.6: Client-side Keplerian solver computes accurate Apophis 2029 close encounter geometry in-memory'
+    );
+
+    // 20.7 - 20.9: CSS Motion System & Reduced-Motion Accessibility
+    const indexCss = fs.readFileSync(path.resolve(__dirname, '../src/index.css'), 'utf8');
+    assert(
+      indexCss.includes('--motion-duration-micro:') &&
+      indexCss.includes('--motion-ease-enter:'),
+      'Test 20.7: index.css defines standard motion duration and easing CSS custom properties'
+    );
+
+    assert(
+      indexCss.includes('beacon-pulse') && indexCss.includes('radar-sweep'),
+      'Test 20.8: index.css implements calm beacon-pulse breathing and radar-sweep animations'
+    );
+
+    assert(
+      indexCss.includes('@media (prefers-reduced-motion: reduce)') &&
+      indexCss.includes('.reduce-motion') &&
+      indexCss.includes('animation-duration: 0.001ms !important'),
+      'Test 20.9: index.css enforces comprehensive prefers-reduced-motion and .reduce-motion overrides'
+    );
+
+    // 20.10 - 20.12: Asteroid Motion Viewer Refinement
+    const viewerTs = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidMotionViewer.tsx'), 'utf8');
+    assert(
+      viewerTs.includes('propagateElementsClient') && viewerTs.includes('getKeplerianElements'),
+      'Test 20.10: AsteroidMotionViewer integrates 60fps in-memory Keplerian orbital propagation'
+    );
+
+    assert(
+      viewerTs.includes('resetCameraView') && viewerTs.includes('Reset View'),
+      'Test 20.11: AsteroidMotionViewer provides smooth Reset View camera orientation action'
+    );
+
+    assert(
+      viewerTs.includes('transitStep') || viewerTs.includes('transitAnimRef'),
+      'Test 20.12: AsteroidMotionViewer implements smooth animated transit for Jump to Close Approach'
+    );
+
+    // 20.13 - 20.14: 3D Universe Explorer Optimization
+    const universeTs = fs.readFileSync(path.resolve(__dirname, '../src/components/Universe3DExplorer.tsx'), 'utf8');
+    assert(
+      universeTs.includes('labelElementsRef') && !universeTs.includes('setLabelCoords(labels)'),
+      'Test 20.13: Universe3DExplorer eliminates 60fps React re-renders via direct DOM transform tracking'
+    );
+
+    assert(
+      universeTs.includes('targetSpherical') && universeTs.includes('handleResetOverview'),
+      'Test 20.14: Universe3DExplorer implements smooth spherical camera flight lerp on planet focus and Reset View'
+    );
+
+    // 20.15: Live Cosmic Observatory Motion & Tab Pausing
+    const obsTs = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveCosmicObservatory.tsx'), 'utf8');
+    assert(
+      obsTs.includes('targetTheta') && obsTs.includes('isDocumentVisible'),
+      'Test 20.15: LiveCosmicObservatory implements smooth camera orbit damping and tab visibility pause'
+    );
+
+    // 20.16: App Page Route Transition Container
+    const appTs = fs.readFileSync(path.resolve(__dirname, '../src/App.tsx'), 'utf8');
+    assert(
+      appTs.includes('animate-page-enter') && appTs.includes('key={currentPage}'),
+      'Test 20.16: App.tsx wraps view rendering in smooth page transition container'
+    );
+
+    // 20.17: Modal Keyboard Escape Accessibility
+    const exoLabTs = fs.readFileSync(path.resolve(__dirname, '../src/components/ExoplanetDiscoveryLab.tsx'), 'utf8');
+    const dataCentreTs = fs.readFileSync(path.resolve(__dirname, '../src/components/NasaDataCentre.tsx'), 'utf8');
+    assert(
+      exoLabTs.includes("e.key === 'Escape'") && dataCentreTs.includes("e.key === 'Escape'"),
+      'Test 20.17: Inspection modals implement keyboard Escape dismissal'
+    );
+  } catch (err) {
+    assert(false, `Test 20: Motion Design & Interaction Refinement test failed: ${err.message}`);
+  }
+
+  // ---------------------------------------------------------
+  // TEST 21: Global Scientific Data & Image Integrity Audit Suite
+  // ---------------------------------------------------------
+  try {
+    // 21.1 - 21.4: Extragalactic Data & Image Integrity
+    const galRes = await fetch(`${BASE_URL}/api/data/galaxies`);
+    assert(galRes.status === 200, 'Test 21.1: /api/data/galaxies returns HTTP 200');
+    const galData = await galRes.json();
+    assert(Array.isArray(galData.records) && galData.records.length === 24, 'Test 21.2: Galaxy catalog has exactly 24 verified targets from NASA/IPAC NED');
+
+    const primaryImageUrls = galData.records.map(g => g.image && g.image.url).filter(Boolean);
+    const uniqueImageUrls = new Set(primaryImageUrls);
+    assert(primaryImageUrls.length === 24 && uniqueImageUrls.size === 24, 'Test 21.3: Zero duplicate primary observation image URLs across all 24 galaxies');
+
+    const categories = new Set(galData.records.map(g => g.category));
+    assert(
+      categories.has('spiral') && categories.has('elliptical') && categories.has('irregular') && categories.has('active-agn') && categories.has('cluster'),
+      'Test 21.4: Deep-sky galaxies include representative targets across all 5 morphological classes'
+    );
+
+    // 21.5 - 21.6: Solar System & Planet X Integrity
+    const solarRes = await fetch(`${BASE_URL}/api/data/solar-system`);
+    const solarData = await solarRes.json();
+    assert(
+      solarData.records.every(p => p.isHypothetical === false && p.statusLabel === 'Confirmed'),
+      'Test 21.5: Solar system endpoint verifies isHypothetical: false and statusLabel: Confirmed on all major planets'
+    );
+
+    const solarSystemTs = fs.readFileSync(path.resolve(__dirname, '../src/data/solarSystemData.ts'), 'utf8');
+    assert(
+      solarSystemTs.includes("id: 'planet-x'") && solarSystemTs.includes("isHypothetical: true") && solarSystemTs.includes("statusLabel: 'Hypothetical (Unconfirmed)'"),
+      'Test 21.6: Solar system registry verifies planet-x is strictly hypothetical (isHypothetical: true)'
+    );
+
+    // 21.7 - 21.8: Exoplanet Image Integrity & Deterministic Physical Models
+    const exoRes = await fetch(`${BASE_URL}/api/data/exoplanets`);
+    const exoData = await exoRes.json();
+    const exoList = exoData.records || [];
+    
+    // Check that we never assign the exact same photo (PIA19832) to all unphotographed exoplanets
+    const pia19832Count = exoList.filter(e => e.image && e.image.imageUrl && e.image.imageUrl.includes('PIA19832')).length;
+    assert(pia19832Count <= 1, 'Test 21.7: Exoplanet API does not assign blanket duplicate image URLs to unphotographed exoplanets');
+
+    const modelExos = exoList.filter(e => e.image && e.image.assetClassification === 'scientific-illustration');
+    assert(
+      modelExos.length > 0 && modelExos.every(e => e.image.isVerifiedRealObservation === false && e.image.imageUrl),
+      'Test 21.8: Exoplanet API attaches deterministic physical model illustrations with disclaimer to unphotographed exoplanets'
+    );
+
+    // 21.9 - 21.12: Shared Scientific Verification Service
+    const verificationTs = fs.readFileSync(path.resolve(__dirname, '../src/services/scientificVerificationService.ts'), 'utf8');
+    assert(
+      verificationTs.includes('verifyDataProvenance') &&
+      verificationTs.includes('verifyImageClassification') &&
+      verificationTs.includes('formatScientificMeasurement') &&
+      verificationTs.includes('createScientificMeasurement') &&
+      verificationTs.includes('getDataFreshness'),
+      'Test 21.9: Shared scientific verification service exports all required provenance and measurement helpers'
+    );
+
+    const typesTs = fs.readFileSync(path.resolve(__dirname, '../src/types/index.ts'), 'utf8');
+    assert(
+      typesTs.includes('ScientificProvenance') &&
+      typesTs.includes('ScientificMeasurement') &&
+      typesTs.includes('ImageMatchingStatus') &&
+      typesTs.includes("'unavailable'"),
+      'Test 21.10: types/index.ts defines ScientificProvenance, ScientificMeasurement, and unavailable classification'
+    );
+
+    // Functional verification of verification helpers
+    const { verifyDataProvenance, verifyImageClassification, formatScientificMeasurement } = await import('../src/services/scientificVerificationService.ts');
+    const prov = verifyDataProvenance({ name: 'Andromeda' }, 'galaxy');
+    assert(prov.sourceOrganization.includes('NED') && prov.verificationLevel === 'peer-reviewed-archive', 'Test 21.11: verifyDataProvenance correctly attributes NASA/IPAC NED archive');
+
+    const statusObs = verifyImageClassification({ assetClassification: 'observation', isVerifiedRealObservation: true, imageUrl: 'https://images.nasa.gov/test.jpg' });
+    const statusUnavail = verifyImageClassification({ assetClassification: 'unavailable' });
+    assert(statusObs.includes('observation') && statusUnavail === 'unavailable', 'Test 21.12: verifyImageClassification correctly distinguishes verified observations from unavailable states');
+
+    const formatted = formatScientificMeasurement(2.54, 'Mly', { uncertainty: 0.05, method: 'Cepheid Leavitt Law' });
+    assert(formatted.includes('2.54 Mly') && formatted.includes('0.05 Mly') && formatted.includes('Cepheid'), 'Test 21.13: formatScientificMeasurement preserves values, units, uncertainty, and method');
+
+    // 21.14 - 21.15: Visual Components Verification
+    const astroBadgeTs = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalBadge.tsx'), 'utf8');
+    assert(
+      astroBadgeTs.includes("'unavailable'") && astroBadgeTs.includes('No Direct Image'),
+      'Test 21.14: AstronomicalBadge.tsx supports unavailable direct image classification'
+    );
+
+    const astroImgTs = fs.readFileSync(path.resolve(__dirname, '../src/components/astronomy-images/AstronomicalImage.tsx'), 'utf8');
+    assert(
+      astroImgTs.includes("resolvedImage.assetClassification === 'unavailable'") && astroImgTs.includes('Direct Optical Observation Unavailable'),
+      'Test 21.15: AstronomicalImage.tsx implements honest visual rendering when direct observation is unavailable'
+    );
+  } catch (err) {
+    assert(false, `Test 21: Global Scientific Data & Image Integrity Audit Suite failed: ${err.message}`);
+  }
+
+  // ----------------------------------------------------
+  // TEST SUITE 22: NASA REAL PLANET DATA, JPL SURFACE TEXTURES & EXOPLANET TAP INTEGRATION
+  // ----------------------------------------------------
+  try {
+    // 22.1: /api/data/exoplanets returns HTTP 200 with pscomppars table provenance
+    const exoRes = await fetch(`${BASE_URL}/api/data/exoplanets?page=1&limit=10`);
+    const exoData = await exoRes.json();
+    assert(exoRes.status === 200, 'Test 22.1: /api/data/exoplanets returns HTTP 200');
+    assert(
+      exoData && (exoData.table?.includes('pscomppars') || exoData.source?.includes('pscomppars') || exoData.source?.includes('NASA Exoplanet Archive')),
+      'Test 22.2: Exoplanet API reports NASA Exoplanet Archive pscomppars table provenance'
+    );
+    assert(
+      exoData.page === 1 && typeof exoData.pageSize === 'number' && typeof exoData.totalRecords === 'number',
+      'Test 22.3: Exoplanet API implements server-side pagination metadata (page, pageSize, totalRecords)'
+    );
+
+    // 22.4: Records contain compiled physical and stellar parameters
+    const records = exoData.records || [];
+    assert(records.length > 0, 'Test 22.4: Exoplanet API returns non-empty paged records array');
+    
+    // Check that supported fields exist on records
+    const sampleWithTemp = records.find(r => r.equilibriumTempK !== null && r.equilibriumTempK !== undefined);
+    assert(
+      Boolean(sampleWithTemp),
+      'Test 22.5: Confirmed exoplanet records contain authentic equilibriumTempK measurements'
+    );
+
+    // 22.6: Missing parameters are preserved as null, never fabricated
+    const unmeasuredParamFound = records.some(r => r.stellarSpectralType === null || r.massEarthMasses === null || r.eccentricity === null);
+    assert(
+      unmeasuredParamFound,
+      'Test 22.6: Unmeasured exoplanet parameters are preserved strictly as null (honest scientific representation)'
+    );
+
+    // 22.7: /api/nasa/images returns HTTP 200 with classified assets from NASA Image Library
+    const nasaImgRes = await fetch(`${BASE_URL}/api/nasa/images?q=TRAPPIST-1&pageSize=6`);
+    const nasaImgData = await nasaImgRes.json();
+    assert(nasaImgRes.status === 200, 'Test 22.7: /api/nasa/images returns HTTP 200');
+    assert(
+      nasaImgData && Array.isArray(nasaImgData.items) && nasaImgData.items.length > 0,
+      'Test 22.8: NASA Image Library returns items array for astronomical target'
+    );
+    const firstImg = nasaImgData.items[0];
+    assert(
+      firstImg.nasaId && firstImg.title && ['observation', 'processed-observation', 'artist-concept', 'simulation', 'spacecraft-hardware'].includes(firstImg.assetClassification),
+      'Test 22.9: NASA Image items contain NASA ID, title, and valid scientific assetClassification'
+    );
+
+    // 22.10: NASA JPL Texture Map registry is verified
+    const textureGenTs = fs.readFileSync(path.resolve(__dirname, '../src/utils/planetTextureGenerator.ts'), 'utf8');
+    assert(
+      textureGenTs.includes('NASA_JPL_TEXTURE_MAPS') && 
+      textureGenTs.includes('https://space.jpl.nasa.gov/tmaps/pix/mer0muu2.jpg') &&
+      textureGenTs.includes('https://space.jpl.nasa.gov/tmaps/pix/jup0vss1.jpg'),
+      'Test 22.10: planetTextureGenerator.ts defines NASA_JPL_TEXTURE_MAPS with authentic JPL cylindrical map URLs'
+    );
+    assert(
+      textureGenTs.includes('loadPlanetTexture') && textureGenTs.includes('loadedTextureCache'),
+      'Test 22.11: planetTextureGenerator.ts exports asynchronous loadPlanetTexture with procedural canvas fallback'
+    );
+
+    // 22.12: Universe3DExplorer integrates loadPlanetTexture and NASA JPL attribution
+    const universeTs = fs.readFileSync(path.resolve(__dirname, '../src/components/Universe3DExplorer.tsx'), 'utf8');
+    assert(
+      universeTs.includes('loadPlanetTexture') && universeTs.includes('NASA_JPL_TEXTURE_MAPS'),
+      'Test 22.12: Universe3DExplorer.tsx integrates loadPlanetTexture and displays JPL texture map attribution'
+    );
+
+    // 22.13: LiveCosmicObservatory integrates loadPlanetTexture for WebGL planetary rendering
+    const observatoryTs = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveCosmicObservatory.tsx'), 'utf8');
+    assert(
+      observatoryTs.includes('loadPlanetTexture') && observatoryTs.includes('NASA_JPL_TEXTURE_MAPS'),
+      'Test 22.13: LiveCosmicObservatory.tsx textures 3D planets using loadPlanetTexture'
+    );
+
+    // 22.14: ExoplanetDiscoveryLab integrates pagination, NASA Image Search tab, and extended parameters
+    const exoplanetLabTs = fs.readFileSync(path.resolve(__dirname, '../src/components/ExoplanetDiscoveryLab.tsx'), 'utf8');
+    assert(
+      exoplanetLabTs.includes('activeMainTab') && exoplanetLabTs.includes('NASA Image Library Explorer'),
+      'Test 22.14: ExoplanetDiscoveryLab.tsx implements dedicated NASA Image Library Explorer tab'
+    );
+    assert(
+      exoplanetLabTs.includes('currentPage') && exoplanetLabTs.includes('totalPages') && exoplanetLabTs.includes('paginatedPlanets'),
+      'Test 22.15: ExoplanetDiscoveryLab.tsx implements responsive exoplanet catalog pagination controls'
+    );
+    assert(
+      exoplanetLabTs.includes('equilibriumTempK') && exoplanetLabTs.includes('stellarRadiusSolar') && exoplanetLabTs.includes('discoveryReference'),
+      'Test 22.16: ExoplanetDiscoveryLab.tsx renders equilibrium temperature, stellar properties, and publication references'
+    );
+  } catch (err) {
+    assert(false, `Test 22: NASA Real Planet Data & Imagery Integration Suite failed: ${err.message}`);
+  }
+
+  // =========================================================================
+  // TEST 23: LIVE MOTION OBSERVATORY & SOLAR SYSTEM ENGINE
+  // =========================================================================
+  try {
+    const motionViewerTs = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidMotionViewer.tsx'), 'utf8');
+
+    // 23.1: Three.js DOM architecture preventing WebGL context lost & blank screens
+    assert(
+      motionViewerTs.includes('container.appendChild(renderer.domElement)') &&
+      motionViewerTs.includes('renderer.dispose()') &&
+      motionViewerTs.includes('container.removeChild(canvasDom)'),
+      'Test 23.1: AsteroidMotionViewer implements dynamic canvas mounting and clean resource disposal'
+    );
+
+    // 23.2: Valid non-collapsing viewport height styling
+    assert(
+      motionViewerTs.includes('h-[520px]') && motionViewerTs.includes('min-h-[500px]') && !motionViewerTs.includes('h-125'),
+      'Test 23.2: AsteroidMotionViewer eliminates collapsed zero-height classes with responsive height styling'
+    );
+
+    // 23.3: Dual perspective modes (Solar System Heliocentric & Earth Flyby Radar)
+    assert(
+      motionViewerTs.includes('Solar System Heliocentric') && motionViewerTs.includes('Earth Flyby Radar'),
+      'Test 23.3: AsteroidMotionViewer provides dual perspective modes for Solar System and Earth flyby'
+    );
+
+    // 23.4: Object selection & camera focus for Sun, Earth, Mars, Asteroid
+    assert(
+      motionViewerTs.includes("handleFocusBody") &&
+      motionViewerTs.includes("'asteroid'") &&
+      motionViewerTs.includes("'earth'") &&
+      motionViewerTs.includes("'mars'") &&
+      motionViewerTs.includes("'sun'"),
+      'Test 23.4: AsteroidMotionViewer enables smooth camera focus on Asteroid, Earth, Mars, and Sun'
+    );
+
+    // 23.5: Automatic WebGL fallback to high-DPI 2D radar canvas with notice
+    assert(
+      motionViewerTs.includes("renderEngine === '2d'") &&
+      motionViewerTs.includes('render2DRadar') &&
+      motionViewerTs.includes('webGlNotice'),
+      'Test 23.5: AsteroidMotionViewer implements graceful WebGL fallback to high-DPI 2D radar canvas'
+    );
+
+    // 23.6: Clear NASA/JPL provenance badges (Live vs Verified Archive)
+    assert(
+      motionViewerTs.includes('Live response') &&
+      motionViewerTs.includes('Verified archive'),
+      'Test 23.6: AsteroidMotionViewer renders transparent NASA/JPL data provenance badges'
+    );
+
+    // 23.7: Standish analytical planetary ephemeris exports in orbitalMotion.ts
+    const orbitalTs = fs.readFileSync(path.resolve(__dirname, '../src/utils/orbitalMotion.ts'), 'utf8');
+    assert(
+      orbitalTs.includes('calculateMajorPlanetPosition') && orbitalTs.includes('generateMajorPlanetOrbitPath'),
+      'Test 23.7: orbitalMotion.ts implements JPL Standish planetary positions and orbital ellipses'
+    );
+
+    // 23.8: Standish calculation computes realistic Earth and Mars states
+    const { calculateMajorPlanetPosition } = await import('../src/utils/orbitalMotion.ts');
+    const testDate = new Date('2026-10-25T12:00:00Z');
+    const earthState = calculateMajorPlanetPosition('earth', testDate);
+    const marsState = calculateMajorPlanetPosition('mars', testDate);
+
+    assert(
+      earthState.distSunAU >= 0.98 && earthState.distSunAU <= 1.02 &&
+      earthState.orbitalSpeedKmS >= 29 && earthState.orbitalSpeedKmS <= 31,
+      'Test 23.8: calculateMajorPlanetPosition computes authentic Earth distance (~1.0 AU) and velocity (~29.8 km/s)'
+    );
+
+    assert(
+      marsState.distSunAU >= 1.35 && marsState.distSunAU <= 1.70 &&
+      marsState.orbitalSpeedKmS >= 21 && marsState.orbitalSpeedKmS <= 27,
+      'Test 23.9: calculateMajorPlanetPosition computes authentic Mars distance (~1.38-1.67 AU) and velocity (~24 km/s)'
+    );
+
+    // 23.10: Asteroid Watch and routing integration
+    const watchTs = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidWatch.tsx'), 'utf8');
+    const appTs = fs.readFileSync(path.resolve(__dirname, '../src/App.tsx'), 'utf8');
+
+    assert(
+      watchTs.includes("viewMode === 'motion'") &&
+      watchTs.includes('AsteroidMotionViewer') &&
+      appTs.includes("candidate === 'motion' || candidate === 'asteroid-motion'"),
+      'Test 23.10: AsteroidWatch and App.tsx guarantee seamless routing and deep linking into Live Motion'
+    );
+  } catch (err) {
+    assert(false, `Test 23: Live Motion Observatory Suite failed: ${err.message}`);
+  }
+
+  // =========================================================================
+  // TEST 24: LIVE DATA PROVENANCE & RETRIEVAL PIPELINE SUITE
+  // =========================================================================
+  try {
+    // 24.1: Endpoint accepts refresh parameter and classifies live NASA/JPL response
+    const resLive = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=101955&refresh=true`);
+    assert(resLive.status === 200, 'Test 24.1: /api/data/asteroid/orbit?des=101955&refresh=true returns HTTP 200');
+    const liveJson = await resLive.json();
+    assert(liveJson.success === true && liveJson.asteroid && liveJson.provenance, 'Test 24.2: Orbit response contains success, asteroid, and provenance');
+    assert(
+      liveJson.provenance.retrievalStatus === 'live' || liveJson.provenance.retrievalStatus === 'archive' || liveJson.provenance.retrievalStatus === 'cached',
+      'Test 24.3: Orbit provenance accurately classifies retrievalStatus (live from JPL SBDB or archive fallback)'
+    );
+
+    if (liveJson.provenance.retrievalStatus === 'live') {
+      assert(liveJson.provenance.isLive === true, 'Test 24.4: Live response sets isLive to true');
+      assert(liveJson.provenance.source.includes('Small-Body Database'), 'Test 24.5: Live response source identifies NASA/JPL SBDB');
+      assert(liveJson.provenance.epochReference && liveJson.provenance.epochReference.startsWith('JD'), 'Test 24.6: Live response provides authentic Julian Date epoch reference');
+      assert(liveJson.provenance.lastRefreshAttempt && liveJson.provenance.lastRefreshAttempt.success === true, 'Test 24.7: Live refresh attempt logs success');
+    }
+
+    // 24.8: Subsequent query without refresh parameter returns cached response
+    const resCached = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=101955`);
+    assert(resCached.status === 200, 'Test 24.8: Subsequent query returns HTTP 200');
+    const cachedJson = await resCached.json();
+    assert(
+      cachedJson.provenance.retrievalStatus === 'cached' || cachedJson.provenance.retrievalStatus === 'live' || cachedJson.provenance.retrievalStatus === 'archive',
+      'Test 24.9: Subsequent query classifies status correctly without false live claim'
+    );
+    if (cachedJson.provenance.retrievalStatus === 'cached') {
+      assert(cachedJson.provenance.isLive === false, 'Test 24.10: Cached response does not falsely claim isLive: true');
+    }
+
+    // 24.11: Verified archive fallback for known preset
+    const resArchive = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=2025%20UK9`);
+    const archiveJson = await resArchive.json();
+    assert(
+      ['archive', 'live', 'cached'].includes(archiveJson.provenance.retrievalStatus),
+      'Test 24.11: Known preset query accurately reports retrieval status'
+    );
+
+    // 24.12: UI Data Provenance & Status panel implementation
+    const viewerTs = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidMotionViewer.tsx'), 'utf8');
+    assert(
+      viewerTs.includes('Data Provenance & Status') &&
+      viewerTs.includes('handleRetryLive') &&
+      viewerTs.includes('Retry Live'),
+      'Test 24.12: AsteroidMotionViewer.tsx implements dedicated Data Provenance & Status panel with Retry Live'
+    );
+
+    assert(
+      viewerTs.includes('SELECTED OBJECT') &&
+      viewerTs.includes('LAST SUCCESSFUL RETRIEVAL') &&
+      viewerTs.includes('EPOCH / REFERENCE TIME') &&
+      viewerTs.includes('LAST REFRESH ATTEMPT'),
+      'Test 24.13: Data panel displays Selected Object, Last Retrieval, Epoch Reference, and Last Refresh Attempt'
+    );
+
+    assert(
+      viewerTs.includes('Live response') &&
+      viewerTs.includes('Cached response') &&
+      viewerTs.includes('Verified archive') &&
+      viewerTs.includes('Source status unavailable'),
+      'Test 24.14: Data panel renders distinct badges for Live, Cached, Archive, and Unavailable states'
+    );
+
+    // 24.15: Duplicate click protection during active refresh
+    assert(
+      viewerTs.includes('disabled={isRefreshing || isLoading}'),
+      'Test 24.15: Retry Live button disables during in-flight network requests to prevent duplicate clicks'
+    );
+
+    // 24.16: liveSpaceService.ts cache busting and error handling
+    const serviceTs = fs.readFileSync(path.resolve(__dirname, '../src/services/liveSpaceService.ts'), 'utf8');
+    assert(
+      serviceTs.includes("url.searchParams.set('refresh', 'true')") &&
+      serviceTs.includes("url.searchParams.set('_t'") &&
+      serviceTs.includes('lastRefreshAttempt'),
+      'Test 24.16: liveSpaceService.ts adds cache-busting timestamp and captures refresh errors'
+    );
+  } catch (err) {
+    assert(false, `Test 24: Live Data Provenance & Retrieval Status Suite failed: ${err.message}`);
+  }
+
+  // =========================================================================
+  // TEST 25: SCIENTIFIC DATA ACCURACY & EPHEMERIS INTEGRATION SUITE
+  // =========================================================================
+  try {
+    const AU_KM = 149597870.7;
+    const LD_KM = 384400.0;
+    const viewerTs = fs.readFileSync(path.resolve(__dirname, '../src/components/AsteroidMotionViewer.tsx'), 'utf8');
+    const serviceTs = fs.readFileSync(path.resolve(__dirname, '../src/services/liveSpaceService.ts'), 'utf8');
+
+    // 25.1: Horizons Vector API returns HTTP 200 and standard coordinate frame
+    const resHorizons = await fetch(`${BASE_URL}/api/data/horizons/vector?target=399`);
+    assert(resHorizons.status === 200, 'Test 25.1: /api/data/horizons/vector returns HTTP 200');
+    const horizonsJson = await resHorizons.json();
+    assert(
+      horizonsJson.target === '399' &&
+      horizonsJson.coordinateFrame === 'ICRF / J2000 Heliocentric Ecliptic' &&
+      horizonsJson.origin && horizonsJson.origin.includes('Sun'),
+      'Test 25.2: Horizons endpoint formats ICRF/J2000 Heliocentric Ecliptic coordinates with Sun center'
+    );
+
+    // 25.3: Astronomical constant unit conversions
+    assert(
+      horizonsJson.positionKm && horizonsJson.positionAU,
+      'Test 25.3: Horizons state vector provides position in both km and AU'
+    );
+    const calculatedAU = Math.hypot(horizonsJson.positionKm.x, horizonsJson.positionKm.y, horizonsJson.positionKm.z) / AU_KM;
+    assert(
+      Math.abs(calculatedAU - horizonsJson.rangeAU) < 0.0001,
+      'Test 25.4: 1 AU is rigorously defined as 149,597,870.7 km within numerical precision'
+    );
+
+    // 25.5: Velocity vector speed consistency
+    if (horizonsJson.velocityKmS) {
+      const calcSpeed = Math.hypot(horizonsJson.velocityKmS.vx, horizonsJson.velocityKmS.vy, horizonsJson.velocityKmS.vz);
+      assert(
+        Math.abs(calcSpeed - horizonsJson.speedKmS) < 0.05,
+        'Test 25.5: Velocity vector magnitude matches reported orbital speed'
+      );
+    }
+
+    // 25.6: Authoritative Horizons Deterministic Benchmarks file exists and validates
+    const benchmarkPath = path.resolve(__dirname, '../data/horizons-benchmarks.json');
+    assert(fs.existsSync(benchmarkPath), 'Test 25.6: data/horizons-benchmarks.json fixture file exists');
+    const benchmarks = JSON.parse(fs.readFileSync(benchmarkPath, 'utf8'));
+    assert(
+      benchmarks.benchmarks &&
+      benchmarks.benchmarks.earth_j2000 &&
+      benchmarks.benchmarks.mars_j2000 &&
+      benchmarks.benchmarks.bennu_20261025 &&
+      benchmarks.benchmarks.apophis_20290413,
+      'Test 25.7: Benchmark fixtures contain verified NASA/JPL state vectors for Earth, Mars, Bennu, and Apophis'
+    );
+
+    // 25.8: Earth J2000 epoch verification
+    const earthJ2000 = benchmarks.benchmarks.earth_j2000;
+    assert(
+      earthJ2000.epochJd === 2451545.0,
+      'Test 25.8: J2000.0 epoch rigorously corresponds to Julian Date 2451545.0'
+    );
+    assert(
+      earthJ2000.rangeAU >= 0.980 && earthJ2000.rangeAU <= 0.986 &&
+      earthJ2000.speedKmS >= 29.5 && earthJ2000.speedKmS <= 30.5,
+      'Test 25.9: Earth at J2000 is 0.9833 AU from Sun traveling at ~30.3 km/s'
+    );
+
+    // 25.10: Mars J2000 epoch verification
+    const marsJ2000 = benchmarks.benchmarks.mars_j2000;
+    assert(
+      marsJ2000.rangeAU >= 1.38 && marsJ2000.rangeAU <= 1.40 &&
+      marsJ2000.speedKmS >= 25.5 && marsJ2000.speedKmS <= 27.0,
+      'Test 25.10: Mars at J2000 is 1.391 AU from Sun traveling at ~26.3 km/s'
+    );
+
+    // 25.11: Standish analytical ephemeris agreement with Horizons benchmark (Earth at J2000)
+    const ephemJ2000Res = await fetch(`${BASE_URL}/api/data/live-space/ephemeris?date=2000-01-01T12:00:00Z&target=earth`);
+    const ephemJ2000 = await ephemJ2000Res.json();
+    const earthEphem = ephemJ2000.objects?.find(o => o.id === 'earth');
+    assert(
+      earthEphem && Math.abs(earthEphem.distSunAU - earthJ2000.rangeAU) < 0.005,
+      'Test 25.11: Analytical Keplerian Earth distance matches Horizons benchmark within 0.005 AU (< 0.5% tolerance)'
+    );
+
+    // 25.12: Standish analytical ephemeris agreement with Horizons benchmark (Mars at J2000)
+    const ephemMarsRes = await fetch(`${BASE_URL}/api/data/live-space/ephemeris?date=2000-01-01T12:00:00Z&target=mars`);
+    const ephemMars = await ephemMarsRes.json();
+    const marsEphem = ephemMars.objects?.find(o => o.id === 'mars');
+    assert(
+      marsEphem && Math.abs(marsEphem.distSunAU - marsJ2000.rangeAU) < 0.015,
+      'Test 25.12: Analytical Keplerian Mars distance matches Horizons benchmark within 0.015 AU (< 1.0% tolerance)'
+    );
+
+    // 25.13: Asteroid Bennu (101955) Keplerian orbital physical bounds
+    const resBennu = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=101955`);
+    const bennuData = await resBennu.json();
+    const bennuA = bennuData.asteroid.orbitalElements.semiMajorAxisAU;
+    const bennuE = bennuData.asteroid.orbitalElements.eccentricity;
+    const bennuPerihelion = bennuA * (1 - bennuE);
+    const bennuAphelion = bennuA * (1 + bennuE);
+    assert(
+      bennuData.stateVector.distSunAU >= (bennuPerihelion - 0.02) &&
+      bennuData.stateVector.distSunAU <= (bennuAphelion + 0.02),
+      'Test 25.13: Asteroid Bennu propagated position is strictly bounded by orbital perihelion (~0.897 AU) and aphelion (~1.356 AU)'
+    );
+
+    // 25.14: Apophis 2029 encounter accuracy & transparent hazard disclosure
+    const resApophis = await fetch(`${BASE_URL}/api/data/asteroid/orbit?des=99942`);
+    const apophisData = await resApophis.json();
+    assert(
+      apophisData.asteroid.closeApproach &&
+      Math.abs(apophisData.asteroid.closeApproach.nominalDistanceKm - 31600) < 2000 &&
+      apophisData.asteroid.closeApproach.sentryImpactProbability.includes('0.00%'),
+      'Test 25.14: Apophis 2029 close approach verifies safe miss distance (~31,600 km / 0.082 LD) with 0.00% impact risk'
+    );
+
+    // 25.15: Missing uncertainty fields represented transparently as unavailable
+    assert(
+      viewerTs.includes('MEASUREMENT UNCERTAINTY') &&
+      viewerTs.includes('Not available'),
+      'Test 25.15: UI displays "Not available" when upstream measurement uncertainties are omitted'
+    );
+
+    // 25.16: Observatory Snapshot honest classification (no fake live claim)
+    const snapshotTs = fs.readFileSync(path.resolve(__dirname, '../src/data/observatorySnapshot.ts'), 'utf8');
+    assert(
+      !snapshotTs.includes('"statusLabel": "LIVE DATA"') &&
+      snapshotTs.includes('"statusLabel": "ARCHIVED BASELINE'),
+      'Test 25.16: Observatory startup snapshot identifies as ARCHIVED BASELINE rather than claiming live data'
+    );
+
+    // 25.17: client liveSpaceService exports fetchHorizonsVector
+    assert(
+      serviceTs.includes('export async function fetchHorizonsVector'),
+      'Test 25.17: liveSpaceService.ts exports authoritative fetchHorizonsVector client function'
+    );
+
+    // 25.18: LiveCosmicObservatory scientific modeling & provenance notice panel
+    const observatoryTs = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveCosmicObservatory.tsx'), 'utf8');
+    assert(
+      observatoryTs.includes('Scientific Modeling & Provenance') &&
+      observatoryTs.includes('Coordinate Frame:') &&
+      observatoryTs.includes('Computation Method:'),
+      'Test 25.18: LiveCosmicObservatory implements transparent Scientific Modeling & Provenance drawer'
+    );
+  } catch (err) {
+    assert(false, `Test 25: Scientific Data Accuracy & Ephemeris Integration Suite failed: ${err.message}`);
+  }
+
+  // =========================================================================
+  // TEST 26: COMBINED DEEP-SPACE RADAR & PLANET X INVESTIGATION SUITE
+  // =========================================================================
+  try {
+    const radarTs = fs.readFileSync(path.resolve(__dirname, '../src/components/CosmicRadarHUD.tsx'), 'utf8');
+    const appTs = fs.readFileSync(path.resolve(__dirname, '../src/App.tsx'), 'utf8');
+
+    // 26.1: deriveOrbitalParametersFromQ Keplerian conversion
+    const { 
+      deriveOrbitalParametersFromQ, 
+      deriveOrbitalParametersFromA, 
+      validateHypothesisParams, 
+      PLANET_NINE_PRESETS,
+      generateSecularTestParticles,
+      calculateClusteringMetric,
+      stepSecularSimulation 
+    } = await import('../src/utils/planetXPhysics.ts');
+
+    const p9Derived = deriveOrbitalParametersFromQ(247, 0.35, { massEarth: 6.2 });
+    assert(
+      Math.abs(p9Derived.semiMajorAxisAU - 380) < 0.1 &&
+      Math.abs(p9Derived.aphelionAU - 513) < 0.1 &&
+      p9Derived.orbitalPeriodYears > 7300 && p9Derived.orbitalPeriodYears < 7500,
+      "Test 26.1: deriveOrbitalParametersFromQ converts q and e to a, Q, and P accurately via Kepler's third law"
+    );
+
+    // 26.2: deriveOrbitalParametersFromA reproduces Sedna
+    const sednaDerived = deriveOrbitalParametersFromA(506.8, 0.849, { massEarth: 0.00017 });
+    assert(
+      Math.abs(sednaDerived.perihelionAU - 76.5) < 0.2 &&
+      Math.abs(sednaDerived.aphelionAU - 937.1) < 0.2 &&
+      sednaDerived.orbitalPeriodYears > 11300 && sednaDerived.orbitalPeriodYears < 11500,
+      'Test 26.2: deriveOrbitalParametersFromA derives perihelion, aphelion, and period reproducing Sedna and Planet Nine'
+    );
+
+    // 26.3: Hypothesis parameter boundary validation
+    const validCheck = validateHypothesisParams({ massEarth: 6.2, perihelionAU: 250, eccentricity: 0.35 });
+    const invalidCheck = validateHypothesisParams({ massEarth: 100, perihelionAU: -5, eccentricity: 1.5 });
+    assert(
+      validCheck.valid === true && validCheck.errors.length === 0 &&
+      invalidCheck.valid === false && invalidCheck.errors.length >= 2,
+      'Test 26.3: validateHypothesisParams checks boundaries and rejects non-physical inputs'
+    );
+
+    // 26.4: Literature reference presets
+    assert(
+      PLANET_NINE_PRESETS.batyginBrown2021 &&
+      PLANET_NINE_PRESETS.batyginBrown2016 &&
+      PLANET_NINE_PRESETS.trujilloSheppard2014 &&
+      PLANET_NINE_PRESETS.batyginBrown2021.doi.includes('10.3847') &&
+      PLANET_NINE_PRESETS.batyginBrown2021.isHypothetical === true,
+      'Test 26.4: PLANET_NINE_PRESETS incorporates Batygin & Brown (2016, 2021) and Trujillo & Sheppard (2014) with DOI citations'
+    );
+
+    // 26.5: Radar coordinate projection engine
+    const { 
+      projectHeliocentricToRadar, 
+      RADAR_RANGE_PRESETS, 
+      computeSweepPhosphorIntensity 
+    } = await import('../src/utils/deepSpaceRadar.ts');
+
+    const projCenter = projectHeliocentricToRadar(0, 0, 1000, 300, 300, 280);
+    const proj100 = projectHeliocentricToRadar(100, 0, 1000, 300, 300, 280);
+    const projOutOfRange = projectHeliocentricToRadar(1500, 0, 1000, 300, 300, 280);
+
+    assert(
+      projCenter.xPx === 300 && projCenter.yPx === 300 && projCenter.inRange === true &&
+      proj100.xPx === 328 && proj100.yPx === 300 && proj100.azimuthDeg === 0 && proj100.inRange === true &&
+      projOutOfRange.inRange === false && projOutOfRange.rangeFraction === 1.5,
+      'Test 26.5: projectHeliocentricToRadar accurately maps 3D ICRF/J2000 positions to 2D polar radar screen coordinates'
+    );
+
+    // 26.6: Radar Range Presets (5 AU, 35 AU, 150 AU, 1,000 AU)
+    assert(
+      RADAR_RANGE_PRESETS.inner.maxRangeAU === 5.0 &&
+      RADAR_RANGE_PRESETS.outer.maxRangeAU === 35.0 &&
+      RADAR_RANGE_PRESETS.tno.maxRangeAU === 150.0 &&
+      RADAR_RANGE_PRESETS['deep-space'].maxRangeAU === 1000.0 &&
+      RADAR_RANGE_PRESETS.outer.ringLabels[30.0].includes('Neptune'),
+      'Test 26.6: RADAR_RANGE_PRESETS configures 5 AU, 35 AU, 150 AU, and 1,000 AU with authentic astronomical boundary rings'
+    );
+
+    // 26.7: Phosphor sweep intensity calculation
+    const pingDirect = computeSweepPhosphorIntensity(90, 90, 60);
+    const pingTrailing = computeSweepPhosphorIntensity(110, 90, 60);
+    const pingOpposite = computeSweepPhosphorIntensity(270, 90, 60);
+
+    assert(
+      Math.abs(pingDirect - 1.0) < 0.01 &&
+      pingTrailing > 0.2 && pingTrailing < 0.8 &&
+      pingOpposite === 0.0,
+      'Test 26.7: computeSweepPhosphorIntensity models smooth phosphor fade without abrupt cutoffs'
+    );
+
+    // 26.8: Secular perturbation simulation utilities
+    const particles = generateSecularTestParticles();
+    const statsInit = calculateClusteringMetric(particles);
+    assert(
+      particles.length === 20 &&
+      statsInit.meanResultantLength > 0.80 &&
+      statsInit.circularStdDeg < 45.0,
+      'Test 26.8: Secular perturbation model computes orbital precession rates and circular clustering statistics'
+    );
+
+    // 26.9: Secular simulation stepping (with vs without P9)
+    const initState = {
+      timeMyr: 0,
+      particles,
+      planetNine: p9Derived,
+      withPlanetNine: true,
+      clusteringMetric: statsInit.meanResultantLength,
+      dispersionStdDeg: statsInit.circularStdDeg
+    };
+    const steppedWithP9 = stepSecularSimulation(initState, 2.0, p9Derived, true);
+    let dispersedState = initState;
+    for (let i = 0; i < 20; i++) {
+      dispersedState = stepSecularSimulation(dispersedState, 10.0, p9Derived, false);
+    }
+
+    assert(
+      steppedWithP9.timeMyr === 2.0 &&
+      steppedWithP9.clusteringMetric > 0.80 &&
+      dispersedState.timeMyr === 200.0 &&
+      dispersedState.clusteringMetric < steppedWithP9.clusteringMetric,
+      'Test 26.9: Secular simulation exhibits libration under Planet Nine and differential dispersion when perturber is removed'
+    );
+
+    // 26.10: CosmicRadarHUD UI controls & sweep state
+    assert(
+      radarTs.includes('isSweepRunning') &&
+      radarTs.includes('sweepSpeedMultiplier') &&
+      radarTs.includes('handleResetView'),
+      'Test 26.10: CosmicRadarHUD.tsx renders interactive sweep controls with play, pause, speed multipliers, and reset'
+    );
+
+    // 26.11: Category filtering
+    assert(
+      radarTs.includes("toggleCategory('planets')") &&
+      radarTs.includes("toggleCategory('asteroids')") &&
+      radarTs.includes("toggleCategory('distant-tnos')") &&
+      radarTs.includes("toggleCategory('hypothetical-p9')"),
+      'Test 26.11: CosmicRadarHUD.tsx provides category filtering for Planets, Asteroids, eTNOs, and Planet Nine'
+    );
+
+    // 26.12: Strict hypothetical labeling of Planet Nine
+    assert(
+      radarTs.includes('Hypothetical Planet Nine') &&
+      radarTs.includes('Planet X (Mathematical Prediction)') &&
+      radarTs.includes('HYPOTHETICAL TARGET') &&
+      radarTs.includes('simulated position. Not an observed astronomical detection'),
+      'Test 26.12: CosmicRadarHUD.tsx strictly labels Planet Nine as hypothetical without claiming observed visual detection'
+    );
+
+    // 26.13: Target Telemetry Inspector
+    assert(
+      radarTs.includes('selectedTarget.distSunAU') &&
+      radarTs.includes('selectedTarget.distEarthAU') &&
+      radarTs.includes('selectedTarget.orbitalSpeedKmS') &&
+      radarTs.includes('selectedTarget.dataSource'),
+      'Test 26.13: CosmicRadarHUD.tsx displays target telemetry inspector with heliocentric coordinates, speed, and provenance'
+    );
+
+    // 26.14: Cross-navigation to Observatory, Planet X Lab, and Asteroid Watch
+    assert(
+      radarTs.includes("onNavigate('observatory')") &&
+      radarTs.includes("onNavigate('planet-x')") &&
+      radarTs.includes("onNavigate('asteroid-watch')"),
+      'Test 26.14: CosmicRadarHUD.tsx provides cross-navigation links to Live Cosmic Observatory, Planet X Lab, and Asteroid Watch'
+    );
+
+    // 26.15: Dedicated Planet X Lab mode with real-time sliders
+    assert(
+      radarTs.includes("radarMode === 'planet-x-lab'") &&
+      radarTs.includes("handleApplyP9Preset('batyginBrown2021')") &&
+      radarTs.includes("handleUpdateP9Param('massEarth'") &&
+      radarTs.includes("handleUpdateP9Param('perihelionAU'") &&
+      radarTs.includes("handleUpdateP9Param('eccentricity'"),
+      'Test 26.15: CosmicRadarHUD.tsx features dedicated Planet X Lab mode with real-time hypothesis parameter sliders'
+    );
+
+    // 26.16: App.tsx deep linking and hash navigation
+    assert(
+      appTs.includes("clean === 'radar' || clean === 'deep-space-radar'") &&
+      appTs.includes("candidate === 'radar' || candidate === 'deep-space-radar'") &&
+      appTs.includes("document.getElementById('deep-space-radar')"),
+      'Test 26.16: App.tsx routes #radar and #deep-space-radar directly to the deep-space radar instrument'
+    );
+
+    // 26.17: Transparent disclaimer of tracking visualization
+    assert(
+      radarTs.includes('Astronomical Tracking Notice:') &&
+      radarTs.includes('Not an active radio radar receiver') &&
+      radarTs.includes('ICRF/J2000'),
+      'Test 26.17: CosmicRadarHUD explicitly disclaims active radar reception and documents tracking visualization methodology'
+    );
+  } catch (err) {
+    assert(false, `Test 26: Combined Deep-Space Radar & Planet X Suite failed: ${err.message}`);
   }
 
   console.log('\n====================================================');

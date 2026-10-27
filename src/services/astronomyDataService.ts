@@ -4,12 +4,27 @@ import type {
   GalaxyRecord, 
   StarRecord, 
   CatalogItem, 
-  CatalogCategory 
+  CatalogCategory,
+  NasaImageRecord
 } from '../types';
+import { getApiUrl } from '../config/api';
 
 const REQUEST_TIMEOUT_MS = 8000;
 
-async function safeFetch<T>(url: string, fallbackData: T): Promise<{ data: T; source: string; isLive: boolean }> {
+export interface FetchResult<T> {
+  data: T;
+  source: string;
+  isLive: boolean;
+  table?: string;
+  page?: number;
+  pageSize?: number;
+  totalRecords?: number;
+  hasMore?: boolean;
+  lastUpdatedUtc?: string;
+}
+
+async function safeFetch<T>(endpoint: string, fallbackData: T): Promise<FetchResult<T>> {
+  const url = getApiUrl(endpoint);
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
@@ -17,9 +32,15 @@ async function safeFetch<T>(url: string, fallbackData: T): Promise<{ data: T; so
     if (res.ok) {
       const json = await res.json();
       return {
-        data: (json.records || json.data || json) as T,
+        data: (json.records || json.data || json.items || json) as T,
         source: json.source || 'NASA Open Data Gateway',
-        isLive: true
+        isLive: json.isLive ?? true,
+        table: json.table,
+        page: json.page,
+        pageSize: json.pageSize,
+        totalRecords: json.totalRecords || json.recordCount,
+        hasMore: json.hasMore,
+        lastUpdatedUtc: json.lastUpdatedUtc || json.retrievalDateUTC
       };
     }
   } catch (err) {
@@ -36,12 +57,32 @@ export async function fetchSolarSystemPlanets() {
   return safeFetch('/api/data/solar-system', []);
 }
 
-export async function fetchConfirmedExoplanets(search?: string, includeCandidates = true) {
+export async function fetchConfirmedExoplanets(
+  search?: string, 
+  includeCandidates = true,
+  page = 1,
+  limit = 50,
+  method?: string,
+  sort?: string
+) {
   const params = new URLSearchParams();
   if (search) params.append('search', search);
   if (includeCandidates) params.append('candidates', 'true');
+  if (page > 1) params.append('page', String(page));
+  if (limit) params.append('limit', String(limit));
+  if (method && method !== 'all') params.append('method', method);
+  if (sort) params.append('sort', sort);
   const query = params.toString() ? `?${params.toString()}` : '';
   return safeFetch<ExoplanetRecord[]>(`/api/data/exoplanets${query}`, []);
+}
+
+export async function fetchNasaImageSearch(query: string, page = 1, pageSize = 12, category?: string) {
+  const params = new URLSearchParams();
+  params.append('q', query);
+  if (page > 1) params.append('page', String(page));
+  if (pageSize) params.append('pageSize', String(pageSize));
+  if (category && category !== 'all') params.append('category', category);
+  return safeFetch<NasaImageRecord[]>(`/api/nasa/images?${params.toString()}`, []);
 }
 
 export async function fetchSmallBodies(search?: string) {
@@ -104,7 +145,7 @@ export async function fetchCatalogItems(
   if (category && category !== 'all') params.append('category', category);
   if (searchQuery) params.append('q', searchQuery);
 
-  const url = `/api/data/catalog?${params.toString()}`;
+  const url = getApiUrl(`/api/data/catalog?${params.toString()}`);
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)

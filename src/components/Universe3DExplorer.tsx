@@ -2,18 +2,14 @@ import { useState, useEffect, useRef, useMemo, type FC } from 'react';
 import * as THREE from 'three';
 import type { AppPage } from '../types';
 import { SOLAR_SYSTEM_OBJECTS } from '../data/solarSystemData';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
+import { useReducedMotion, useDocumentVisibility } from '../utils/motion';
 import { 
   createSunTexture,
-  createMercuryTexture,
-  createVenusTexture,
-  createEarthTexture,
   createMoonTexture,
-  createMarsTexture,
-  createJupiterTexture,
-  createSaturnTexture,
   createSaturnRingsTexture,
-  createUranusTexture,
-  createNeptuneTexture
+  loadPlanetTexture,
+  NASA_JPL_TEXTURE_MAPS
 } from '../utils/planetTextureGenerator';
 import { 
   Compass, 
@@ -157,6 +153,8 @@ const BODIES_CONFIG: Body3DConfig[] = [
 
 export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const isReducedMotion = useReducedMotion();
+  const isDocumentVisible = useDocumentVisibility();
 
   // UI state
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
@@ -168,8 +166,8 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
   const [searchQuery, setSearchQuery] = useState('');
   const [isWebGLSupported] = useState(() => isWebGLAvailable());
 
-  // 2D label projections state
-  const [labelCoords, setLabelCoords] = useState<Array<{ id: string; name: string; x: number; y: number; visible: boolean }>>([]);
+  // Direct DOM label references for 60fps label tracking without React reconciliation overhead
+  const labelElementsRef = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Active object scientific data from Stage 2 dataset
   const activeObjectData = useMemo(() => {
@@ -187,6 +185,7 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
     selectionRing: THREE.Mesh;
     cameraTarget: THREE.Vector3;
     cameraSpherical: { radius: number; theta: number; phi: number };
+    targetSpherical: { radius: number; theta: number; phi: number };
     isDragging: boolean;
     pointerStart: { x: number; y: number; time: number };
     activeFocusBodyId: string | null;
@@ -313,18 +312,6 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
     const planetMeshes = new Map<string, { mesh: THREE.Mesh; orbitGroup: THREE.Group; config: Body3DConfig }>();
     const orbitLines: THREE.Line[] = [];
 
-    // Helper map of texture generators
-    const textureMap: Record<string, () => THREE.CanvasTexture> = {
-      mercury: createMercuryTexture,
-      venus: createVenusTexture,
-      earth: createEarthTexture,
-      mars: createMarsTexture,
-      jupiter: createJupiterTexture,
-      saturn: createSaturnTexture,
-      uranus: createUranusTexture,
-      neptune: createNeptuneTexture
-    };
-
     let moonMeshRef: THREE.Mesh | undefined;
     let earthMeshRef: THREE.Mesh | undefined;
 
@@ -334,14 +321,19 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
 
       // Sphere geometry
       const sphereGeom = new THREE.SphereGeometry(body.presentationRadius, 32, 32);
-      const textureFn = textureMap[body.id] || createMercuryTexture;
-      const texture = textureFn();
 
       const planetMat = new THREE.MeshStandardMaterial({
-        map: texture,
         roughness: 0.75,
         metalness: 0.1
       });
+
+      // Load authentic NASA/JPL planetary cylindrical map with instant procedural fallback
+      const initialTexture = loadPlanetTexture(body.id, (loadedTex) => {
+        planetMat.map = loadedTex;
+        planetMat.needsUpdate = true;
+      });
+      planetMat.map = initialTexture;
+
       const mesh = new THREE.Mesh(sphereGeom, planetMat);
       mesh.rotation.z = (body.axialTiltDeg * Math.PI) / 180;
       mesh.userData = { id: body.id, name: body.name };
@@ -417,6 +409,7 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
       selectionRing,
       cameraTarget,
       cameraSpherical,
+      targetSpherical: { ...cameraSpherical },
       isDragging: false,
       pointerStart: { x: 0, y: 0, time: 0 },
       activeFocusBodyId: null,
@@ -438,15 +431,15 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
 
     const handlePointerMove = (e: PointerEvent) => {
       if (!sceneRefs.current) return;
-      const { isDragging, cameraSpherical } = sceneRefs.current;
+      const { isDragging, targetSpherical } = sceneRefs.current;
       if (!isDragging) return;
 
       const dx = e.clientX - sceneRefs.current.pointerStart.x;
       const dy = e.clientY - sceneRefs.current.pointerStart.y;
 
-      // Update camera spherical angles
-      cameraSpherical.theta -= dx * 0.005;
-      cameraSpherical.phi = Math.max(0.08, Math.min(Math.PI - 0.08, cameraSpherical.phi - dy * 0.005));
+      // Update camera spherical target angles
+      targetSpherical.theta -= dx * 0.005;
+      targetSpherical.phi = Math.max(0.08, Math.min(Math.PI - 0.08, targetSpherical.phi - dy * 0.005));
 
       sceneRefs.current.pointerStart.x = e.clientX;
       sceneRefs.current.pointerStart.y = e.clientY;
@@ -490,13 +483,13 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
     const handleWheel = (e: WheelEvent) => {
       if (!sceneRefs.current) return;
       e.preventDefault();
-      const { cameraSpherical, activeFocusBodyId } = sceneRefs.current;
+      const { targetSpherical, activeFocusBodyId } = sceneRefs.current;
 
       const zoomFactor = 1 + Math.sign(e.deltaY) * 0.08;
       const minRadius = activeFocusBodyId ? 8 : 25;
       const maxRadius = activeFocusBodyId ? 180 : 800;
 
-      cameraSpherical.radius = Math.max(minRadius, Math.min(maxRadius, cameraSpherical.radius * zoomFactor));
+      targetSpherical.radius = Math.max(minRadius, Math.min(maxRadius, targetSpherical.radius * zoomFactor));
     };
 
     const domElement = renderer.domElement;
@@ -522,17 +515,21 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
     const animate = (currentTime: number) => {
       sceneRefs.current!.animFrameId = requestAnimationFrame(animate);
 
+      if (!isDocumentVisible) return;
+
       const delta = (currentTime - lastTime) * 0.001;
       lastTime = currentTime;
 
       const refs = sceneRefs.current;
       if (!refs) return;
 
-      // Spin the Sun
-      refs.sunMesh.rotation.y += 0.002;
+      // Spin the Sun (disabled when reduced motion)
+      if (!isReducedMotion) {
+        refs.sunMesh.rotation.y += 0.002;
+      }
 
-      // Orbit and spin planets if not paused
-      if (!isPaused) {
+      // Orbit and spin planets if not paused and not reduced motion
+      if (!isPaused && !isReducedMotion) {
         for (const { mesh, orbitGroup, config } of refs.planetMeshes.values()) {
           // Axial spin
           mesh.rotation.y += config.rotationSpeed * simSpeed;
@@ -569,10 +566,18 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
       }
 
       // Smoothly lerp cameraTarget toward targetPos
-      refs.cameraTarget.lerp(targetPos, 0.06);
+      const targetLerp = isReducedMotion ? 1.0 : 0.06;
+      refs.cameraTarget.lerp(targetPos, targetLerp);
+
+      // Smoothly lerp camera spherical angles towards target
+      const angleLerp = isReducedMotion ? 1.0 : 0.08;
+      const sp = refs.cameraSpherical;
+      const tsp = refs.targetSpherical;
+      sp.radius += (tsp.radius - sp.radius) * angleLerp;
+      sp.phi += (tsp.phi - sp.phi) * angleLerp;
+      sp.theta += (tsp.theta - sp.theta) * angleLerp;
 
       // Compute camera coords from spherical
-      const sp = refs.cameraSpherical;
       const cx = refs.cameraTarget.x + sp.radius * Math.sin(sp.phi) * Math.sin(sp.theta);
       const cy = refs.cameraTarget.y + sp.radius * Math.cos(sp.phi);
       const cz = refs.cameraTarget.z + sp.radius * Math.sin(sp.phi) * Math.cos(sp.theta);
@@ -580,24 +585,27 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
       refs.camera.position.set(cx, cy, cz);
       refs.camera.lookAt(refs.cameraTarget);
 
-      // 10. Update 2D Screen Labels
+      // 10. Update 2D Screen Labels directly without triggering React re-renders
       if (showLabels) {
-        const labels: Array<{ id: string; name: string; x: number; y: number; visible: boolean }> = [];
         const tempV = new THREE.Vector3();
-
         for (const [id, { mesh, config }] of refs.planetMeshes.entries()) {
+          const el = labelElementsRef.current.get(id);
+          if (!el) continue;
           mesh.getWorldPosition(tempV);
           tempV.y += config.presentationRadius * 1.4;
           tempV.project(refs.camera);
 
           // Is behind camera?
           const isVisible = tempV.z < 1.0;
-          const sx = (tempV.x * 0.5 + 0.5) * container.clientWidth;
-          const sy = (-(tempV.y * 0.5) + 0.5) * container.clientHeight;
-
-          labels.push({ id, name: config.name, x: sx, y: sy, visible: isVisible });
+          if (isVisible) {
+            const sx = (tempV.x * 0.5 + 0.5) * container.clientWidth;
+            const sy = (-(tempV.y * 0.5) + 0.5) * container.clientHeight;
+            el.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
+            el.style.display = 'block';
+          } else {
+            el.style.display = 'none';
+          }
         }
-        setLabelCoords(labels);
       }
 
       renderer.render(scene, camera);
@@ -634,7 +642,7 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
         container.removeChild(renderer.domElement);
       }
     };
-  }, [isWebGLSupported, scaleMode]);
+  }, [isWebGLSupported, scaleMode, isDocumentVisible, isReducedMotion]);
 
   // Handle Planet Selection & Focus
   const handleSelectObject = (id: string) => {
@@ -644,12 +652,12 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
     sceneRefs.current.activeFocusBodyId = id;
 
     if (id === 'sun') {
-      sceneRefs.current.cameraSpherical.radius = 45;
+      sceneRefs.current.targetSpherical.radius = 45;
     } else {
       const item = sceneRefs.current.planetMeshes.get(id);
       if (item) {
-        sceneRefs.current.cameraSpherical.radius = item.config.presentationRadius * 6.5;
-        sceneRefs.current.cameraSpherical.phi = Math.PI / 2.8;
+        sceneRefs.current.targetSpherical.radius = item.config.presentationRadius * 6.5;
+        sceneRefs.current.targetSpherical.phi = Math.PI / 2.8;
       }
     }
   };
@@ -659,9 +667,9 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
     setSelectedObjectId(null);
     if (!sceneRefs.current) return;
     sceneRefs.current.activeFocusBodyId = null;
-    sceneRefs.current.cameraSpherical.radius = 210;
-    sceneRefs.current.cameraSpherical.phi = Math.PI / 3.2;
-    sceneRefs.current.cameraSpherical.theta = Math.PI / 4;
+    sceneRefs.current.targetSpherical.radius = 210;
+    sceneRefs.current.targetSpherical.phi = Math.PI / 3.2;
+    sceneRefs.current.targetSpherical.theta = Math.PI / 4;
   };
 
   // Toggle Orbits Visibility
@@ -692,7 +700,7 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold uppercase bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
               <Compass className="w-3.5 h-3.5" />
-              Stage 3: 3D Universe Explorer
+              Planetary Mechanics • 3D Universe Explorer
             </span>
             <span className="text-xs text-[#94A3B8]">JPL Horizons Reference Ephemerides</span>
           </div>
@@ -771,19 +779,24 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
           </div>
         )}
 
-        {/* 2D Overlay Projected Planet Labels */}
+        {/* 2D Overlay Projected Planet Labels (Direct DOM transforms without React re-rendering) */}
         {showLabels && isWebGLSupported && (
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {labelCoords.map(label => {
-              if (!label.visible) return null;
-              const isSelected = selectedObjectId === label.id;
+            {BODIES_CONFIG.map(body => {
+              const isSelected = selectedObjectId === body.id;
               return (
                 <div
-                  key={label.id}
+                  key={body.id}
+                  ref={el => {
+                    if (el) labelElementsRef.current.set(body.id, el);
+                    else labelElementsRef.current.delete(body.id);
+                  }}
                   style={{
-                    transform: `translate(${label.x}px, ${label.y}px)`,
+                    display: 'none',
+                    position: 'absolute',
                     left: 0,
-                    top: 0
+                    top: 0,
+                    willChange: 'transform'
                   }}
                   className="absolute -translate-x-1/2 -translate-y-full pb-2 transition-opacity"
                 >
@@ -794,7 +807,7 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
                         : 'bg-[#0B1630]/80 text-[#94A3B8] border border-[#1E293B]'
                     }`}
                   >
-                    {label.name}
+                    {body.name}
                   </span>
                 </div>
               );
@@ -935,6 +948,17 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
               </button>
             </div>
 
+            {/* Mission Photograph / Scientific Visual */}
+            <div className="rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A]">
+              <AstronomicalImage
+                target={activeObjectData}
+                targetType={activeObjectData.id === 'sun' ? 'star' : 'planet'}
+                aspectRatio="16/9"
+                showBadge={true}
+                className="w-full h-36 object-cover"
+              />
+            </div>
+
             {/* Description */}
             <p className="text-xs text-[#CBD5E1] leading-relaxed">
               {activeObjectData.description}
@@ -945,7 +969,7 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
               <h4 className="text-[11px] font-mono uppercase text-[#64748B] font-semibold">
                 Verified Astronomical Parameters
               </h4>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-2 gap-2 text-xs tabular-nums">
                 <div className="p-2 rounded-lg bg-[#0B1630] border border-[#1E293B]">
                   <span className="text-[10px] text-[#64748B] block">Semi-Major Axis</span>
                   <span className="font-semibold text-white font-mono">{activeObjectData.semiMajorAxisAU}</span>
@@ -982,6 +1006,38 @@ export const Universe3DExplorer: FC<Universe3DExplorerProps> = ({ onNavigate }) 
                 </div>
               </div>
             </div>
+
+            {/* Authentic NASA/JPL Planetary Surface Map Provenance */}
+            {NASA_JPL_TEXTURE_MAPS[activeObjectData.id] && (
+              <div className="p-3 rounded-xl bg-[#0B1630]/90 border border-sky-500/30 text-[11px] text-[#94A3B8] space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-sky-400 font-semibold">
+                    Surface Map • NASA/JPL
+                  </span>
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                    {NASA_JPL_TEXTURE_MAPS[activeObjectData.id].mission}
+                  </span>
+                </div>
+                <p className="text-white text-xs font-medium">
+                  {NASA_JPL_TEXTURE_MAPS[activeObjectData.id].credit}
+                </p>
+                <p className="text-[10px] text-[#CBD5E1] leading-relaxed">
+                  {NASA_JPL_TEXTURE_MAPS[activeObjectData.id].description}
+                </p>
+                <div className="pt-1 border-t border-[#1E293B] flex items-center justify-between text-[10px] text-[#64748B]">
+                  <span>{NASA_JPL_TEXTURE_MAPS[activeObjectData.id].projection}</span>
+                  <a
+                    href={NASA_JPL_TEXTURE_MAPS[activeObjectData.id].sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sky-400 hover:text-sky-300 inline-flex items-center gap-1 font-medium"
+                  >
+                    <span>JPL Simulator Map</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+              </div>
+            )}
 
             {/* Scientific Context */}
             {activeObjectData.scientificContext && (

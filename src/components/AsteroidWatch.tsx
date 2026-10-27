@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useMemo, type FC } from 'react';
 import type { AppPage, LiveCloseApproach, LiveCloseApproachesResponse, LiveDataBadgeStatus } from '../types';
 import { fetchLiveCloseApproaches } from '../services/liveSpaceService';
+import { buildFallbackCloseApproachesResponse } from '../data/verifiedAsteroidPresets';
+import { AstronomicalImage } from './astronomy-images/AstronomicalImage';
+import { AsteroidMotionViewer } from './AsteroidMotionViewer';
 import { 
   ShieldAlert, 
   CheckCircle2, 
@@ -9,7 +12,9 @@ import {
   Calendar, 
   Crosshair,
   Globe,
-  ArrowRight
+  ArrowRight,
+  Orbit,
+  List
 } from 'lucide-react';
 
 interface AsteroidWatchProps {
@@ -17,6 +22,10 @@ interface AsteroidWatchProps {
 }
 
 export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
+  // Mode State: 'list' (records & CAD feed) vs 'motion' (interactive orbital scene)
+  const [viewMode, setViewMode] = useState<'list' | 'motion'>('list');
+  const [motionTargetDes, setMotionTargetDes] = useState<string>('99942');
+
   // Feed Data State
   const [cadResponse, setCadResponse] = useState<LiveCloseApproachesResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -32,6 +41,38 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
   const [customDateMax, setCustomDateMax] = useState<string>(
     new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10)
   );
+
+  // Check URL hash/query on mount & on hashchange for deep-linking
+  useEffect(() => {
+    const syncFromUrl = () => {
+      const raw = (window.location.hash || window.location.search || '').toLowerCase();
+      if (
+        raw.includes('mode=motion') || 
+        raw === '#motion' || 
+        raw.startsWith('#motion?') ||
+        raw === '#asteroid-motion' || 
+        raw.startsWith('#asteroid-motion?') ||
+        raw.includes('motion')
+      ) {
+        setViewMode('motion');
+      } else if (raw.includes('mode=list') || raw === '#asteroid-watch') {
+        setViewMode('list');
+      }
+
+      const targetMatch = (window.location.hash || window.location.search).match(/target=([^&]+)/i);
+      if (targetMatch && targetMatch[1]) {
+        setMotionTargetDes(decodeURIComponent(targetMatch[1]));
+      }
+    };
+
+    syncFromUrl();
+    window.addEventListener('hashchange', syncFromUrl);
+    window.addEventListener('popstate', syncFromUrl);
+    return () => {
+      window.removeEventListener('hashchange', syncFromUrl);
+      window.removeEventListener('popstate', syncFromUrl);
+    };
+  }, []);
 
   // Canvas Ref for Approach Visualizer
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -61,7 +102,12 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
       }
     } catch (err: any) {
       console.error('Error fetching close approaches:', err);
-      setError('Failed to retrieve close approach data from JPL CNEOS. Showing verified cached records.');
+      setError('Failed to retrieve live close approach data from JPL CNEOS. Showing verified cached records.');
+      const fallback = buildFallbackCloseApproachesResponse();
+      setCadResponse(fallback);
+      if (fallback.approaches.length > 0) {
+        setSelectedApproach(fallback.approaches[0]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -282,19 +328,19 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* 1. Header & Live NASA CNEOS Badge */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-linear-to-b from-[#0B1630] to-[#050B1A] border border-[#1E293B] shadow-2xl space-y-6">
+      <div className="p-6 sm:p-8 rounded-2xl bg-linear-to-b from-[#0B1630] to-[#070E22] border border-[#1E293B] shadow-xl space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider uppercase bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-semibold tracking-wider uppercase bg-[#38BDF8]/10 text-[#38BDF8] border border-[#38BDF8]/30">
                 NASA/JPL CNEOS Close-Approach Data (CAD)
               </span>
               {cadResponse && renderBadge(cadResponse.statusLabel)}
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#F8FAFC] font-mono">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#F8FAFC]">
               Live Asteroid & Comet Approach Monitor
             </h1>
-            <p className="text-sm text-[#A7B4CC] max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#A7B4CC] max-w-2xl leading-relaxed">
               Real-time radar and optical tracking of natural near-Earth objects (NEOs) passing within the inner Solar System. Direct telemetry from NASA/JPL Center for Near Earth Object Studies.
             </p>
           </div>
@@ -305,7 +351,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
               href="https://cneos.jpl.nasa.gov/ca/"
               target="_blank"
               rel="noreferrer"
-              className="px-4 py-3 rounded-2xl bg-[#050B1A] hover:bg-[#0E1B38] border border-[#1E293B] text-xs font-mono text-[#A7B4CC] hover:text-[#F8FAFC] transition-all flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-[#050B1A] hover:bg-[#0E1B38] border border-[#1E293B] text-xs font-mono text-[#A7B4CC] hover:text-[#F8FAFC] transition-all flex items-center gap-2"
             >
               <span>JPL CNEOS Portal</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -314,7 +360,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
             <button
               onClick={loadApproaches}
               disabled={isLoading}
-              className="px-4 py-3 rounded-2xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8]/50 text-xs font-mono font-bold text-[#F8FAFC] transition-all flex items-center gap-2 group"
+              className="px-4 py-2.5 rounded-xl bg-[#0E1B38] hover:bg-[#1E293B] border border-[#1E293B] hover:border-[#38BDF8]/50 text-xs font-mono font-semibold text-[#F8FAFC] transition-all flex items-center gap-2 group cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 text-[#38BDF8] ${isLoading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
               <span>Refresh Feed</span>
@@ -371,6 +417,45 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
           </div>
         )}
 
+        {/* Mode Switch Tabs: List Mode vs Motion Mode */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-[#1E293B]">
+          <div className="flex rounded-xl bg-[#050B1A] p-1 border border-[#1E293B] text-xs font-mono">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                viewMode === 'list'
+                  ? 'bg-[#38BDF8] text-[#050B1A] shadow-md'
+                  : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
+              }`}
+            >
+              <List className="w-4 h-4" />
+              <span>List Mode (Records & CAD Feed)</span>
+            </button>
+            <button
+              onClick={() => {
+                if (selectedApproach) {
+                  setMotionTargetDes(selectedApproach.designation);
+                }
+                setViewMode('motion');
+              }}
+              className={`px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                viewMode === 'motion'
+                  ? 'bg-[#38BDF8] text-[#050B1A] shadow-md'
+                  : 'text-[#A7B4CC] hover:text-[#F8FAFC]'
+              }`}
+            >
+              <Orbit className="w-4 h-4" />
+              <span>Motion Mode (Interactive Orbital Scene)</span>
+            </button>
+          </div>
+
+          <span className="text-[11px] font-mono text-[#A7B4CC]">
+            {viewMode === 'list' 
+              ? 'Viewing catalog records, close approach tables & encounter schematic'
+              : `Viewing time-controlled Keplerian motion & orbital state vectors for ${motionTargetDes}`}
+          </span>
+        </div>
+
         {/* Cross-navigation links */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           <button
@@ -397,7 +482,23 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* 3. Filter Controls Toolbar */}
+      {viewMode === 'motion' ? (
+        <AsteroidMotionViewer
+          initialDesignation={motionTargetDes || selectedApproach?.designation || '99942'}
+          allApproaches={cadResponse?.approaches || []}
+          onSwitchToListMode={() => {
+            setViewMode('list');
+            window.location.hash = 'asteroid-watch';
+          }}
+          onSelectApproach={(app: LiveCloseApproach) => {
+            setSelectedApproach(app);
+            setMotionTargetDes(app.designation);
+            window.location.hash = `asteroid-watch?mode=motion&target=${encodeURIComponent(app.designation)}`;
+          }}
+        />
+      ) : (
+        <>
+          {/* 3. Filter Controls Toolbar */}
       <div className="p-4 sm:p-5 rounded-2xl bg-[#0B1630] border border-[#1E293B] space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Timeframe Presets */}
@@ -557,7 +658,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
             </span>
           </div>
 
-          <div className="relative rounded-3xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-2xl h-100 flex items-center justify-center">
+          <div className="relative rounded-2xl bg-[#050B1A] border border-[#1E293B] overflow-hidden shadow-2xl h-100 flex items-center justify-center">
             {selectedApproach ? (
               <canvas ref={canvasRef} className="w-full h-full" />
             ) : (
@@ -576,7 +677,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
         {/* Selected Asteroid Details Inspector (Col Span 1) */}
         <div className="space-y-4">
           {selectedApproach ? (
-            <div className="p-6 rounded-3xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
+            <div className="p-6 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
               <div className="space-y-2 border-b border-[#1E293B] pb-4">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-mono uppercase tracking-wider text-[#38BDF8] font-bold">
@@ -599,6 +700,22 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                 <div className="text-xs font-mono text-[#A7B4CC]">
                   Close Approach: {selectedApproach.closeApproachDate} (UTC)
                 </div>
+              </div>
+
+              {/* Visual Representation */}
+              <div className="rounded-xl overflow-hidden border border-[#1E293B] bg-[#050B1A]">
+                <AstronomicalImage
+                  target={{
+                    id: selectedApproach.designation.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                    name: selectedApproach.designation,
+                    classification: selectedApproach.isPotentiallyHazardous ? 'Potentially Hazardous Asteroid' : 'Near-Earth Asteroid',
+                    diameterEstimateMeters: selectedApproach.estimatedDiameterMeters.avg,
+                  }}
+                  targetType="small-body"
+                  aspectRatio="16/9"
+                  showBadge={true}
+                  className="w-full h-36 object-cover"
+                />
               </div>
 
               {/* Physical & Trajectory Parameters */}
@@ -664,6 +781,19 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                 </div>
               </div>
 
+              {/* Inspect Orbit in Motion Mode CTA Button */}
+              <button
+                onClick={() => {
+                  setMotionTargetDes(selectedApproach.designation);
+                  setViewMode('motion');
+                  window.location.hash = `asteroid-watch?mode=motion&target=${encodeURIComponent(selectedApproach.designation)}`;
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-linear-to-r from-[#38BDF8] to-[#0284C7] hover:from-[#38BDF8]/90 hover:to-[#0284C7]/90 text-[#050B1A] font-bold text-xs font-mono transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+              >
+                <Orbit className="w-4 h-4" />
+                <span>Inspect Orbit in Motion Mode</span>
+              </button>
+
               {/* Official JPL SBDB Link */}
               <div className="pt-2 border-t border-[#1E293B] flex items-center justify-between text-xs font-mono">
                 <span className="text-[11px] text-[#A7B4CC]">Orbit ID: {selectedApproach.orbitId}</span>
@@ -679,7 +809,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
               </div>
             </div>
           ) : (
-            <div className="p-8 rounded-3xl bg-[#0B1630] border border-[#1E293B] text-center text-xs font-mono text-[#A7B4CC]">
+            <div className="p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] text-center text-xs font-mono text-[#A7B4CC]">
               Select an encounter from the table below to inspect its trajectory.
             </div>
           )}
@@ -687,7 +817,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
       </div>
 
       {/* 5. Close Approaches Feed Table */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0B1630] border border-[#1E293B] shadow-2xl space-y-6">
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] shadow-xl space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1E293B] pb-4">
           <div>
             <h3 className="text-xl font-bold font-mono text-[#F8FAFC]">
@@ -713,6 +843,7 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                   <th className="py-3 px-4">Rel. Velocity</th>
                   <th className="py-3 px-4">Est. Diameter</th>
                   <th className="py-3 px-4">Classification</th>
+                  <th className="py-3 px-4 text-right">Orbit Motion</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1E293B]/60">
@@ -729,16 +860,16 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                       <td className="py-3.5 px-4 font-bold text-[#F8FAFC]">
                         {item.designation}
                       </td>
-                      <td className="py-3.5 px-4 text-[#A7B4CC]">
+                      <td className="py-3.5 px-4 text-[#A7B4CC] tabular-nums">
                         {item.closeApproachDate}
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-[#38BDF8]">
+                      <td className="py-3.5 px-4 font-bold text-[#38BDF8] tabular-nums">
                         {formatDistance(item)}
                       </td>
-                      <td className="py-3.5 px-4 text-[#F5C451]">
+                      <td className="py-3.5 px-4 text-[#F5C451] tabular-nums">
                         {item.relativeVelocityKmS} km/s
                       </td>
-                      <td className="py-3.5 px-4 text-[#F8FAFC]">
+                      <td className="py-3.5 px-4 text-[#F8FAFC] tabular-nums">
                         ~{item.estimatedDiameterMeters.avg} m ({item.estimatedDiameterMeters.min}–{item.estimatedDiameterMeters.max} m)
                       </td>
                       <td className="py-3.5 px-4">
@@ -751,6 +882,21 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
                             NEO
                           </span>
                         )}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedApproach(item);
+                            setMotionTargetDes(item.designation);
+                            setViewMode('motion');
+                            window.location.hash = `asteroid-watch?mode=motion&target=${encodeURIComponent(item.designation)}`;
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-[#0E1B38] hover:bg-[#1E293B] text-[#38BDF8] border border-[#38BDF8]/40 hover:border-[#38BDF8] text-[11px] font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <Orbit className="w-3.5 h-3.5" />
+                          <span>Motion</span>
+                        </button>
                       </td>
                     </tr>
                   );
@@ -771,9 +917,11 @@ export const AsteroidWatch: FC<AsteroidWatchProps> = ({ onNavigate }) => {
           </div>
         )}
       </div>
+      </>
+      )}
 
       {/* 6. Scientific Distinction: Close Approach vs PHA vs Impact Risk (Section 7) */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0B1630] border border-[#1E293B] space-y-6">
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#0B1630] border border-[#1E293B] space-y-6">
         <div className="space-y-2">
           <span className="text-xs font-mono uppercase tracking-wider text-[#38BDF8] font-bold">
             Scientific Data Integrity

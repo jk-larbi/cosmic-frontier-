@@ -308,10 +308,10 @@ export const SPHERExExplorer: FC = () => {
               <span>NASA SPHEREx Mission Surveyor & Infrared Laboratory</span>
             </div>
             <h1 className="text-3xl sm:text-5xl font-extrabold text-[#F8FAFC] tracking-tight">
-              Cosmic Image Laboratory
+              SPHEREx Explorer
             </h1>
             <p className="text-base sm:text-lg text-[#F5C451] font-medium mt-1">
-              Multi-Wavelength Infrared Spectroscopy & SPHEREx Explorer
+              Multi-Wavelength Infrared Spectroscopy & Mission Data Laboratory
             </p>
           </div>
 
@@ -360,6 +360,40 @@ export const SPHERExExplorer: FC = () => {
         <p className="text-sm text-[#A7B4CC] leading-relaxed max-w-4xl">
           Infrared light is a form of light invisible to human eyes with longer wavelengths than optical light. While dense cosmic dust clouds completely block visible light, infrared waves pass straight through to unveil newborn protostars, distant early galaxies, and frozen chemical compounds like water and carbon dioxide ice.
         </p>
+
+        {/* Mission Operational Status Banner (Quick Release 3) */}
+        <div className="p-4 rounded-xl bg-[#050B1A] border border-[#10B981]/40 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse shrink-0" />
+            <div>
+              <span className="font-bold text-[#F8FAFC]">Mission Status: Operational in Orbit (Launched March 2025)</span>
+              <span className="text-[#A7B4CC] block sm:inline sm:ml-2">
+                IRSA Quick Release 3 (QR3) active since September 2026 • DOI: <span className="font-mono text-[#38BDF8]">10.26131/IRSA662</span>
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 font-mono text-[11px] text-[#A7B4CC]">
+            <a 
+              href="https://irsa.ipac.caltech.edu/data/SPHEREx/docs/overview_qr.html" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-[#38BDF8] hover:underline flex items-center gap-1"
+            >
+              <span>IRSA QR3 Docs</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+            <span className="text-[#1E293B]">|</span>
+            <a 
+              href="https://irsa.ipac.caltech.edu/cloud_access/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-[#38BDF8] hover:underline flex items-center gap-1"
+            >
+              <span>AWS S3 Open Data</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Target Selector Tabs */}
@@ -394,13 +428,21 @@ export const SPHERExExplorer: FC = () => {
                     {target.category}
                   </span>
                   <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded ${
-                    target.dataStatus === 'Real Archival Data'
+                    target.dataStatus === 'Operational In-Flight Data'
+                      ? 'bg-[#10B981]/20 text-[#10B981]'
+                      : target.dataStatus === 'Real Archival Data'
                       ? 'bg-[#38BDF8]/10 text-[#38BDF8]'
                       : target.dataStatus === 'Synthetic Mission Demonstration'
                       ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]'
                       : 'bg-[#F5C451]/10 text-[#F5C451]'
                   }`}>
-                    {target.dataStatus === 'Real Archival Data' ? 'Real' : target.dataStatus === 'Synthetic Mission Demonstration' ? 'Synthetic' : 'Model'}
+                    {target.dataStatus === 'Operational In-Flight Data'
+                      ? 'In-Flight QR3'
+                      : target.dataStatus === 'Real Archival Data'
+                      ? 'Archival Analog'
+                      : target.dataStatus === 'Synthetic Mission Demonstration'
+                      ? 'Synthetic'
+                      : 'Model'}
                   </span>
                 </div>
                 <div className="font-semibold text-xs text-[#F8FAFC] truncate mt-1">
@@ -427,7 +469,9 @@ export const SPHERExExplorer: FC = () => {
                 <span className="text-[#1E293B]">|</span>
                 <span className="text-[#38BDF8] font-semibold">{selectedBand.wavelength.toFixed(1)} μm</span>
                 <span className={`text-[10px] px-2 py-0.5 rounded border hidden sm:inline ${
-                  selectedTarget.dataStatus === 'Real Archival Data'
+                  selectedTarget.dataStatus === 'Operational In-Flight Data'
+                    ? 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/30'
+                    : selectedTarget.dataStatus === 'Real Archival Data'
                     ? 'bg-[#38BDF8]/10 text-[#38BDF8] border-[#38BDF8]/30'
                     : selectedTarget.dataStatus === 'Synthetic Mission Demonstration'
                     ? 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/30'
@@ -850,7 +894,7 @@ export const SPHERExExplorer: FC = () => {
                   <Sun className="w-3.5 h-3.5 text-[#F5C451]" />
                   <span>Brightness:</span>
                 </span>
-                <span className="font-mono text-[#F8FAFC]">{brightness}%</span>
+                <span className="font-mono tabular-nums text-[#F8FAFC]">{brightness}%</span>
               </div>
               <input
                 type="range"
@@ -870,7 +914,7 @@ export const SPHERExExplorer: FC = () => {
                   <Sliders className="w-3.5 h-3.5 text-[#38BDF8]" />
                   <span>Contrast:</span>
                 </span>
-                <span className="font-mono text-[#F8FAFC]">{contrast}%</span>
+                <span className="font-mono tabular-nums text-[#F8FAFC]">{contrast}%</span>
               </div>
               <input
                 type="range"
@@ -911,7 +955,7 @@ export const SPHERExExplorer: FC = () => {
               </span>
             </div>
 
-            <div className="space-y-2.5 text-xs font-mono">
+            <div className="space-y-2.5 text-xs font-mono tabular-nums">
               <div className="flex justify-between">
                 <span className="text-[#A7B4CC]">Product / Target:</span>
                 <span className="font-semibold text-[#F8FAFC] text-right truncate max-w-45">
@@ -933,7 +977,9 @@ export const SPHERExExplorer: FC = () => {
               <div className="flex justify-between">
                 <span className="text-[#A7B4CC]">Data Status:</span>
                 <span className={`font-bold ${
-                  selectedTarget.dataStatus === 'Real Archival Data' 
+                  selectedTarget.dataStatus === 'Operational In-Flight Data'
+                    ? 'text-[#10B981]'
+                    : selectedTarget.dataStatus === 'Real Archival Data' 
                     ? 'text-[#38BDF8]' 
                     : selectedTarget.dataStatus === 'Illustrative Astronomical Model'
                     ? 'text-[#F5C451]'
@@ -999,7 +1045,7 @@ export const SPHERExExplorer: FC = () => {
                 </span>
               </div>
 
-              <div className="space-y-2 text-xs font-mono">
+              <div className="space-y-2 text-xs font-mono tabular-nums">
                 <div className="flex justify-between">
                   <span className="text-[#A7B4CC]">Target Name:</span>
                   <span className="font-semibold text-[#F8FAFC]">{compareTarget.name}</span>
@@ -1039,6 +1085,116 @@ export const SPHERExExplorer: FC = () => {
             </div>
           )}
 
+          {/* Interactive Infrared Spectral Curve & Molecular Features Plot */}
+          {selectedTarget.spectralProfile && (
+            <div className="p-6 rounded-2xl bg-[#0B1630] border border-[#38BDF8]/40 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-[#1E293B] pb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#38BDF8] font-mono flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  <span>Spectral Profile (0.75 – 5.0 μm)</span>
+                </span>
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                  selectedTarget.spectralProfile.spectrumType === 'In-Flight Calibrated Spectroscopy'
+                    ? 'bg-[#10B981]/10 text-[#10B981] border-[#10B981]/30'
+                    : selectedTarget.spectralProfile.spectrumType === 'Archival Reference Spectroscopy'
+                    ? 'bg-[#38BDF8]/10 text-[#38BDF8] border-[#38BDF8]/30'
+                    : selectedTarget.spectralProfile.spectrumType === 'Theoretical Radiative Model'
+                    ? 'bg-[#F5C451]/10 text-[#F5C451] border-[#F5C451]/30'
+                    : 'bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/30'
+                }`}>
+                  {selectedTarget.spectralProfile.spectrumType}
+                </span>
+              </div>
+
+              {/* Responsive SVG Spectral Chart */}
+              <div className="bg-[#050B1A] p-3 rounded-xl border border-[#1E293B] space-y-2">
+                <div className="h-36 w-full relative">
+                  <svg viewBox="0 0 320 120" className="w-full h-full overflow-visible">
+                    {/* Grid lines */}
+                    <line x1="30" y1="20" x2="310" y2="20" stroke="#1E293B" strokeDasharray="3 3" />
+                    <line x1="30" y1="60" x2="310" y2="60" stroke="#1E293B" strokeDasharray="3 3" />
+                    <line x1="30" y1="100" x2="310" y2="100" stroke="#1E293B" />
+                    <line x1="30" y1="10" x2="30" y2="100" stroke="#1E293B" />
+
+                    {/* Y-axis labels */}
+                    <text x="5" y="24" fill="#A7B4CC" fontSize="8" fontFamily="monospace">1.2</text>
+                    <text x="5" y="64" fill="#A7B4CC" fontSize="8" fontFamily="monospace">0.8</text>
+                    <text x="5" y="104" fill="#A7B4CC" fontSize="8" fontFamily="monospace">0.4</text>
+
+                    {/* Spectral Curve Path */}
+                    {(() => {
+                      const pts = selectedTarget.spectralProfile.points;
+                      const minW = 0.75;
+                      const maxW = 5.0;
+                      const minF = 0.2;
+                      const maxF = 1.3;
+                      const getX = (w: number) => 30 + ((w - minW) / (maxW - minW)) * 280;
+                      const getY = (f: number) => 100 - ((f - minF) / (maxF - minF)) * 90;
+
+                      const pathD = pts.reduce((acc, p, idx) => {
+                        return `${acc} ${idx === 0 ? 'M' : 'L'} ${getX(p.wavelength).toFixed(1)} ${getY(p.relativeFlux).toFixed(1)}`;
+                      }, '');
+
+                      // Active band marker X
+                      const activeX = getX(selectedBand.wavelength);
+                      // 3.05 water ice line X
+                      const iceX = getX(3.05);
+
+                      return (
+                        <>
+                          {/* 3.05 µm water ice absorption region highlight */}
+                          <rect x={getX(2.95)} y="10" width={getX(3.15) - getX(2.95)} height="90" fill="rgba(192, 132, 252, 0.12)" />
+                          <line x1={iceX} y1="10" x2={iceX} y2="100" stroke="#C084FC" strokeWidth="1" strokeDasharray="2 2" opacity="0.6" />
+
+                          {/* Spectral line */}
+                          <path d={pathD} fill="none" stroke="#38BDF8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+
+                          {/* Data points */}
+                          {pts.map((p, idx) => (
+                            <circle
+                              key={idx}
+                              cx={getX(p.wavelength)}
+                              cy={getY(p.relativeFlux)}
+                              r="2.5"
+                              fill="#38BDF8"
+                            />
+                          ))}
+
+                          {/* Active band vertical indicator */}
+                          <line x1={activeX} y1="10" x2={activeX} y2="100" stroke="#F5C451" strokeWidth="2" />
+                          <circle cx={activeX} cy="10" r="3.5" fill="#F5C451" />
+                        </>
+                      );
+                    })()}
+                  </svg>
+                </div>
+
+                {/* X-axis labels */}
+                <div className="flex justify-between text-[10px] font-mono text-[#A7B4CC] px-2 pt-1">
+                  <span>0.75 μm</span>
+                  <span className="text-[#C084FC] font-semibold">3.05 μm (H₂O Ice)</span>
+                  <span className="text-[#FB7185]">4.27 μm (CO₂)</span>
+                  <span>5.0 μm</span>
+                </div>
+              </div>
+
+              {/* Spectral provenance and context note */}
+              <div className="text-[11px] font-mono text-[#A7B4CC] space-y-1">
+                <div className="flex justify-between">
+                  <span>Reference Source:</span>
+                  <span className="text-[#F8FAFC] truncate max-w-44">{selectedTarget.spectralProfile.provenance}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Active Probe Channel:</span>
+                  <span className="text-[#F5C451] font-bold">{selectedBand.wavelength.toFixed(1)} μm ({selectedBand.name.split('—')[1]?.trim() || selectedBand.name})</span>
+                </div>
+                <p className="text-[10px] text-[#A7B4CC]/80 pt-1 leading-snug">
+                  Scientific Provenance: SPHEREx is operational in orbit (launched March 2025; Quick Release 3 active since September 2026, DOI: 10.26131/IRSA662). Plotted curves distinguish authentic in-flight QR3 calibrated spectra (NEP Deep Field), archival multi-mission comparison spectra (Carina, Orion, Sculptor from JWST and Spitzer), and theoretical simulations (HL Tau disk model).
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Active Band Chemical Diagnostics */}
           <div className="p-6 rounded-2xl bg-[#0B1630] border border-[#8B5CF6]/30 space-y-3 shadow-xl">
             <div className="flex items-center gap-2 text-[#8B5CF6]">
@@ -1074,9 +1230,9 @@ export const SPHERExExplorer: FC = () => {
           <div className="p-4 rounded-xl bg-[#050B1A] border border-[#F5C451]/30 flex items-start gap-3 text-xs text-[#A7B4CC]">
             <ShieldAlert className="w-5 h-5 text-[#F5C451] shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <span className="font-bold text-[#F8FAFC] block">Scientific Transparency</span>
+              <span className="font-bold text-[#F8FAFC] block">Scientific Transparency & Archival Analogs</span>
               <p className="text-[11px] leading-relaxed">
-                Display stretch functions and false-color palettes are mathematical transformations applied to image pixels. For verified FITS data, these map directly to physical calibrated flux densities (MJy/sr).
+                Display stretch functions and false-color palettes are mathematical transformations applied to image pixels. For verified FITS data, these map directly to physical calibrated flux densities (MJy/sr). Current multi-wavelength previews utilize verified archival analogs (Spitzer IRAC, WISE, JWST NIRCam) mapped to SPHEREx's 102 LVF channels; full all-sky spectroscopic data cubes will be released via NASA/IPAC IRSA following orbital commissioning.
               </p>
             </div>
           </div>
@@ -1084,7 +1240,7 @@ export const SPHERExExplorer: FC = () => {
       </div>
 
       {/* 6. EDUCATIONAL EXPLANATION SECTION */}
-      <div className="rounded-3xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-8">
+      <div className="rounded-2xl bg-[#0B1630] border border-[#1E293B] p-8 sm:p-10 space-y-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/10 text-[#38BDF8] flex items-center justify-center">
             <Info className="w-5 h-5" />

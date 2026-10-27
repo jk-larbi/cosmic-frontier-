@@ -1,0 +1,174 @@
+{
+  "metadata": {
+    "source": "NASA/JPL Horizons Ephemeris System (DE441/ORX/JPL_SSD)",
+    "coordinateFrame": "ICRF / J2000 Heliocentric Ecliptic",
+    "origin": "Sun (500@10)",
+    "timeScale": "TDB",
+    "units": {
+      "distance": "km",
+      "velocity": "km/s",
+      "astronomicalUnitKm": 149597870.7,
+      "lunarDistanceKm": 384400.0
+    },
+    "documentation": "Authoritative Cartesian state vectors retrieved from https://ssd.jpl.nasa.gov/api/horizons.api",
+    "generatedAt": "2026-10-25T18:45:00.000Z"
+  },
+  "benchmarks": {
+    "earth_j2000": {
+      "target": "399",
+      "name": "Earth",
+      "epochIso": "2000-01-01T12:00:00.000Z",
+      "epochJd": 2451545.0,
+      "calendarDateTdb": "A.D. 2000-Jan-01 12:00:00.0000",
+      "positionKm": {
+        "x": -26499033.6774,
+        "y": 144697296.7925,
+        "z": -611.1494
+      },
+      "positionAU": {
+        "x": -0.177135,
+        "y": 0.967242,
+        "z": -0.000004
+      },
+      "velocityKmS": {
+        "vx": -29.79426,
+        "vy": -5.469295,
+        "vz": 0.000182
+      },
+      "speedKmS": 30.292,
+      "rangeKm": 147103726.959,
+      "rangeAU": 0.983328,
+      "rangeRateKmS": -0.0127
+    },
+    "mars_j2000": {
+      "target": "499",
+      "name": "Mars",
+      "epochIso": "2000-01-01T12:00:00.000Z",
+      "epochJd": 2451545.0,
+      "calendarDateTdb": "A.D. 2000-Jan-01 12:00:00.0000",
+      "positionKm": {
+        "x": 208048140.6418,
+        "y": -2007052.628,
+        "z": -5156288.9593
+      },
+      "positionAU": {
+        "x": 1.390716,
+        "y": -0.013416,
+        "z": -0.034468
+      },
+      "velocityKmS": {
+        "vx": 1.162672,
+        "vy": 26.296065,
+        "vz": 0.522297
+      },
+      "speedKmS": 26.327,
+      "rangeKm": 208121705.741,
+      "rangeAU": 1.391208,
+      "rangeRateKmS": 0.8957
+    },
+    "earth_20261025": {
+      "target": "399",
+      "name": "Earth",
+      "epochIso": "2026-10-25T00:00:00.000Z",
+      "epochJd": 2461338.5,
+      "calendarDateTdb": "A.D. 2026-Oct-25 00:00:00.0000",
+      "positionKm": {
+        "x": 127233740.8982,
+        "y": 77115119.9815,
+        "z": -5792.7195
+      },
+      "positionAU": {
+        "x": 0.850505,
+        "y": 0.515483,
+        "z": -0.000039
+      },
+      "velocityKmS": {
+        "vx": -15.919383,
+        "vy": 25.350758,
+        "vz": -0.002191
+      },
+      "speedKmS": 29.931,
+      "rangeKm": 148778918.487,
+      "rangeAU": 0.994526,
+      "rangeRateKmS": -0.4742
+    },
+    "mars_20261025": {
+      "target": "499",
+      "name": "Mars",
+      "epochIso": "2026-10-25T00:00:00.000Z",
+      "epochJd": 2461338.5,
+      "calendarDateTdb": "A.D. 2026-Oct-25 00:00:00.0000",
+      "positionKm": {
+        "x": -29201447.4866,
+        "y": 235485354.9174,
+        "z": 5650929.4714
+      },
+      "positionAU": {
+        "x": -0.195200,
+        "y": 1.574122,
+        "z": 0.037774
+      },
+      "velocityKmS": {
+        "vx": -23.127577,
+        "vy": -0.924221,
+        "vz": 0.547718
+      },
+      "speedKmS": 23.152,
+      "rangeKm": 237356293.196,
+      "rangeAU": 1.586629,
+      "rangeRateKmS": 1.9414
+    },
+    "bennu_20261025": {
+      "target": "101955",
+      "name": "101955 Bennu",
+      "epochIso": "2026-10-25T00:00:00.000Z",
+      "epochJd": 2461338.5,
+      "calendarDateTdb": "A.D. 2026-Oct-25 00:00:00.0000",
+      "positionKm": {
+        "x": -60507862.532,
+        "y": -192303776.0212,
+        "z": -20092555.8455
+      },
+      "positionAU": {
+        "x": -0.404470,
+        "y": -1.285471,
+        "z": -0.134310
+      },
+      "velocityKmS": {
+        "vx": 21.934276,
+        "vy": -6.36534,
+        "vz": -0.751871
+      },
+      "speedKmS": 22.853,
+      "rangeKm": 202597271.701,
+      "rangeAU": 1.354279,
+      "rangeRateKmS": -0.4344
+    },
+    "apophis_20290413": {
+      "target": "99942",
+      "name": "99942 Apophis",
+      "epochIso": "2029-04-13T21:46:00.000Z",
+      "epochJd": 2462240.406944,
+      "calendarDateTdb": "A.D. 2029-Apr-13 21:46:00.0000",
+      "positionKm": {
+        "x": -137257201.1065,
+        "y": -60599942.5881,
+        "z": 10446.677
+      },
+      "positionAU": {
+        "x": -0.917508,
+        "y": -0.405086,
+        "z": 0.000070
+      },
+      "velocityKmS": {
+        "vx": 17.890737,
+        "vy": -23.964926,
+        "vz": 1.846541
+      },
+      "speedKmS": 29.963,
+      "rangeKm": 150039636.118,
+      "rangeAU": 1.002953,
+      "rangeRateKmS": -6.6872
+    }
+  }
+}

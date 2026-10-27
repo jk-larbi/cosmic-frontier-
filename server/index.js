@@ -7,6 +7,9 @@ import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { findVerifiedAnswer, VERIFIED_KNOWLEDGE_BASE } from './knowledge.js';
 import { getCompleteEphemeris, AU_KM, LD_KM } from './ephemerisEngine.js';
+import { getAsteroidOrbitData } from './asteroidMotionEngine.js';
+import { getHorizonsVector } from './horizonsService.js';
+import { getVerifiedServerImage, searchNasaImagesApi } from './verifiedImages.js';
 
 dotenv.config();
 
@@ -304,6 +307,10 @@ app.get('/api/nasa/apod', async (req, res) => {
       service_version: 'v1'
     };
 
+    // Cache fallback APOD to prevent hammering failing upstream NASA endpoint
+    cachedApod = fallbackApod;
+    cachedApodTimestamp = Date.now();
+
     return res.json({
       success: true,
       source: 'verified-archive',
@@ -432,30 +439,48 @@ app.get('/api/data/manifest', (req, res) => {
 app.get('/api/data/solar-system', (req, res) => {
   const data = readLocalData('data/solar-system/planets.json');
   if (data) {
-    return res.json({ success: true, source: 'NASA/JPL Horizons Ephemerides', ...data });
+    const records = (data.records || []).map(p => ({
+      ...p,
+      image: getVerifiedServerImage(p.id) || null
+    }));
+    return res.json({ success: true, source: 'NASA/JPL Horizons Ephemerides', ...data, records });
   }
   return res.status(500).json({ error: 'Solar system data not found' });
 });
 
+function cleanTapReference(ref) {
+  if (!ref) return null;
+  return String(ref).replace(/<[^>]+>/g, '').trim();
+}
+
+function cleanTapRefUrl(ref) {
+  if (!ref) return null;
+  const m = String(ref).match(/href=([^ >]+)/i);
+  return m ? m[1].replace(/["']/g, '') : null;
+}
+
 // 3. GET /api/data/exoplanets
 app.get('/api/data/exoplanets', async (req, res) => {
-  const search = req.query.search ? String(req.query.search).toLowerCase() : null;
+  const search = req.query.search ? String(req.query.search).toLowerCase().trim() : null;
+  const methodFilter = req.query.method && req.query.method !== 'all' ? String(req.query.method).toLowerCase().trim() : null;
   const includeCandidates = req.query.candidates === 'true';
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
   const now = Date.now();
 
   let records = null;
-  let source = 'NASA Exoplanet Archive (Caltech/IPAC Live TAP)';
+  let source = 'NASA Exoplanet Archive (Caltech/IPAC Live TAP pscomppars)';
   let isLive = false;
 
   // Try cached live exoplanets first
   if (cachedLiveExoplanets && (now - cachedLiveExoplanetsTimestamp < EXOPLANET_CACHE_TTL)) {
     records = cachedLiveExoplanets;
-    source = 'NASA Exoplanet Archive (TAP Cache)';
+    source = 'NASA Exoplanet Archive (TAP Cache pscomppars)';
     isLive = true;
   } else {
-    // Attempt live ADQL query with complete orbital and physical parameters
+    // Attempt live ADQL query on pscomppars (Planetary Systems Composite Parameters)
     try {
-      const adql = 'select top 100 pl_name,hostname,discoverymethod,disc_year,pl_orbper,pl_rade,pl_bmasse,pl_bmassj,pl_orbsmax,pl_orbeccen,st_teff,sy_dist from ps where default_flag=1 order by disc_year desc';
+      const adql = 'select top 150 pl_name,hostname,discoverymethod,disc_year,disc_refname,disc_pubdate,pl_orbper,pl_rade,pl_bmasse,pl_bmassj,pl_orbsmax,pl_orbeccen,pl_eqt,st_teff,st_rad,st_mass,st_spectype,sy_dist from pscomppars order by disc_year desc';
       const tapUrl = `https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=${encodeURIComponent(adql)}&format=json`;
       const tapRes = await fetch(tapUrl, {
         headers: { 'User-Agent': 'CosmicFrontier/1.0' },
@@ -469,13 +494,20 @@ app.get('/api/data/exoplanets', async (req, res) => {
             hostStar: p.hostname,
             discoveryMethod: p.discoverymethod || 'Transit',
             discoveryYear: p.disc_year,
+            discoveryReference: cleanTapReference(p.disc_refname),
+            discoveryReferenceUrl: cleanTapRefUrl(p.disc_refname),
+            discoveryPublicationDate: p.disc_pubdate || null,
             orbitalPeriodDays: p.pl_orbper ? parseFloat(p.pl_orbper.toFixed(4)) : null,
             radiusEarthRadii: p.pl_rade ? parseFloat(p.pl_rade.toFixed(2)) : null,
             massEarthMasses: p.pl_bmasse ? parseFloat(p.pl_bmasse.toFixed(2)) : null,
             massJupiterMasses: p.pl_bmassj ? parseFloat(p.pl_bmassj.toFixed(4)) : null,
             semiMajorAxisAU: p.pl_orbsmax ? parseFloat(p.pl_orbsmax.toFixed(4)) : null,
             eccentricity: p.pl_orbeccen != null ? parseFloat(p.pl_orbeccen.toFixed(4)) : null,
+            equilibriumTempK: p.pl_eqt ? Math.round(p.pl_eqt) : null,
             stellarEffectiveTempK: p.st_teff ? Math.round(p.st_teff) : null,
+            stellarRadiusSolar: p.st_rad ? parseFloat(p.st_rad.toFixed(2)) : null,
+            stellarMassSolar: p.st_mass ? parseFloat(p.st_mass.toFixed(2)) : null,
+            stellarSpectralType: p.st_spectype || null,
             distanceParsecs: p.sy_dist ? parseFloat(p.sy_dist.toFixed(2)) : null,
             distanceLightYears: p.sy_dist ? parseFloat((p.sy_dist * 3.26156).toFixed(2)) : null,
             confirmedStatus: 'Confirmed',
@@ -526,13 +558,20 @@ app.get('/api/data/exoplanets', async (req, res) => {
             hostStar: `Kepler Target (${c.kepoi_name.split('.')[0]})`,
             discoveryMethod: 'Transit (Kepler Pipeline)',
             discoveryYear: 2015,
+            discoveryReference: 'Kepler Candidate Pipeline (Mullally et al. 2015)',
+            discoveryReferenceUrl: 'https://ui.adsabs.harvard.edu/abs/2015ApJS..217...31M/abstract',
+            discoveryPublicationDate: '2015-04',
             orbitalPeriodDays: c.koi_period ? parseFloat(c.koi_period.toFixed(4)) : null,
             radiusEarthRadii: c.koi_prad ? parseFloat(c.koi_prad.toFixed(2)) : null,
             massEarthMasses: null, // Mass unmeasured for transit-only candidate
             massJupiterMasses: null,
             semiMajorAxisAU: null,
             eccentricity: null,
+            equilibriumTempK: null,
             stellarEffectiveTempK: c.koi_steff ? Math.round(c.koi_steff) : null,
+            stellarRadiusSolar: null,
+            stellarMassSolar: null,
+            stellarSpectralType: null,
             distanceParsecs: null,
             distanceLightYears: null,
             confirmedStatus: 'Candidate',
@@ -547,7 +586,10 @@ app.get('/api/data/exoplanets', async (req, res) => {
     }
   }
 
-  let combined = [...(records || []), ...candidateRecords];
+  let combined = [...(records || []), ...candidateRecords].map(r => ({
+    ...r,
+    image: getVerifiedServerImage(r.planetName, { isExoplanet: true }) || null
+  }));
 
   if (search && combined.length > 0) {
     combined = combined.filter(r => 
@@ -557,13 +599,54 @@ app.get('/api/data/exoplanets', async (req, res) => {
     );
   }
 
+  if (methodFilter && combined.length > 0) {
+    combined = combined.filter(r => 
+      r.discoveryMethod && r.discoveryMethod.toLowerCase().includes(methodFilter)
+    );
+  }
+
+  // Server-side pagination
+  const totalRecords = combined.length;
+  const offset = (page - 1) * limit;
+  const pagedRecords = combined.slice(offset, offset + limit);
+
   return res.json({
     success: true,
     source,
+    table: 'pscomppars (Planetary Systems Composite Parameters)',
     isLive,
-    recordCount: combined.length,
-    records: combined
+    page,
+    pageSize: limit,
+    totalRecords,
+    recordCount: pagedRecords.length,
+    hasMore: (offset + limit) < totalRecords,
+    retrievalDateUTC: new Date(cachedLiveExoplanetsTimestamp || now).toISOString(),
+    records: pagedRecords
   });
+});
+
+// 3b. GET /api/nasa/images - Dedicated NASA Image and Video Library search with pagination
+app.get('/api/nasa/images', async (req, res) => {
+  const q = req.query.q || req.query.search || 'Jupiter planet';
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const pageSize = Math.min(24, Math.max(1, parseInt(req.query.pageSize, 10) || 12));
+  const category = req.query.category || null;
+
+  try {
+    const items = await searchNasaImagesApi(q, { page, pageSize, category });
+    return res.json({
+      success: true,
+      source: 'NASA Image and Video Library (images.nasa.gov)',
+      query: q,
+      totalHits: items.totalHits || items.length,
+      page,
+      pageSize,
+      items: Array.isArray(items) ? items : items.items || []
+    });
+  } catch (err) {
+    console.warn('[NASA Images Endpoint] Search failed:', err.message);
+    return res.status(500).json({ error: 'Failed to search NASA Image Library', items: [] });
+  }
 });
 
 // 4. GET /api/data/small-bodies
@@ -621,6 +704,34 @@ app.get('/api/data/small-bodies', async (req, res) => {
     isLive: false,
     ...localData
   });
+});
+
+// 4b. GET /api/data/asteroid/orbit - Data-driven Keplerian orbital motion & state vectors
+app.get('/api/data/asteroid/orbit', async (req, res) => {
+  try {
+    const { des = '99942', date, refresh, forceLive } = req.query;
+    const targetDate = date ? new Date(date) : new Date();
+    const isRefresh = refresh === 'true' || forceLive === 'true';
+    const motionData = await getAsteroidOrbitData(des, targetDate, { forceLive: isRefresh });
+    return res.json(motionData);
+  } catch (err) {
+    console.error('[Asteroid Motion] Error computing orbit:', err.message);
+    return res.status(500).json({ error: 'Failed to compute asteroid orbital motion' });
+  }
+});
+
+// 4c. GET /api/data/horizons/vector - Authoritative NASA/JPL Horizons Cartesian state vectors
+app.get('/api/data/horizons/vector', async (req, res) => {
+  try {
+    const { target = '399', date, refresh, forceLive } = req.query;
+    const targetDate = date ? new Date(date) : new Date();
+    const isRefresh = refresh === 'true' || forceLive === 'true';
+    const vectorData = await getHorizonsVector(target, targetDate, { forceLive: isRefresh, isDateExplicit: !!date });
+    return res.json(vectorData);
+  } catch (err) {
+    console.error('[Horizons API] Error retrieving vector:', err.message);
+    return res.status(500).json({ error: 'Failed to retrieve Horizons state vector', details: err.message });
+  }
 });
 
 // In-memory cache for live NED queries
@@ -757,7 +868,8 @@ app.get('/api/data/galaxies', async (req, res) => {
       g.catalogIdentifier.toLowerCase().includes(searchTerm) ||
       (g.constellation && g.constellation.toLowerCase().includes(searchTerm)) ||
       (g.morphologicalType && g.morphologicalType.toLowerCase().includes(searchTerm)) ||
-      (g.alternateNames && g.alternateNames.some(a => a.toLowerCase().includes(searchTerm)))
+      (g.alternateNames && g.alternateNames.some(a => a.toLowerCase().includes(searchTerm))) ||
+      (g.catalogs && Object.values(g.catalogs).some(v => typeof v === 'string' && v.toLowerCase().includes(searchTerm)))
     );
   }
 
@@ -816,7 +928,25 @@ app.get('/api/data/spherex', (req, res) => {
 });
 
 // 8. GET /api/data/images
-app.get('/api/data/images', (req, res) => {
+app.get('/api/data/images', async (req, res) => {
+  const { search, object } = req.query;
+
+  // Direct object lookup in verified registry
+  if (object) {
+    const record = getVerifiedServerImage(object);
+    if (record) {
+      return res.json({ success: true, source: 'COSMIC FRONTIER Verified Imagery', record });
+    }
+  }
+
+  // Live NASA Images API search query
+  if (search) {
+    const liveResults = await searchNasaImagesApi(search);
+    if (liveResults && liveResults.length > 0) {
+      return res.json({ success: true, source: 'NASA Image and Video Library (Live API)', records: liveResults });
+    }
+  }
+
   const data = readLocalData('data/images/nasa-archives.json');
   if (data) {
     return res.json({ success: true, source: 'NASA Image and Video Library', ...data });
@@ -1746,8 +1876,25 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error: 'An unexpected server error occurred.' });
 });
 
-app.listen(PORT, () => {
+// Process-level resilience against unhandled async errors
+process.on('uncaughtException', (err) => {
+  console.error('[COSMIC FRONTIER Backend] Uncaught Exception:', err.message || err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[COSMIC FRONTIER Backend] Unhandled Rejection:', reason?.message || reason);
+});
+
+const server = app.listen(PORT, () => {
   console.log(`[COSMIC FRONTIER Backend] Server listening on port ${PORT}`);
   console.log(`[COSMIC FRONTIER Backend] AI Status: ${getCleanApiKey() ? 'Live Google Gen AI Configured' : 'Demonstration / Verified Offline Mode'}`);
   console.log(`[COSMIC FRONTIER Backend] NASA API Key: ${getNasaApiKey() !== 'DEMO_KEY' ? 'Configured & Active' : 'Using Demo Key'}`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`[COSMIC FRONTIER Backend] Port ${PORT} is already in use by another process.`);
+  } else {
+    console.error('[COSMIC FRONTIER Backend] Server error:', err.message || err);
+  }
 });

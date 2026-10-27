@@ -1246,6 +1246,9 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
               )}
             </div>
           </div>
+          <p className="text-xs text-[#A7B4CC] max-w-2xl">
+            High-precision ICRF/J2000 top-down heliocentric monitoring system integrating near-Earth asteroids, distant trans-Neptunian sednoids, and the hypothetical Planet Nine dynamical simulation.
+          </p>
         </div>
 
         {/* RIGHT: TARGET TELEMETRY INSPECTOR & PLANET X DYNAMICAL DRAWER */}

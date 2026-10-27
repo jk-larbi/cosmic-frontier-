@@ -1,4 +1,95 @@
-export type AppPage = 'home' | 'mission-control' | 'observatory' | 'universe' | 'live-space' | 'asteroid-watch' | 'exoplanets' | 'galaxies' | 'spherex' | 'planet-x' | 'data-centre' | 'guide' | 'ai-guide' | 'about';
+export type AppPage = 
+  | 'home' 
+  | 'mission-control' 
+  | 'observatory' 
+  | 'universe' 
+  | 'live-space' 
+  | 'asteroid-watch' 
+  | 'motion' 
+  | 'asteroid-motion' 
+  | 'exoplanets' 
+  | 'galaxies' 
+  | 'spherex' 
+  | 'planet-x' 
+  | 'data-centre' 
+  | 'data-center' 
+  | 'guide' 
+  | 'ai-guide' 
+  | 'about';
+
+export type AstronomicalAssetClassification = 
+  | 'observation'
+  | 'spacecraft'
+  | 'artist-impression'
+  | 'scientific-illustration'
+  | 'simulation'
+  | 'contextual'
+  | 'unavailable'
+  | 'category-fallback';
+
+export type VerificationLevel = 
+  | 'peer-reviewed-archive'
+  | 'in-situ-spacecraft'
+  | 'space-telescope-calibrated'
+  | 'ground-based-astrometry'
+  | 'ephemeris-propagation'
+  | 'theoretical-model'
+  | 'unverified';
+
+export type FreshnessStatus = 'live' | 'cached' | 'archival' | 'stale';
+
+export interface ScientificProvenance {
+  sourceOrganization: string;
+  catalogName?: string;
+  archiveUrl?: string;
+  bibcode?: string;
+  retrievalDateUTC?: string;
+  isLive: boolean;
+  freshnessStatus: FreshnessStatus;
+  verificationLevel: VerificationLevel;
+  disclaimer?: string;
+}
+
+export interface ScientificMeasurement<T = number> {
+  value: T | null;
+  unit: string;
+  uncertainty?: T | null;
+  method?: string;
+  isEstimate: boolean;
+  status: 'measured' | 'derived' | 'estimated' | 'unmeasured' | 'hypothetical';
+  provenance?: Partial<ScientificProvenance>;
+}
+
+export type ImageMatchingStatus = 
+  | 'verified-direct-observation'
+  | 'verified-spacecraft-photo'
+  | 'verified-composite'
+  | 'artist-impression'
+  | 'physical-model-illustration'
+  | 'contextual-field'
+  | 'unavailable'
+  | 'unverified';
+
+export interface AstronomicalImageRecord {
+  id: string;
+  associatedObjectId: string;
+  imageUrl: string;
+  thumbnailUrl?: string;
+  hdUrl?: string;
+  title: string;
+  caption: string;
+  sourceOrganization: string;
+  sourceUrl?: string;
+  credit: string;
+  assetClassification: AstronomicalAssetClassification;
+  isVerifiedRealObservation: boolean;
+  observationDate?: string;
+  instrument?: string;
+  wavelength?: string;
+  processing?: string;
+  retrievalTimestamp?: string;
+  license?: string;
+}
 
 export type GalaxyCategory = 'spiral' | 'elliptical' | 'irregular' | 'active-agn' | 'cluster';
 
@@ -40,7 +131,32 @@ export interface GalaxyObject {
   bibcode?: string;
   dataStatus: DataStatusType;
   image?: GalaxyImage;
+  images?: AstronomicalImageRecord[];
   isLiveLookup?: boolean;
+  catalogs?: {
+    messier?: string;
+    ngc?: string;
+    ic?: string;
+    pgc?: string;
+    ugc?: string;
+    ned?: string;
+    simbad?: string;
+  };
+  fieldStatus?: {
+    redshift: 'measured' | 'estimated';
+    distance: 'measured' | 'estimated';
+    diameter: 'measured' | 'estimated' | 'unmeasured';
+    apparentMagnitude: 'measured' | 'unmeasured';
+  };
+  observationalMetadata?: {
+    telescope: string;
+    instrument: string;
+    wavelength: string;
+    observationDate?: string;
+    processing: string;
+    credit: string;
+    license: string;
+  };
 }
 
 export interface InfraredBand {
@@ -57,7 +173,8 @@ export interface InfraredBand {
 export type DataStatusType = 
   | 'Real Archival Data'
   | 'Illustrative Astronomical Model'
-  | 'Synthetic Mission Demonstration';
+  | 'Synthetic Mission Demonstration'
+  | 'Operational In-Flight Data';
 
 export interface CelestialTarget {
   id: string;
@@ -87,6 +204,15 @@ export interface CelestialTarget {
       bandImage?: string;
     };
   };
+  spectralProfile?: {
+    spectrumType: 
+      | 'Archival Reference Spectroscopy' 
+      | 'Theoretical Radiative Model' 
+      | 'Synthetic Instrument Simulation'
+      | 'In-Flight Calibrated Spectroscopy';
+    provenance: string;
+    points: { wavelength: number; relativeFlux: number }[];
+  };
 }
 
 export interface SolarSystemObject {
@@ -112,6 +238,8 @@ export interface SolarSystemObject {
   longitudeOfAscendingNodeDeg: number;
   dataSource?: string;
   statusLabel: 'Confirmed' | 'Hypothetical (Unconfirmed)';
+  image?: AstronomicalImageRecord;
+  images?: AstronomicalImageRecord[];
 }
 
 export interface GuideMessage {
@@ -191,11 +319,40 @@ export interface ExoplanetRecord {
   semiMajorAxisAU?: number | null;
   eccentricity?: number | null;
   stellarEffectiveTempK: number | null;
+  equilibriumTempK?: number | null;
+  stellarRadiusSolar?: number | null;
+  stellarMassSolar?: number | null;
+  stellarSpectralType?: string | null;
+  discoveryReference?: string | null;
+  discoveryReferenceUrl?: string | null;
+  discoveryPublicationDate?: string | null;
   distanceParsecs: number | null;
   distanceLightYears: number | null;
   dataStatus: string;
   disposition?: 'Confirmed' | 'Candidate';
+  confirmedStatus?: string;
   sourceUrl?: string;
+  image?: AstronomicalImageRecord;
+  images?: AstronomicalImageRecord[];
+}
+
+export interface NasaImageRecord {
+  id: string;
+  nasaId: string;
+  title: string;
+  caption: string;
+  description?: string;
+  center?: string;
+  dateCreated?: string;
+  creator?: string;
+  credit?: string;
+  sourceUrl: string;
+  imageUrl: string;
+  thumbUrl: string;
+  hdUrl?: string;
+  assetClassification: 'observation' | 'processed-observation' | 'artist-concept' | 'simulation' | 'spacecraft-hardware';
+  isVerifiedRealObservation: boolean;
+  keywords?: string[];
 }
 
 export interface SmallBodyRecord {
@@ -258,6 +415,7 @@ export interface CatalogItem {
     value: string | number;
     unit?: string;
   }>;
+  image?: AstronomicalImageRecord;
 }
 
 export type LiveDataBadgeStatus = 'LIVE DATA' | 'RECENT DATA' | 'PREDICTED' | 'SIMULATION' | 'UNAVAILABLE';
@@ -385,7 +543,7 @@ export interface ObservatoryObject {
   categoryLabel: string;
   classification: string;
   color: string;
-  radiusKm: number | string;
+  radiusKm?: number | string;
   motionType: ObservatoryMotionType;
   dataStatus: string;
   isHypothetical: boolean;
@@ -410,6 +568,8 @@ export interface ObservatoryObject {
     meanAnomalyDeg: number;
     trueAnomalyDeg: number;
     orbitalPeriodYears: number;
+    epochJd?: number;
+    meanMotionDegDay?: number;
   };
   exoplanetParams?: {
     hostStar: string;
@@ -438,6 +598,7 @@ export interface ObservatoryObject {
   retrievalTimestamp: string;
   coordinateFrame: string;
   scientificDisclaimer: string;
+  image?: AstronomicalImageRecord;
 }
 
 export interface ObservatoryApiResponse {
@@ -458,4 +619,132 @@ export interface ObservatoryApiResponse {
     'spherex-targets': number;
   };
   objects: ObservatoryObject[];
+}
+
+export interface AsteroidOrbitalElements {
+  semiMajorAxisAU: number;
+  eccentricity: number;
+  inclinationDeg: number;
+  longitudeOfAscendingNodeDeg: number;
+  argumentOfPerihelionDeg: number;
+  meanAnomalyDeg: number;
+  epochJd: number;
+  orbitalPeriodYears: number;
+  meanMotionDegDay?: number;
+}
+
+export interface AsteroidMotionStateVector {
+  epochIso: string;
+  epochJd: number;
+  heliocentricAU: { x: number; y: number; z: number };
+  heliocentricKm: { x: number; y: number; z: number };
+  earthPositionAU: { x: number; y: number; z: number };
+  earthRelativeAU: { x: number; y: number; z: number };
+  earthRelativeKm: { x: number; y: number; z: number };
+  distSunAU: number;
+  distSunMillionKm: number;
+  distEarthAU: number;
+  distEarthKm: number;
+  distEarthMillionKm: number;
+  distEarthLunar: number;
+  orbitalSpeedKmS: number;
+  velocityVectorKmS: { vx: number; vy: number; vz: number };
+  meanAnomalyDeg: number;
+  trueAnomalyDeg: number;
+}
+
+export type AsteroidRetrievalStatus = 'live' | 'cached' | 'archive' | 'local_propagation' | 'unavailable';
+
+export interface AsteroidMotionProvenance {
+  source: string;
+  isLive: boolean;
+  retrievalStatus: AsteroidRetrievalStatus;
+  statusExplanation?: string;
+  retrievalTimestamp: string | null;
+  lastSuccessfulRetrieval: string | null;
+  lastRefreshAttempt: {
+    timestamp: string;
+    success: boolean;
+    error?: string;
+  } | null;
+  calculationEpoch: string;
+  epochReference?: string | null;
+  calculationMethod: string;
+  coordinateFrame: string;
+  sourceUrl: string;
+  sentryUrl: string;
+}
+
+export interface AsteroidMotionResponse {
+  success: boolean;
+  asteroid: {
+    designation: string;
+    name: string;
+    shortName: string;
+    orbitClass: string;
+    isPotentiallyHazardous: boolean;
+    diameterKm: number | null;
+    diameterMeters: { min: number; max: number; avg: number };
+    absoluteMagnitudeH: number | null;
+    orbitalElements: AsteroidOrbitalElements;
+    closeApproach: {
+      date: string;
+      iso: string;
+      nominalDistanceLD: number;
+      nominalDistanceKm: number;
+      relativeVelocityKmS: number;
+      sentryImpactProbability: string;
+    } | null;
+    educationalSummary: string;
+  };
+  stateVector: AsteroidMotionStateVector;
+  trajectories: {
+    asteroidOrbitPath: Array<{ x: number; y: number; z: number }>;
+    earthOrbitPath: Array<{ x: number; y: number; z: number }>;
+  };
+  provenance: AsteroidMotionProvenance;
+}
+
+export interface HorizonsVectorQueryParams {
+  target?: string;
+  date?: string;
+  refresh?: boolean;
+}
+
+export interface HorizonsVectorResponse {
+  target: string;
+  inputTarget: string;
+  requestedDateIso: string;
+  epochJd: number | null;
+  calendarDateTdb: string;
+  coordinateFrame: string;
+  origin: string;
+  timeScale: string;
+  units: {
+    position: string;
+    velocity: string;
+    distance: string;
+  };
+  positionKm: { x: number; y: number; z: number } | null;
+  positionAU: { x: number; y: number; z: number } | null;
+  velocityKmS: { vx: number; vy: number; vz: number } | null;
+  speedKmS: number | null;
+  rangeKm: number | null;
+  rangeAU: number | null;
+  rangeLunar: number | null;
+  rangeRateKmS: number | null;
+  provenance: {
+    source: string;
+    apiEndpoint?: string;
+    retrievalStatus: 'live' | 'cached' | 'archive' | 'unavailable';
+    isLive: boolean;
+    retrievalTimestamp: string | null;
+    lastSuccessfulRetrieval: string | null;
+    lastRefreshAttempt: {
+      timestamp: string;
+      success: boolean;
+      error?: string;
+    } | null;
+    cacheAgeSeconds?: number | null;
+  };
 }

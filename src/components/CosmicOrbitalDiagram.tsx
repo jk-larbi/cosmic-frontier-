@@ -15,7 +15,7 @@ export const CosmicOrbitalDiagram: FC<CosmicOrbitalDiagramProps> = ({ onNavigate
   const hoveredObj = SOLAR_SYSTEM_OBJECTS.find(o => o.id === hoveredId) || SOLAR_SYSTEM_OBJECTS.find(o => o.id === 'planet-x');
 
   return (
-    <div className="relative rounded-3xl bg-[#070D1E] border border-[#1E293B] overflow-hidden shadow-2xl">
+    <div className="relative rounded-2xl bg-[#070D1E] border border-[#1E293B] overflow-hidden shadow-2xl">
       {/* Background starlight & nebula gradients */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-[#38BDF8]/10 rounded-full blur-3xl" />
@@ -27,7 +27,7 @@ export const CosmicOrbitalDiagram: FC<CosmicOrbitalDiagramProps> = ({ onNavigate
       <div className="relative z-10 px-6 py-5 border-b border-[#1E293B] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#050B1A]/70 backdrop-blur-md">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#38BDF8] animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-[#38BDF8] beacon-pulse" />
             <span className="text-[11px] font-mono uppercase tracking-widest text-[#38BDF8] font-bold">
               Solar System Telemetry & Orbital Architecture
             </span>
@@ -75,7 +75,7 @@ export const CosmicOrbitalDiagram: FC<CosmicOrbitalDiagramProps> = ({ onNavigate
       {/* Diagram Canvas Area */}
       <div className="relative p-4 sm:p-8 flex flex-col lg:flex-row items-center gap-8">
         {/* SVG Orbital Plotter */}
-        <div className="relative w-full lg:w-2/3 aspect-[16/10] bg-[#050B1A]/80 rounded-2xl border border-[#1E293B]/70 overflow-hidden flex items-center justify-center">
+        <div className="relative w-full lg:w-2/3 aspect-16/10 bg-[#050B1A]/80 rounded-2xl border border-[#1E293B]/70 overflow-hidden flex items-center justify-center">
           <svg className="w-full h-full" viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <radialGradient id="sunGlowSmall" cx="50%" cy="50%" r="50%">
@@ -216,7 +216,7 @@ export const CosmicOrbitalDiagram: FC<CosmicOrbitalDiagramProps> = ({ onNavigate
                 />
                 {/* Planet X Node */}
                 <g transform="translate(190, 215)" onMouseEnter={() => setHoveredId('planet-x')} className="cursor-pointer">
-                  <circle cx="0" cy="0" r="10" fill="#8B5CF6" opacity="0.3" className="animate-ping" />
+                  <circle cx="0" cy="0" r="10" fill="#8B5CF6" opacity="0.3" className="beacon-pulse" />
                   <circle cx="0" cy="0" r="7" fill="#8B5CF6" />
                   <circle cx="0" cy="0" r="9" fill="none" stroke="#C084FC" strokeWidth="1.5" />
                   <line x1="0" y1="0" x2="-35" y2="-30" stroke="#8B5CF6" strokeWidth="1" strokeDasharray="2 2" />
@@ -300,10 +300,10 @@ export const CosmicOrbitalDiagram: FC<CosmicOrbitalDiagramProps> = ({ onNavigate
 
             <button
               onClick={() => onNavigate('planet-x')}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] hover:from-[#7C3AED] hover:to-[#6D28D9] text-[#FFFFFF] font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+              className="w-full py-2.5 px-4 rounded-xl bg-linear-to-r from-[#8B5CF6] to-[#7C3AED] hover:from-[#7C3AED] hover:to-[#6D28D9] text-[#FFFFFF] font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-2"
             >
               <Orbit className="w-4 h-4" />
-              <span>Simulate in Planet X Explorer</span>
+              <span>Simulate in Planet X Investigation Lab</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>

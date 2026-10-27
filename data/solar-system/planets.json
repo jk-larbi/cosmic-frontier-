@@ -2,7 +2,7 @@
   "metadata": {
     "source": "NASA/JPL Solar System Dynamics & Horizons Ephemerides",
     "sourceUrl": "https://ssd.jpl.nasa.gov/horizons/",
-    "retrievalDateUTC": "2026-10-23T23:00:00Z",
+    "retrievalDateUTC": "2026-10-24T00:00:00Z",
     "recordCount": 9,
     "dataStatus": "Reference Standard",
     "description": "Physical constants and orbital elements for the Sun and the eight IAU-recognized major planets."
@@ -21,6 +21,8 @@
       "eccentricity": 0,
       "inclinationDeg": 0,
       "rotationPeriodHours": 609.12,
+      "isHypothetical": false,
+      "statusLabel": "Confirmed",
       "description": "The central star of the Solar System, containing over 99.8% of its total mass.",
       "sourceUrl": "https://science.nasa.gov/sun/"
     },
@@ -37,6 +39,8 @@
       "eccentricity": 0.2056,
       "inclinationDeg": 7.005,
       "rotationPeriodHours": 1407.6,
+      "isHypothetical": false,
+      "statusLabel": "Confirmed",
       "description": "The smallest planet in the Solar System, heavily cratered with virtually no atmosphere.",
       "sourceUrl": "https://science.nasa.gov/mercury/"
     },
@@ -53,6 +57,8 @@
       "eccentricity": 0.0067,
       "inclinationDeg": 3.394,
       "rotationPeriodHours": -5832.5,
+      "isHypothetical": false,
+      "statusLabel": "Confirmed",
       "description": "Earth's sister world by size, wrapped in a runaway greenhouse atmosphere of carbon dioxide and sulfuric acid clouds.",
       "sourceUrl": "https://science.nasa.gov/venus/"
     },
@@ -69,6 +75,8 @@
       "eccentricity": 0.0167,
       "inclinationDeg": 0.0,
       "rotationPeriodHours": 23.934,
+      "isHypothetical": false,
+      "statusLabel": "Confirmed",
       "description": "Our home planet, the only known celestial body in the universe supporting liquid surface oceans and abundant life.",
       "sourceUrl": "https://science.nasa.gov/earth/"
     },
@@ -85,6 +93,8 @@
       "eccentricity": 0.0934,
       "inclinationDeg": 1.85,
       "rotationPeriodHours": 24.623,
+      "isHypothetical": false,
+      "statusLabel": "Confirmed",
       "description": "The Red Planet, featuring ancient dry river valleys, massive extinct shield volcanoes, and polar water/CO2 ice caps.",
       "sourceUrl": "https://science.nasa.gov/mars/"
     },
@@ -101,6 +111,8 @@
       "eccentricity": 0.0489,
       "inclinationDeg": 1.303,
       "rotationPeriodHours": 9.925,
+      "isHypothetical": false,
+      "statusLabel": "Confirmed",
       "description": "The largest planet in the Solar System, more massive than all other planets combined, with a powerful magnetic field.",
       "sourceUrl": "https://science.nasa.gov/jupiter/"
     },
@@ -117,6 +129,8 @@
       "eccentricity": 0.0565,
       "inclinationDeg": 2.485,
       "rotationPeriodHours": 10.656,
+      "isHypothetical": false,
+      "statusLabel": "Confirmed",
       "description": "Adorned with the Solar System's most extensive ring system composed of pure water ice particles.",
       "sourceUrl": "https://science.nasa.gov/saturn/"
     },
@@ -133,6 +147,8 @@
       "eccentricity": 0.0463,
       "inclinationDeg": 0.773,
       "rotationPeriodHours": -17.24,
+      "isHypothetical": false,
+      "statusLabel": "Confirmed",
       "description": "An ice giant rotating on its side at an axial tilt of 97.8 degrees, possessing faint rings and complex methane cloud bands.",
       "sourceUrl": "https://science.nasa.gov/uranus/"
     },
@@ -149,9 +165,10 @@
       "eccentricity": 0.0095,
       "inclinationDeg": 1.768,
       "rotationPeriodHours": 16.11,
+      "isHypothetical": false,
+      "statusLabel": "Confirmed",
       "description": "The outermost recognized major planet, featuring the fastest supersonic winds in the Solar System exceeding 2,100 km/h.",
       "sourceUrl": "https://science.nasa.gov/neptune/"
     }
   ]
 }
-
