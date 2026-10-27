@@ -20,7 +20,9 @@
       "stellarEffectiveTempK": 4975,
       "distanceParsecs": 154.961,
       "distanceLightYears": 505.4,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "K2-285 e",
@@ -33,7 +35,9 @@
       "stellarEffectiveTempK": 4975,
       "distanceParsecs": 154.961,
       "distanceLightYears": 505.4,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "K2-285 d",
@@ -46,7 +50,9 @@
       "stellarEffectiveTempK": 4975,
       "distanceParsecs": 154.961,
       "distanceLightYears": 505.4,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "NGTS-2 b",
@@ -59,7 +65,9 @@
       "stellarEffectiveTempK": 6478,
       "distanceParsecs": 356.391,
       "distanceLightYears": 1162.4,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "WASP-164 b",
@@ -72,7 +80,9 @@
       "stellarEffectiveTempK": 5806,
       "distanceParsecs": 327.506,
       "distanceLightYears": 1068.2,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "KELT-4 A b",
@@ -85,7 +95,9 @@
       "stellarEffectiveTempK": 6206,
       "distanceParsecs": 218.05,
       "distanceLightYears": 711.2,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "K2-33 b",
@@ -98,7 +110,9 @@
       "stellarEffectiveTempK": 3540,
       "distanceParsecs": 139.268,
       "distanceLightYears": 454.2,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "HATS-6 b",
@@ -111,7 +125,9 @@
       "stellarEffectiveTempK": 3724,
       "distanceParsecs": 169.318,
       "distanceLightYears": 552.2,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "KELT-8 b",
@@ -124,7 +140,9 @@
       "stellarEffectiveTempK": 5754,
       "distanceParsecs": 197.572,
       "distanceLightYears": 644.4,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "KELT-7 b",
@@ -137,7 +155,9 @@
       "stellarEffectiveTempK": 6768,
       "distanceParsecs": 136.681,
       "distanceLightYears": 445.8,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "WASP-94 A b",
@@ -150,7 +170,9 @@
       "stellarEffectiveTempK": 6170,
       "distanceParsecs": 211.211,
       "distanceLightYears": 688.9,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "WASP-80 b",
@@ -163,7 +185,9 @@
       "stellarEffectiveTempK": 4143,
       "distanceParsecs": 49.7876,
       "distanceLightYears": 162.4,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "WASP-63 b",
@@ -176,7 +200,9 @@
       "stellarEffectiveTempK": 5550,
       "distanceParsecs": 290.684,
       "distanceLightYears": 948.1,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "HAT-P-17 b",
@@ -189,7 +215,9 @@
       "stellarEffectiveTempK": 5246,
       "distanceParsecs": 92.3831,
       "distanceLightYears": 301.3,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "HAT-P-30 b",
@@ -202,7 +230,9 @@
       "stellarEffectiveTempK": 6304,
       "distanceParsecs": 213.985,
       "distanceLightYears": 697.9,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "WASP-43 b",
@@ -215,7 +245,9 @@
       "stellarEffectiveTempK": 4400,
       "distanceParsecs": 86.7467,
       "distanceLightYears": 282.9,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "HAT-P-14 b",
@@ -228,7 +260,9 @@
       "stellarEffectiveTempK": 6600,
       "distanceParsecs": 222.663,
       "distanceLightYears": 726.2,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "HAT-P-26 b",
@@ -241,7 +275,9 @@
       "stellarEffectiveTempK": 5079,
       "distanceParsecs": 141.837,
       "distanceLightYears": 462.6,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "WASP-17 b",
@@ -254,7 +290,9 @@
       "stellarEffectiveTempK": 6550,
       "distanceParsecs": 405.908,
       "distanceLightYears": 1323.9,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "WASP-15 b",
@@ -267,7 +305,9 @@
       "stellarEffectiveTempK": 6300,
       "distanceParsecs": 282.091,
       "distanceLightYears": 920.1,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "HAT-P-12 b",
@@ -280,7 +320,9 @@
       "stellarEffectiveTempK": 4650,
       "distanceParsecs": 142.751,
       "distanceLightYears": 465.6,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "TrES-4 b",
@@ -293,7 +335,9 @@
       "stellarEffectiveTempK": 6200,
       "distanceParsecs": 515.98,
       "distanceLightYears": 1682.9,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "HD 189733 b",
@@ -306,7 +350,9 @@
       "stellarEffectiveTempK": 5052,
       "distanceParsecs": 19.7638,
       "distanceLightYears": 64.5,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "HD 149026 b",
@@ -319,7 +365,9 @@
       "stellarEffectiveTempK": 6179,
       "distanceParsecs": 75.8643,
       "distanceLightYears": 247.4,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     },
     {
       "planetName": "HD 209458 b",
@@ -332,7 +380,9 @@
       "stellarEffectiveTempK": 6091,
       "distanceParsecs": 48.3016,
       "distanceLightYears": 157.5,
-      "dataStatus": "Confirmed Exoplanet"
+      "dataStatus": "Confirmed Exoplanet",
+      "confirmedStatus": "Confirmed",
+      "disposition": "Confirmed"
     }
   ]
 }

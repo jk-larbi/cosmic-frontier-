@@ -500,6 +500,14 @@ app.get('/api/data/exoplanets', async (req, res) => {
     source = 'NASA Exoplanet Archive (Verified Local Benchmark)';
   }
 
+  // Guarantee standard classification flags on confirmed records
+  records = (records || []).map(r => ({
+    ...r,
+    confirmedStatus: r.confirmedStatus || 'Confirmed',
+    disposition: r.disposition || 'Confirmed',
+    dataStatus: r.dataStatus || 'Confirmed Exoplanet'
+  }));
+
   // Optionally include unconfirmed candidate planets from NASA Kepler/K2/TESS candidate archives
   let candidateRecords = [];
   if (includeCandidates) {
@@ -719,6 +727,21 @@ app.get('/api/data/galaxies', async (req, res) => {
     } catch (nedErr) {
       console.warn('[Data Layer] NED Live lookup failed, falling back to local records:', nedErr.message);
     }
+
+    // If live NED lookup failed or timed out, match from local catalog
+    const localMatch = localData.records.find(g => 
+      g.name.toLowerCase().includes(targetName.toLowerCase()) || 
+      g.catalogIdentifier.toLowerCase().includes(targetName.toLowerCase()) ||
+      (g.alternateNames && g.alternateNames.some(a => a.toLowerCase().includes(targetName.toLowerCase())))
+    ) || localData.records[0];
+
+    return res.json({
+      success: true,
+      source: 'NASA/IPAC Extragalactic Database (Local Benchmark Fallback)',
+      isLive: false,
+      record: localMatch,
+      records: [localMatch, ...localData.records.filter(r => r.id !== localMatch.id)]
+    });
   }
 
   // Filter local records
