@@ -122,8 +122,8 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
         {/* Right Status Badge */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0B1329] border border-[#1E293B] text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-[#10B981]" />
-            <span className="text-[#34D399] font-semibold">TELEMETRY LIVE</span>
+            <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
+            <span className="text-[#34D399] font-semibold">LIVE HUD</span>
           </div>
         </div>
       </div>
@@ -134,8 +134,8 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
         <div className="lg:col-span-6 space-y-6">
           {/* Status Chip */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0B1329] border border-[#1E293B] text-xs font-mono text-[#A7B4CC]">
-            <span className="w-2 h-2 rounded-full bg-[#10B981]" />
-            <span>NASA SPACE APPS • ASTRONOMICAL PLATFORM</span>
+            <span>SYSTEM STATUS</span>
+            <span className="text-[#10B981] font-bold">● NOMINAL</span>
           </div>
 
           {/* Monumental Headline */}
@@ -153,7 +153,7 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
             Explore distant galaxies, investigate the outer Solar System, and uncover the science behind our cosmic neighbourhood.
           </p>
 
-          {/* Two Prominent Action Buttons */}
+          {/* Two Prominent Action Buttons (White primary + Dark secondary with icon) */}
           <div className="flex flex-wrap items-center gap-4 pt-2">
             <button
               onClick={() => onNavigate('observatory')}
@@ -165,7 +165,7 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
 
             <button
               onClick={() => onNavigate('planet-x')}
-              className="px-6 py-3.5 rounded-full bg-[#0B1329]/90 hover:bg-[#131D38] text-[#F8FAFC] border border-[#8B5CF6]/50 hover:border-[#8B5CF6] font-semibold text-sm shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center gap-2 cursor-pointer backdrop-blur-sm"
+              className="px-6 py-3.5 rounded-full bg-[#0B1329]/90 hover:bg-[#131D38] text-[#F8FAFC] border border-[#38BDF8]/40 hover:border-[#38BDF8] font-bold text-sm shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 cursor-pointer backdrop-blur-sm"
             >
               <span>Discover Planet X</span>
               <span className="text-[#38BDF8] text-base font-bold">+</span>
@@ -561,7 +561,7 @@ export const NovaCommandHero: FC<NovaCommandHeroProps> = ({ onNavigate }) => {
             <div className="space-y-0.5">
               <div className="text-xs font-mono font-bold text-[#F8FAFC] flex items-center justify-center gap-1">
                 <span>SCROLL TO EXPLORE</span>
-                <ArrowDown className="w-3 h-3 text-[#38BDF8] group-hover:translate-y-1 transition-transform" />
+                <ArrowDown className="w-3 h-3 text-[#38BDF8] animate-bounce" />
               </div>
               <div className="text-[9px] font-mono text-[#A7B4CC]">12 Stations Mapped</div>
             </div>

@@ -53,7 +53,7 @@ export const HomePage: FC<HomePageProps> = ({
             Exploration Stations
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#F8FAFC] tracking-tight">
-            Explore the Cosmic Frontier
+            Discover the Cosmic Frontier
           </h2>
           <p className="text-sm sm:text-base text-[#A7B4CC] leading-relaxed">
             Ten research consoles and interactive simulators engineered for beginners, students, and astronomy explorers.
@@ -108,24 +108,12 @@ export const HomePage: FC<HomePageProps> = ({
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
                 Simulate 2D orbits of 8 planets and extreme trans-Neptunian objects. Investigate mathematical clues for a hypothetical 9th world.
               </p>
-
-              <div className="space-y-2 pt-2 text-xs font-mono">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
-                  <span className="text-[#A7B4CC]">Predicted Mass:</span>
-                  <span className="font-bold text-[#F5C451]">5 – 10 M⊕ (~380 AU)</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-[#050B1A]/70 border border-[#1E293B]">
-                  <span className="text-[#A7B4CC]">Orbital Signature:</span>
-                  <span className="font-bold text-[#C084FC]">ω & Ω Anti-Aligned</span>
-                </div>
-              </div>
             </div>
             <div className="pt-2 flex items-center justify-between text-xs font-mono font-bold text-[#8B5CF6]">
               <span>Investigate Lab</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
             </div>
           </div>
-        </div>
 
           {/* 3. Deep-Space Radar */}
           <div 
@@ -229,7 +217,6 @@ export const HomePage: FC<HomePageProps> = ({
                   Galaxy Explorer
                 </h3>
               </div>
-              <h4 className="text-base font-bold text-[#F8FAFC]">Planets & Distant Orbits</h4>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
                 24+ deep-sky galaxies, active galactic nuclei (AGN), and galaxy clusters sourced from NASA/IPAC NED and CDS SIMBAD.
               </p>
@@ -257,7 +244,6 @@ export const HomePage: FC<HomePageProps> = ({
                   Exoplanet Lab
                 </h3>
               </div>
-              <h4 className="text-base font-bold text-[#F8FAFC]">Exoplanets & Galaxies</h4>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
                 Compare worlds beyond our Solar System. Filter by transit, radial velocity, or direct imaging, and evaluate habitability zones.
               </p>
@@ -518,12 +504,12 @@ export const HomePage: FC<HomePageProps> = ({
 
       {/* 9. HOW COSMIC FRONTIER WORKS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl bg-[#0B1630]/60 border border-[#1E293B] p-8 sm:p-10 space-y-8 shadow-lg">
-          <div className="max-w-2xl space-y-2">
-            <span className="text-xs uppercase tracking-widest text-[#38BDF8] font-mono font-semibold">
-              Exploration Methodology
+        <div className="rounded-3xl bg-[#0B1630]/70 border border-[#1E293B] p-8 sm:p-12 space-y-10 shadow-xl">
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="text-xs uppercase tracking-widest text-[#38BDF8] font-bold">
+              Simple Step-by-Step Exploration
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC]">
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] mt-2">
               How COSMIC FRONTIER Works
             </h2>
             <p className="text-sm text-[#A7B4CC] mt-2">
@@ -531,32 +517,32 @@ export const HomePage: FC<HomePageProps> = ({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 border-t border-[#1E293B]/70">
-            <div className="space-y-3">
-              <div className="text-xs font-mono font-bold text-[#38BDF8] tracking-widest">
-                STEP 01
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-2xl bg-[#050B1A]/80 border border-[#1E293B] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#38BDF8]/10 border border-[#38BDF8]/30 flex items-center justify-center text-[#38BDF8] font-bold font-mono">
+                01
               </div>
-              <h3 className="text-base font-semibold text-[#F8FAFC]">Select a Target or Realm</h3>
+              <h3 className="text-lg font-semibold text-[#F8FAFC]">Select a Target or Realm</h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
                 Choose from star-forming nebulae, early galaxies, protoplanetary disks, or scale out to the remote Kuiper Belt and Sedna’s distant trajectory.
               </p>
             </div>
 
-            <div className="space-y-3">
-              <div className="text-xs font-mono font-bold text-[#C084FC] tracking-widest">
-                STEP 02
+            <div className="p-6 rounded-2xl bg-[#050B1A]/80 border border-[#1E293B] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/30 flex items-center justify-center text-[#8B5CF6] font-bold font-mono">
+                02
               </div>
-              <h3 className="text-base font-semibold text-[#F8FAFC]">Adjust Filters & Scales</h3>
+              <h3 className="text-lg font-semibold text-[#F8FAFC]">Adjust Filters & Scales</h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
                 Slide across infrared bands from 0.75 µm to 5.0 µm, compare optical versus infrared with the split slider, or zoom from 1 AU out to 1,000 AU.
               </p>
             </div>
 
-            <div className="space-y-3">
-              <div className="text-xs font-mono font-bold text-[#F5C451] tracking-widest">
-                STEP 03
+            <div className="p-6 rounded-2xl bg-[#050B1A]/80 border border-[#1E293B] space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#F5C451]/10 border border-[#F5C451]/30 flex items-center justify-center text-[#F5C451] font-bold font-mono">
+                03
               </div>
-              <h3 className="text-base font-semibold text-[#F8FAFC]">Inspect Scientific Clues</h3>
+              <h3 className="text-lg font-semibold text-[#F8FAFC]">Inspect Scientific Clues</h3>
               <p className="text-xs text-[#A7B4CC] leading-relaxed">
                 Read concise verified explanations of water ice signatures, orbital clustering probabilities, and survey limits without any fabricated jargon.
               </p>

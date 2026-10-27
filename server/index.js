@@ -532,14 +532,6 @@ app.get('/api/data/exoplanets', async (req, res) => {
     source = 'NASA Exoplanet Archive (Verified Local Benchmark)';
   }
 
-  // Guarantee standard classification flags on confirmed records
-  records = (records || []).map(r => ({
-    ...r,
-    confirmedStatus: r.confirmedStatus || 'Confirmed',
-    disposition: r.disposition || 'Confirmed',
-    dataStatus: r.dataStatus || 'Confirmed Exoplanet'
-  }));
-
   // Optionally include unconfirmed candidate planets from NASA Kepler/K2/TESS candidate archives
   let candidateRecords = [];
   if (includeCandidates) {
@@ -588,6 +580,8 @@ app.get('/api/data/exoplanets', async (req, res) => {
 
   let combined = [...(records || []), ...candidateRecords].map(r => ({
     ...r,
+    confirmedStatus: r.confirmedStatus || (r.disposition === 'Candidate' ? 'Candidate' : 'Confirmed'),
+    disposition: r.disposition || (r.confirmedStatus === 'Candidate' ? 'Candidate' : 'Confirmed'),
     image: getVerifiedServerImage(r.planetName, { isExoplanet: true }) || null
   }));
 

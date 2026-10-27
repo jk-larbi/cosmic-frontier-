@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode, type FC } from 'react';
 import type { AppPage } from '../types';
 import { 
-  Home,
   Telescope, 
   Orbit, 
   Sparkles, 
@@ -124,7 +123,7 @@ export const Navbar: FC<NavbarProps> = ({
                   onClick={() => handleNavClick(item.page)}
                   className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-[#0B1630] text-[#38BDF8] border border-[#38BDF8]/40 shadow-xs'
+                      ? 'bg-[#0B1630] text-[#38BDF8] border border-[#38BDF8]/40 shadow-sm'
                       : 'text-[#A7B4CC] hover:text-[#F8FAFC] hover:bg-[#0B1630]/60'
                   }`}
                   aria-current={isActive ? 'page' : undefined}

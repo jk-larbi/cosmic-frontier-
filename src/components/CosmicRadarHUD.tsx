@@ -383,7 +383,7 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
       dataStatus: 'HYPOTHETICAL TARGET',
       dataSource: 'Dynamical Model: Batygin & Brown (2021) The Astronomical Journal, 162:219',
       sourceUrl: 'https://doi.org/10.3847/1538-3881/ac2056',
-      scientificDisclaimer: 'Hypothetical Planet Nine — predicted mathematical solution. Not an observed physical detection.'
+      scientificDisclaimer: 'Hypothetical Planet Nine — simulated position. Not an observed astronomical detection.'
     });
 
     // 5. Simulation Test Particles (if enabled)
@@ -974,7 +974,7 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
         <div className="flex items-center gap-2.5">
           <ShieldAlert className="w-4 h-4 text-[#F5C451] shrink-0" />
           <span className="text-[#A7B4CC]">
-            <strong className="text-[#F8FAFC]">Astronomical Projection Notice:</strong> Visualizes three-dimensional Keplerian orbital mechanics projected onto the ecliptic plane (J2000). Represents analytical ephemerides and mathematical models, not active radio emissions.
+            <strong className="text-[#F8FAFC]">Astronomical Tracking Notice:</strong> Not an active radio radar receiver — visualizes three-dimensional Keplerian orbital mechanics projected onto the ecliptic plane (ICRF/J2000). Represents analytical ephemerides and mathematical models.
           </span>
         </div>
         <div className="flex items-center gap-3 shrink-0 text-[11px] font-mono">
@@ -1246,9 +1246,6 @@ export const CosmicRadarHUD: FC<CosmicRadarHUDProps> = ({ onNavigate }) => {
               )}
             </div>
           </div>
-          <p className="text-xs text-[#A7B4CC] max-w-2xl">
-            High-precision ICRF/J2000 top-down heliocentric monitoring system integrating near-Earth asteroids, distant trans-Neptunian sednoids, and the hypothetical Planet Nine dynamical simulation.
-          </p>
         </div>
 
         {/* RIGHT: TARGET TELEMETRY INSPECTOR & PLANET X DYNAMICAL DRAWER */}
